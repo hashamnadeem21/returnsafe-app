@@ -5,8 +5,7 @@ type AppEnv = 'development' | 'production';
 const APP_ENV: AppEnv = process.env.APP_ENV === 'production' ? 'production' : 'development';
 const IS_PROD = APP_ENV === 'production';
 
-// Dev builds use their own bundle ID so they can sit next to the store build on one phone.
-const BUNDLE_ID = IS_PROD ? 'com.returnsafe.app' : 'com.returnsafe.app.dev';
+const BUNDLE_ID = 'com.returnsafe.app';
 const FIREBASE_DIR = `./firebase/${IS_PROD ? 'prod' : 'dev'}`;
 
 const BRAND_TEAL = '#0F766E';

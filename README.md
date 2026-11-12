@@ -14,6 +14,16 @@ iOS and Android app that scans receipts and reminds you before store return wind
 | [docs/brand](docs/brand)                                               | Logo and app icon source files                                         |
 | [docs/BUILD_PROMPT.md](docs/BUILD_PROMPT.md)                           | Build plan in 9 phases, each with a test gate                          |
 
+## Local setup
+
+Requirements: Node 22, Xcode 26.4 or newer (Expo SDK 58 minimum), Android Studio with an API 36 emulator, JDK 17, CocoaPods.
+
+1. `npm install`
+2. Put the Firebase config files in `firebase/dev/` (see [firebase/README.md](firebase/README.md)).
+3. CocoaPods needs a UTF-8 shell: `export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`
+4. `npm run prebuild`, then `npm run ios` or `npm run android`
+5. `npm run check` runs lint, type check, formatting and tests.
+
 ## Build status
 
 | Phase | Scope                        | Gate        |
