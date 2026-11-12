@@ -113,7 +113,7 @@ PHASE 0 — Foundation. Scope:
    ITSAppUsesNonExemptEncryption = false, and environment switching (APP_ENV=development|production)
    that selects GoogleService-Info.plist / google-services.json for dev or prod.
 3. Install @react-native-firebase/app and expo-dev-client. Add the config plugins.
-   Include expo-build-properties (iOS useFrameworks: "static" as React Native Firebase requires).
+   Include expo-build-properties with iOS useFrameworks "dynamic" and deploymentTarget "16.4" (Expo SDK 58 minimum; React Native Firebase fails with "static").
 4. eas.json with development (simulator + device), preview and production profiles; production
    uses autoIncrement for build numbers.
 5. firebase.json with emulators: auth 9099, firestore 8080, storage 9199, functions 5001, ui 4000.
