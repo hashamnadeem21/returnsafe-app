@@ -1,0 +1,14 @@
+# dependencies
+node_modules/
+# macOS
+.DS_Store
+# env and secrets
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.mobileprovision
+*.jks
+*.keystore
+!debug.keystore

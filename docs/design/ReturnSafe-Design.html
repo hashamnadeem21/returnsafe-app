@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ReturnSafe App Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+@page { size: 1400px 1040px; margin: 0; }
+:root{
+  --primary:#0F766E; --primaryPressed:#115E59; --primarySoft:#CCFBF1; --primaryLine:#99F6E4;
+  --warning:#F59E0B; --warningText:#B45309; --warningSoft:#FEF3C7;
+  --danger:#DC2626; --dangerSoft:#FEE2E2; --success:#16A34A; --successSoft:#DCFCE7;
+  --ink:#0F172A; --ink2:#475569; --muted:#94A3B8; --border:#E2E8F0; --bg:#F8FAFC; --surface:#FFFFFF;
+}
+.dark{
+  --primary:#2DD4BF; --primaryPressed:#14B8A6; --primarySoft:#134E4A; --primaryLine:#115E59;
+  --warning:#FBBF24; --warningText:#FBBF24; --warningSoft:#422006;
+  --danger:#F87171; --dangerSoft:#450A0A; --success:#4ADE80; --successSoft:#052E16;
+  --ink:#F1F5F9; --ink2:#94A3B8; --muted:#64748B; --border:#1F2937; --bg:#0B1220; --surface:#111827;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#E9EEF3}
+body{font-family:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;color:#0F172A;-webkit-font-smoothing:antialiased}
+.page{width:1400px;height:1040px;background:#EEF2F6;position:relative;overflow:hidden;page-break-after:always;padding:30px 56px}
+.page:last-child{page-break-after:auto}
+.ph{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px}
+.ph h2{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.ph .sec{font-size:13px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px}
+.ph .pn{font-size:13px;color:#64748B}
+.row3{display:flex;justify-content:space-between}
+.cell{width:399px;display:flex;flex-direction:column;align-items:center}
+.cap{width:399px;margin-top:14px}
+.cap b{font-size:15px;display:block;margin-bottom:3px}
+.cap b span{display:inline-block;background:#0F766E;color:#fff;font-size:11px;padding:2px 7px;border-radius:6px;margin-right:6px;vertical-align:2px}
+.cap b em{font-style:normal;font-size:11px;color:#475569;background:#fff;border:1px solid #CBD5E1;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:2px}
+.cap p{font-size:12.5px;color:#475569;line-height:1.45}
+
+/* phone */
+.phone{width:375px;height:812px;border:11px solid #0B1220;border-radius:54px;position:relative;overflow:hidden;background:var(--bg);color:var(--ink);box-shadow:0 18px 40px rgba(15,23,42,.18);flex:none;box-sizing:content-box}
+.phone.android{border-radius:38px}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg)}
+.sb{height:50px;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 34px;font-size:15px;font-weight:600;flex:none;position:relative;z-index:5}
+.android .sb{height:36px;padding:2px 22px 0 22px;font-size:13px;font-weight:500}
+.island{position:absolute;left:50%;top:10px;width:118px;height:34px;margin-left:-59px;background:#000;border-radius:20px}
+.punch{position:absolute;left:50%;top:9px;width:16px;height:16px;margin-left:-8px;background:#000;border-radius:50%}
+.sbi{display:flex;gap:5px;align-items:center}
+.homeind{position:absolute;bottom:8px;left:50%;width:134px;height:5px;margin-left:-67px;background:var(--ink);border-radius:3px;opacity:.9;z-index:6}
+.android .homeind{width:108px;height:4px;margin-left:-54px;bottom:7px;opacity:.55}
+.content{flex:1;overflow:hidden;padding:0 20px;position:relative}
+.tabbar{height:84px;flex:none;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:flex-start;padding-top:8px;position:relative}
+.android .tabbar{height:78px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:500;color:var(--muted);width:64px}
+.tab.on{color:var(--primary);font-weight:600}
+.tab .fab{width:56px;height:56px;border-radius:28px;background:var(--primary);display:flex;align-items:center;justify-content:center;margin-top:-26px;box-shadow:0 6px 14px rgba(15,118,110,.35);border:4px solid var(--surface)}
+.dark .tab .fab{box-shadow:none}
+
+/* type */
+.t-display{font-size:28px;line-height:34px;font-weight:700;letter-spacing:-.4px}
+.t-title{font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.2px}
+.t-head{font-size:17px;line-height:22px;font-weight:600}
+.t-body{font-size:16px;line-height:22px}
+.t-cap{font-size:13px;line-height:18px;color:var(--ink2)}
+.t-label{font-size:12px;line-height:16px;font-weight:500;color:var(--ink2)}
+.muted{color:var(--ink2)}
+
+/* components */
+.btn{height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;font-weight:600;width:100%}
+.btn.primary{background:var(--primary);color:#fff}
+.dark .btn.primary{color:#04201D}
+.btn.secondary{background:var(--surface);border:1.5px solid var(--border);color:var(--ink)}
+.btn.soft{background:var(--primarySoft);color:var(--primaryPressed)}
+.dark .btn.soft{color:var(--primary)}
+.btn.text{color:var(--primary);height:44px}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.disabled{background:var(--border);color:var(--muted)}
+.btn.apple{background:#000;color:#fff}
+.btn.google{background:#fff;color:#1F1F1F;border:1.5px solid #DADCE0}
+.field{margin-bottom:14px}
+.field .lbl{font-size:13px;font-weight:500;color:var(--ink2);margin-bottom:6px}
+.input{height:52px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);display:flex;align-items:center;padding:0 14px;font-size:16px;gap:10px;justify-content:space-between}
+.input.focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,118,110,.15)}
+.input.error{border-color:var(--danger)}
+.input .ph2{color:var(--muted)}
+.help{font-size:12.5px;color:var(--ink2);margin-top:6px}
+.err{font-size:12.5px;color:var(--danger);margin-top:6px;display:flex;gap:6px;align-items:center}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px}
+.chip{height:34px;border-radius:17px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--ink);white-space:nowrap}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.dark .chip.on{color:#04201D}
+.chip .n{opacity:.7}
+.pill{height:26px;border-radius:13px;padding:0 10px;display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;white-space:nowrap}
+.pill.red{background:var(--dangerSoft);color:var(--danger)}
+.pill.amber{background:var(--warningSoft);color:var(--warningText)}
+.pill.gray{background:var(--bg);color:var(--ink2);border:1px solid var(--border)}
+.pill.green{background:var(--successSoft);color:var(--success)}
+.pill.teal{background:var(--primarySoft);color:var(--primaryPressed)}
+.dark .pill.teal{color:var(--primary)}
+.av{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex:none}
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.lrow+.lrow{border-top:1px solid var(--border)}
+.lrow .mid{flex:1;min-width:0}
+.lrow .nm{font-size:15.5px;font-weight:600}
+.lrow .sub{font-size:13px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sechd{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 10px}
+.sechd .a{font-size:14px;color:var(--primary);font-weight:600}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;font-size:13.5px;line-height:19px}
+.banner.warn{background:var(--warningSoft);color:#78350F}
+.banner.info{background:var(--primarySoft);color:#134E4A}
+.banner.off{background:#1E293B;color:#F1F5F9}
+.nav{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex:none}
+.nav .ttl{font-size:17px;font-weight:600}
+.iconbtn{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;padding:10px 20px 34px;box-shadow:0 -10px 30px rgba(0,0,0,.18);z-index:4}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--border);margin:0 auto 14px}
+.scrim{position:absolute;inset:0;background:rgba(15,23,42,.45);z-index:3}
+.toggle{width:51px;height:31px;border-radius:16px;background:var(--primary);position:relative;flex:none}
+.toggle:after{content:"";position:absolute;right:2px;top:2px;width:27px;height:27px;border-radius:14px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.toggle.offt{background:var(--border)}
+.toggle.offt:after{right:auto;left:2px}
+.radio{width:22px;height:22px;border-radius:11px;border:2px solid var(--border);flex:none}
+.radio.on{border:7px solid var(--primary)}
+.lock{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--primaryPressed);background:var(--primarySoft);padding:3px 7px;border-radius:6px}
+.dots{display:flex;gap:6px;justify-content:center}
+.dots i{width:8px;height:8px;border-radius:4px;background:var(--border)}
+.dots i.on{width:24px;background:var(--primary)}
+.skel{background:linear-gradient(90deg,var(--border),#F1F5F9);border-radius:8px}
+.kb{position:absolute;left:0;right:0;bottom:0;height:300px;background:#D1D5DB;z-index:4;display:flex;flex-direction:column;gap:10px;padding:10px 4px 0}
+.kb .k{display:flex;gap:6px;justify-content:center}
+.kb .k span{background:#fff;border-radius:5px;height:42px;width:32px;box-shadow:0 1px 0 #9CA3AF;font-size:20px;display:flex;align-items:center;justify-content:center;color:#111}
+
+/* brand pages */
+.sw{width:150px}
+.sw .c{height:84px;border-radius:14px;border:1px solid rgba(0,0,0,.06)}
+.sw b{display:block;font-size:13px;margin-top:8px}
+.sw span{font-size:12px;color:#475569}
+.panel{background:#fff;border-radius:20px;padding:26px;border:1px solid #E2E8F0}
+.panel h3{font-size:15px;font-weight:700;margin-bottom:16px;text-transform:uppercase;letter-spacing:1px;color:#475569}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// ---------- icons ----------
+const P = {
+ home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ receipt:'<path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+ scan:'<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/>',
+ shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+ bell:'<path d="M6 9a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21h4"/>',
+ bellOff:'<path d="M6 9a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21h4M3 3l18 18"/>',
+ right:'<path d="M9 6l6 6-6 6"/>', left:'<path d="M15 6l-6 6 6 6"/>', down:'<path d="M6 9l6 6 6-6"/>',
+ arrowLeft:'<path d="M19 12H5M11 6l-6 6 6 6"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+ check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+ lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+ x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ flash:'<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>',
+ image:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M3 17l5-5 4 4 3-3 6 6"/>',
+ mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+ eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ more:'<path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.2"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ alert:'<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.2h.01"/>',
+ wifiOff:'<path d="M3 3l18 18M8.5 16.5a5 5 0 0 1 7 0M5 12.6a10 10 0 0 1 4.3-2.4M19 12.6a10 10 0 0 0-2.6-1.8M2 8.8a15 15 0 0 1 4.2-2.6M22 8.8A15 15 0 0 0 11 5M12 20h.01"/>',
+ export:'<path d="M12 15V3M7 8l5-5 5 5M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>',
+ help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/>',
+ doc:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+ trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+ restore:'<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v4h-4"/>',
+ spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+ tag:'<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+ dollar:'<path d="M12 2v20M17 6.5C17 4.6 14.8 3.5 12 3.5S7 4.8 7 7s2 3 5 3.5 5 1.5 5 3.8-2.3 3.7-5 3.7-5-1.1-5-3"/>',
+ card:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>',
+ globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+ logout:'<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l-4-4 4-4M6 12h10"/>',
+ store:'<path d="M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9h16M9 20v-6h6v6"/>',
+ sync:'<path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18 3v4h-4M6 21v-4h4"/>',
+ undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+ back:'<path d="M15 6l-6 6 6 6"/>',
+};
+const I=(n,s=22,c='currentColor',w=2)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" style="flex:none">${P[n]}</svg>`;
+const mark=(s=64)=>`<img src="../brand/logo-mark.svg" width="${s}" height="${s}" style="display:block;border-radius:${s*0.22}px">`;
+const G=`<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.2C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C1 16.5 0 20.1 0 24s1 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.8c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.2-13.5-10l-7.9 6.2C6.6 42.6 14.6 48 24 48z"/></svg>`;
+
+// ---------- chrome ----------
+const sbIOS=(light)=>`<div class="sb" style="${light?'color:#fff':''}"><span>9:41</span><div class="island"></div><div class="sbi"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 2.5c2.3 0 4.4.9 5.9 2.4l1.1-1.1A9.8 9.8 0 0 0 8 1 9.8 9.8 0 0 0 1 3.8l1.1 1.1A8.3 8.3 0 0 1 8 2.5zm0 3c1.5 0 2.8.6 3.8 1.5l1.1-1.1A6.9 6.9 0 0 0 8 4a6.9 6.9 0 0 0-4.9 1.9L4.2 7A5.4 5.4 0 0 1 8 5.5zm0 3c.7 0 1.3.3 1.8.7L8 11 6.2 9.2c.5-.4 1.1-.7 1.8-.7z"/></svg><svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="22" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="9" rx="2" fill="currentColor"/><rect x="24" y="4.5" width="2" height="4" rx="1" fill="currentColor" opacity=".4"/></svg></div></div>`;
+const sbAnd=(light)=>`<div class="sb" style="${light?'color:#fff':''}"><span>12:30</span><div class="punch"></div><div class="sbi"><svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 2.5c2.2 0 4.2.8 5.7 2.2L7 12 1.3 4.7A8.4 8.4 0 0 1 7 2.5z"/></svg><svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M13 1v12H1z"/></svg><svg width="9" height="15" viewBox="0 0 9 15" fill="currentColor"><rect x="2.5" y="0" width="4" height="2" rx=".5"/><rect x="0" y="1.5" width="9" height="13.5" rx="1.5"/></svg></div></div>`;
+const sb=(p,light)=>p==='android'?sbAnd(light):sbIOS(light);
+const tabbar=(on)=>{const t=[['home','Home'],['receipt','Receipts'],['scan','Scan'],['shield','Warranties'],['gear','Settings']];
+ return `<div class="tabbar">${t.map(([i,l])=>i==='scan'?`<div class="tab"><div class="fab">${I('scan',26,'#fff',2.2)}</div><span style="margin-top:2px">Scan</span></div>`:`<div class="tab ${on===i?'on':''}">${I(i,24,'currentColor',on===i?2.3:1.9)}<span>${l}</span></div>`).join('')}</div>`;};
+const phone=(inner,{p='ios',dark=false,lightBar=false,bg}={})=>`<div class="phone ${p} ${dark?'dark':''}"><div class="scr" style="${bg?`background:${bg}`:''}">${sb(p,lightBar)}${inner}</div><div class="homeind" style="${lightBar?'background:#fff':''}"></div></div>`;
+const nav=(title,{left='back',right=''}={})=>`<div class="nav"><div class="iconbtn">${left==='back'?I('back',26):left==='x'?I('x',24):left==='arrow'?I('arrowLeft',24):''}</div><div class="ttl">${title}</div><div class="iconbtn">${right}</div></div>`;
+const AVC={T:['#FEE2E2','#B91C1C'],A:['#FEF3C7','#92400E'],B:['#DBEAFE','#1D4ED8'],W:['#E0F2FE','#0369A1'],C:['#EDE9FE','#6D28D9'],H:['#FFEDD5','#C2410C'],I:['#FEF9C3','#854D0E'],J:['#DCFCE7','#15803D'],K:['#FCE7F3','#BE185D'],L:['#E0E7FF','#4338CA']};
+const av=(l,s=42)=>{const c=AVC[l]||['#E2E8F0','#334155'];return `<div class="av" style="background:${c[0]};color:${c[1]};width:${s}px;height:${s}px">${l}</div>`;};
+const rrow=(l,name,sub,pill)=>`<div class="lrow">${av(l)}<div class="mid"><div class="nm">${name}</div><div class="sub">${sub}</div></div>${pill}</div>`;
+const pill=(t,k)=>`<span class="pill ${k}">${t}</span>`;
+const field=(lbl,val,{cls='',ph=false,icon='',help='',err=''}={})=>`<div class="field">${lbl?`<div class="lbl">${lbl}</div>`:''}<div class="input ${cls}"><span class="${ph?'ph2':''}" style="display:flex;align-items:center;gap:8px">${val}</span>${icon}</div>${help?`<div class="help">${help}</div>`:''}${err?`<div class="err">${I('alert',15)}${err}</div>`:''}</div>`;
+const cap=(id,title,text,tag='')=>`<div class="cap"><b><span>${id}</span>${title}${tag?`<em>${tag}</em>`:''}</b><p>${text}</p></div>`;
+
+// ---------- screens ----------
+const S = {};
+S.splash=phone(`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;margin-top:-50px">${mark(112)}<div style="color:#fff;font-size:26px;font-weight:800;letter-spacing:-.5px">ReturnSafe</div></div>`,{bg:'#0F766E',lightBar:true});
+
+const onb=(n,ill,title,text)=>phone(`<div class="content" style="display:flex;flex-direction:column;padding:0 28px">
+ <div style="display:flex;justify-content:flex-end;padding-top:6px"><span style="color:var(--primary);font-weight:600;font-size:15px">Skip</span></div>
+ <div style="flex:1;display:flex;align-items:center;justify-content:center">${ill}</div>
+ <div class="dots" style="margin-bottom:22px">${[1,2,3].map(i=>`<i class="${i===n?'on':''}"></i>`).join('')}</div>
+ <div class="t-display" style="text-align:center;margin-bottom:10px">${title}</div>
+ <div class="t-body muted" style="text-align:center;margin-bottom:30px">${text}</div>
+ <div class="btn primary" style="margin-bottom:46px">${n===3?'Get started':'Next'}</div></div>`);
+const illScan=`<div style="width:250px;height:290px;border-radius:28px;background:var(--primarySoft);position:relative;display:flex;align-items:center;justify-content:center">
+ <div style="width:150px;height:200px;background:#fff;border-radius:10px;box-shadow:0 10px 24px rgba(15,23,42,.12);padding:18px 16px;display:flex;flex-direction:column;gap:9px">
+ <div style="height:10px;width:60%;background:#0F172A;border-radius:4px;margin:0 auto 6px"></div>${[90,70,80,60,85].map(w=>`<div style="display:flex;justify-content:space-between"><div style="height:7px;width:${w*0.7}%;background:#CBD5E1;border-radius:3px"></div><div style="height:7px;width:18%;background:#CBD5E1;border-radius:3px"></div></div>`).join('')}
+ <div style="border-top:1.5px dashed #CBD5E1;margin-top:4px;padding-top:8px;display:flex;justify-content:space-between"><div style="height:9px;width:30%;background:#0F172A;border-radius:3px"></div><div style="height:9px;width:26%;background:#0F172A;border-radius:3px"></div></div></div>
+ ${['left:30px;top:30px;border-width:4px 0 0 4px','right:30px;top:30px;border-width:4px 4px 0 0','left:30px;bottom:30px;border-width:0 0 4px 4px','right:30px;bottom:30px;border-width:0 4px 4px 0'].map(s=>`<div style="position:absolute;width:34px;height:34px;border:solid #0F766E;${s};border-radius:6px"></div>`).join('')}</div>`;
+const illBell=`<div style="width:250px;height:290px;border-radius:28px;background:var(--primarySoft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px">
+ <div style="width:96px;height:96px;border-radius:48px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(15,23,42,.1);color:#0F766E">${I('bell',48,'#0F766E',2)}</div>
+ <div style="background:#fff;border-radius:14px;padding:10px 12px;width:210px;box-shadow:0 8px 20px rgba(15,23,42,.1);display:flex;gap:10px;align-items:center">${mark(30)}<div style="font-size:11.5px;line-height:15px;color:#0F172A"><b>Target return closes in 2 days</b><br><span style="color:#475569">$48.20 · Kids sneakers</span></div></div></div>`;
+const illMoney=`<div style="width:250px;height:290px;border-radius:28px;background:var(--primarySoft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+ <div style="font-size:14px;font-weight:600;color:#115E59">Money saved this year</div><div style="font-size:52px;font-weight:800;color:#0F766E;letter-spacing:-1.5px">$342.18</div>
+ <div style="display:flex;gap:8px"><span class="pill green">12 returns</span><span class="pill" style="background:#fff;color:#0F766E">0 missed</span></div></div>`;
+S.onb1=onb(1,illScan,'Snap any receipt','Take a photo and we read the store, date and total for you.');
+S.onb2=onb(2,illBell,'We remember the deadline','Every store has a different return window. We track it and remind you in time.');
+S.onb3=onb(3,illMoney,'Keep your money','Return what doesn\'t work out, and see how much you\'ve saved.');
+
+const welcome=(p)=>phone(`<div class="content" style="display:flex;flex-direction:column;padding:0 24px">
+ <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">${mark(96)}<div class="t-display" style="text-align:center;margin-top:10px">Never miss a<br>return again</div><div class="t-body muted" style="text-align:center">Save your receipts and get reminded<br>before return windows close.</div></div>
+ <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:12px">
+ ${p==='ios'?`<div class="btn apple"><span style="font-size:20px;margin-top:-3px"></span>Sign in with Apple</div>`:''}
+ <div class="btn google">${G}Continue with Google</div>
+ <div class="btn secondary">${I('mail',20)}Continue with email</div>
+ <div class="btn text">Continue as guest</div></div>
+ <div class="t-cap" style="text-align:center;font-size:12px;margin-bottom:${p==='ios'?40:30}px">By continuing you agree to our <span style="color:var(--primary)">Terms</span> and <span style="color:var(--primary)">Privacy Policy</span>.</div></div>`,{p});
+S.welcomeIOS=welcome('ios'); S.welcomeAnd=welcome('android');
+
+S.signup=phone(`${nav('')}<div class="content"><div class="t-display" style="margin:4px 0 6px">Create account</div><div class="t-body muted" style="margin-bottom:22px">Your receipts are backed up and synced.</div>
+ ${field('Name (optional)','Sam Lee')}
+ ${field('Email','sam.lee@gmail.com')}
+ ${field('Password','••••••••',{cls:'focus',icon:I('eye',20,'#94A3B8'),help:'At least 8 characters, including a number'})}
+ <div class="btn primary" style="margin-top:14px">Create account</div>
+ <div class="t-cap" style="text-align:center;margin-top:18px;font-size:14px">Already have an account? <span style="color:var(--primary);font-weight:600">Log in</span></div>
+ </div>`);
+
+S.login=phone(`${nav('')}<div class="content"><div class="t-display" style="margin:4px 0 6px">Welcome back</div><div class="t-body muted" style="margin-bottom:22px">Log in to see your receipts.</div>
+ ${field('Email','sam.lee@gmail.com')}
+ ${field('Password','•••••••',{cls:'error',icon:I('eye',20,'#94A3B8'),err:'Email or password is incorrect'})}
+ <div style="text-align:right;margin:-2px 0 18px"><span style="color:var(--primary);font-weight:600;font-size:14px">Forgot password?</span></div>
+ <div class="btn primary">Log in</div>
+ <div class="t-cap" style="text-align:center;margin-top:18px;font-size:14px">New here? <span style="color:var(--primary);font-weight:600">Create account</span></div></div>`);
+
+S.forgot=phone(`${nav('')}<div class="content" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 28px">
+ <div style="width:92px;height:92px;border-radius:46px;background:var(--primarySoft);display:flex;align-items:center;justify-content:center;margin:70px 0 26px">${I('mail',42,'#0F766E')}</div>
+ <div class="t-display" style="margin-bottom:12px">Check your email</div>
+ <div class="t-body muted" style="margin-bottom:30px">If an account exists for <b style="color:var(--ink)">sam.lee@gmail.com</b>, we sent a link to reset your password.</div>
+ <div class="btn primary" style="margin-bottom:10px">Back to log in</div><div class="t-cap">Didn't get it? Resend in 0:45</div></div>`);
+
+S.primer=phone(`<div class="content" style="display:flex;flex-direction:column;padding:0 28px">
+ <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+ <div style="width:110px;height:110px;border-radius:55px;background:var(--primarySoft);display:flex;align-items:center;justify-content:center;margin-bottom:28px">${I('bell',52,'#0F766E')}</div>
+ <div class="t-display" style="margin-bottom:12px">Never miss a deadline</div>
+ <div class="t-body muted" style="margin-bottom:26px">We'll remind you the day before a return window closes. Pro members get reminders 7, 3 and 1 day before.</div>
+ <div class="card" style="padding:12px 14px;display:flex;gap:12px;align-items:center;text-align:left;width:100%">${mark(38)}<div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink2)"><span>RETURNSAFE</span><span>9:00 AM</span></div><div style="font-size:14px;font-weight:600">Target return closes in 2 days</div><div style="font-size:13px;color:var(--ink2)">$48.20 · Kids sneakers, bath towels</div></div></div></div>
+ <div class="btn primary" style="margin-bottom:6px">Turn on reminders</div><div class="btn text" style="margin-bottom:34px;color:var(--ink2)">Not now</div></div>`);
+
+const homeBody=(dark)=>`<div class="content" style="padding-top:4px">
+ <div style="display:flex;justify-content:space-between;align-items:center"><div><div class="t-cap" style="font-size:14px">Good morning, Sam</div><div class="t-display">Your returns</div></div><div class="iconbtn" style="background:var(--surface);border:1px solid var(--border);position:relative">${I('bell',22)}<span style="position:absolute;top:9px;right:10px;width:9px;height:9px;border-radius:5px;background:var(--warning);border:2px solid var(--surface)"></span></div></div>
+ <div style="display:flex;gap:12px;margin-top:18px">
+  <div style="flex:1;background:${dark?'#134E4A':'#0F766E'};color:#fff;border-radius:16px;padding:14px"><div style="font-size:12.5px;opacity:.85;font-weight:500">Money protected</div><div style="font-size:24px;font-weight:700;margin:4px 0 2px;letter-spacing:-.5px">$612.40</div><div style="font-size:12px;opacity:.85">7 active receipts</div></div>
+  <div class="card" style="flex:1;padding:14px"><div style="font-size:12.5px;color:var(--ink2);font-weight:500">Money saved</div><div style="font-size:24px;font-weight:700;margin:4px 0 2px;letter-spacing:-.5px;color:var(--success)">$184.97</div><div style="font-size:12px;color:var(--ink2)">5 returned this year</div></div></div>
+ <div class="sechd"><div class="t-head">Due soon</div><div class="a">See all</div></div>
+ <div class="card">${rrow('T','Target','Kids sneakers, bath towels · $48.20',pill('2 days','red'))}${rrow('A','Amazon','Wireless headphones · $129.99',pill('5 days','amber'))}${rrow('B','Best Buy','HDMI cable 6 ft · $24.99',pill('6 days','amber'))}</div>
+ <div class="sechd"><div class="t-head">Later</div></div>
+ <div class="card">${rrow('W','Walmart','Air fryer 5.8 qt · $89.00',pill('23 days','gray'))}${rrow('C','Costco','65" TV · $499.99',pill('71 days','gray'))}</div></div>`;
+S.home=phone(homeBody(false)+tabbar('home'));
+S.homeDark=phone(homeBody(true)+tabbar('home'),{dark:true});
+S.homeEmpty=phone(`<div class="content" style="padding-top:4px;display:flex;flex-direction:column"><div class="t-cap" style="font-size:14px">Welcome, Sam</div><div class="t-display">Your returns</div>
+ <div class="banner warn" style="margin-top:16px">${I('bellOff',20,'#B45309')}<div><b>Reminders are off.</b> Turn them on so you don't miss a deadline. <span style="font-weight:700;color:#92400E;text-decoration:underline">Turn on</span></div></div>
+ <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 16px;margin-top:-10px">
+ <div style="width:120px;height:120px;border-radius:60px;background:var(--primarySoft);display:flex;align-items:center;justify-content:center;margin-bottom:22px">${I('receipt',54,'#0F766E',1.8)}</div>
+ <div class="t-title" style="margin-bottom:8px">No receipts yet</div><div class="t-body muted" style="margin-bottom:24px">Scan your first receipt. It takes about 5 seconds.</div>
+ <div class="btn primary">${I('scan',22,'#fff')}Scan a receipt</div><div class="btn text">Enter manually</div></div></div>${tabbar('home')}`);
+
+S.scan=phone(`<div style="flex:1;position:relative;background:#111">
+ <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,#3F3F46 0%,#18181B 70%)"></div>
+ <div style="position:absolute;left:62px;top:96px;width:230px;height:430px;background:#F5F5F4;transform:rotate(-3deg);border-radius:4px;padding:26px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.5)">
+  <div style="font-weight:800;text-align:center;font-size:17px;color:#1C1917;letter-spacing:2px">WALMART</div><div style="font-size:10px;text-align:center;color:#57534E">STORE #1043 · 11/12/2026 2:14 PM</div>
+  ${['AIR FRYER 5.8QT|89.00','SUBTOTAL|89.00','TAX|0.00'].map(r=>{const[a,b]=r.split('|');return `<div style="display:flex;justify-content:space-between;font-family:Menlo,monospace;font-size:11px;color:#292524"><span>${a}</span><span>${b}</span></div>`}).join('')}
+  <div style="border-top:1px dashed #A8A29E;padding-top:8px;display:flex;justify-content:space-between;font-family:Menlo,monospace;font-size:12.5px;font-weight:700;color:#1C1917"><span>TOTAL</span><span>89.00</span></div>
+  <div style="font-family:Menlo,monospace;font-size:9.5px;color:#78716C;margin-top:auto;text-align:center">RETURN WITHIN 90 DAYS WITH RECEIPT</div></div>
+ <div style="position:absolute;left:50px;top:84px;width:256px;height:456px;border:3px solid #2DD4BF;border-radius:10px;background:rgba(45,212,191,.08)"></div>
+ <div style="position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:4px 14px"><div class="iconbtn" style="background:rgba(0,0,0,.45);color:#fff">${I('x',24,'#fff')}</div><div class="iconbtn" style="background:rgba(0,0,0,.45)">${I('flash',22,'#fff')}</div></div>
+ <div style="position:absolute;top:556px;left:0;right:0;text-align:center"><span style="background:rgba(0,0,0,.6);color:#fff;padding:8px 14px;border-radius:18px;font-size:13.5px;font-weight:500">Receipt found · hold still</span></div>
+ <div style="position:absolute;bottom:0;left:0;right:0;height:150px;display:flex;align-items:center;justify-content:space-around;padding-bottom:20px">
+  <div style="color:#fff;font-size:14px;font-weight:600;width:80px;text-align:center">Enter<br>manually</div>
+  <div style="width:78px;height:78px;border-radius:39px;border:4px solid #fff;display:flex;align-items:center;justify-content:center"><div style="width:62px;height:62px;border-radius:31px;background:#fff"></div></div>
+  <div style="width:80px;display:flex;justify-content:center"><div class="iconbtn" style="background:rgba(255,255,255,.15)">${I('image',24,'#fff')}</div></div></div></div>`,{bg:'#111',lightBar:true});
+S.scan=S.scan.replace('class="homeind" style="','class="homeind" style="background:#fff;');
+
+const receiptForm=(scanned,p)=>`<div class="content" style="padding-top:2px">
+ ${scanned?`<div class="card" style="display:flex;gap:12px;align-items:center;padding:10px;margin-bottom:18px"><div style="width:48px;height:62px;background:#F5F5F4;border-radius:6px;border:1px solid var(--border);display:flex;flex-direction:column;gap:4px;padding:8px 6px">${[1,2,3,4].map(()=>'<div style="height:3px;background:#D6D3D1;border-radius:2px"></div>').join('')}</div><div style="flex:1"><div style="font-weight:600;font-size:15px;display:flex;align-items:center;gap:6px">${I('check',18,'#16A34A',2.6)}Receipt scanned</div><div class="t-cap">Check the details below</div></div><span style="color:var(--primary);font-weight:600;font-size:14px">Retake</span></div>`:''}
+ ${field('Store',`${av('W',28).replace('border-radius:12px','border-radius:8px')}Walmart`,{icon:scanned?`<span class="pill teal" style="height:22px;font-size:11.5px">Detected</span>`:I('down',20,'#94A3B8')})}
+ <div style="display:flex;gap:12px"><div style="flex:1">${field('Purchase date',`${I('cal',18,'#94A3B8')}${p==='android'?'Aug 16, 2026':'Nov 12, 2026'}`,{cls:p==='android'?'focus':''})}</div><div style="flex:1">${field('Total','$89.00')}</div></div>
+ ${field('Item (optional)','Air fryer 5.8 qt')}
+ <div style="background:var(--primarySoft);border-radius:14px;padding:14px;display:flex;gap:12px;align-items:center;margin:4px 0 16px">${I('clock',24,'#0F766E')}<div style="flex:1"><div style="font-size:12.5px;color:#115E59;font-weight:500">Return by · 90-day Walmart policy</div><div style="font-size:17px;font-weight:700;color:#134E4A">${p==='android'?'Sat, Nov 14, 2026':'Wed, Feb 10, 2027'}</div></div><span style="color:#0F766E;font-weight:600;font-size:14px">Change</span></div>
+ <div class="card" style="display:flex;align-items:center;padding:14px;gap:12px;margin-bottom:18px">${I('shield',22,'var(--ink2)')}<div style="flex:1;font-size:15px;font-weight:500">Add warranty</div><span class="lock">${I('lock',12,'#115E59',2.4)}PRO</span></div>
+ <div class="btn primary">Save receipt</div></div>`;
+S.review=phone(nav('New receipt',{left:'x'})+receiptForm(true,'ios'));
+
+S.storePicker=phone(`${nav('New receipt',{left:'x'})}<div class="content" style="opacity:.5">${field('Store','',{})}</div>
+ <div class="scrim"></div><div class="sheet" style="height:640px"><div class="grab"></div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="t-title">Choose store</div><span style="color:var(--primary);font-weight:600">Cancel</span></div>
+ <div class="input focus" style="justify-content:flex-start;margin-bottom:10px">${I('search',20,'#94A3B8')}<span>Ta</span></div>
+ <div style="font-size:12px;font-weight:600;color:var(--ink2);letter-spacing:.6px;margin:14px 0 4px">MATCHES</div>
+ <div>${rrow('T','Target','Most items · 90 days',I('right',20,'#94A3B8'))}</div>
+ <div style="font-size:12px;font-weight:600;color:var(--ink2);letter-spacing:.6px;margin:14px 0 4px">POPULAR</div>
+ <div>${rrow('A','Amazon','Most items · 30 days','')}${rrow('B','Best Buy','Most items · 15 days','')}${rrow('C','Costco','Electronics · 90 days','')}${rrow('H','Home Depot','Most items · 90 days','')}</div>
+ <div style="display:flex;align-items:center;gap:12px;padding:14px 14px 0;color:var(--primary);font-weight:600">${I('plus',22)}Add "Ta" as a new store</div></div>`);
+
+const ring=`<svg width="168" height="168" viewBox="0 0 168 168"><circle cx="84" cy="84" r="72" fill="none" stroke="var(--border)" stroke-width="12"/><circle cx="84" cy="84" r="72" fill="none" stroke="var(--danger)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${2*Math.PI*72*0.978} 1000" transform="rotate(-90 84 84)"/></svg>`;
+S.detail=phone(`${nav('Target',{right:I('more',24)})}<div class="content" style="padding-top:0">
+ <div style="display:flex;flex-direction:column;align-items:center;position:relative;margin:2px 0 6px">${ring}<div style="position:absolute;top:44px;text-align:center"><div style="font-size:40px;font-weight:800;color:var(--danger);letter-spacing:-1px;line-height:44px">2</div><div style="font-size:14px;font-weight:600;color:var(--ink2)">days left</div></div></div>
+ <div style="text-align:center;margin-bottom:16px"><div class="t-head">Return by Sat, Nov 14</div><div class="t-cap">Bought Aug 16, 2026 · 90-day policy</div></div>
+ <div class="card" style="margin-bottom:12px"><div class="lrow"><div class="mid"><div class="sub">Kids sneakers</div></div><b style="font-size:15px">$34.99</b></div><div class="lrow"><div class="mid"><div class="sub">Bath towels (2)</div></div><b style="font-size:15px">$13.21</b></div><div class="lrow"><div class="mid"><div class="nm">Total</div></div><b style="font-size:17px">$48.20</b></div></div>
+ <div style="display:flex;gap:12px;margin-bottom:12px"><div class="card" style="flex:1;padding:12px;display:flex;gap:10px;align-items:center">${I('image',22,'var(--ink2)')}<div><div style="font-size:14px;font-weight:600">Photo</div><div class="t-cap" style="font-size:12px">1 receipt</div></div></div><div class="card" style="flex:1;padding:12px;display:flex;gap:10px;align-items:center">${I('bell',22,'var(--ink2)')}<div><div style="font-size:14px;font-weight:600">Reminder</div><div class="t-cap" style="font-size:12px">Nov 13, 9:00 AM</div></div></div></div>
+ <div style="display:flex;gap:12px;margin-top:16px"><div class="btn secondary" style="flex:1">Keep it</div><div class="btn primary" style="flex:1.4">${I('check',20,'#fff',2.6)}I returned it</div></div></div>`);
+
+const S_receiptsBody=`<div class="content" style="padding-top:4px"><div class="t-display" style="margin-bottom:14px">Receipts</div>
+ <div class="input" style="justify-content:flex-start;height:46px;margin-bottom:12px">${I('search',20,'#94A3B8')}<span class="ph2">Search store or item</span></div>
+ <div style="display:flex;gap:8px;overflow:hidden;margin-bottom:6px"><span class="chip on">All <span class="n">12</span></span><span class="chip">Due soon <span class="n">3</span></span><span class="chip">Active <span class="n">7</span></span><span class="chip">Returned <span class="n">5</span></span></div>
+ <div class="sechd" style="margin-top:16px"><div class="t-label" style="letter-spacing:.6px">THIS WEEK</div></div>
+ <div class="card">${rrow('T','Target','Kids sneakers, bath towels · $48.20',pill('2 days','red'))}${rrow('A','Amazon','Wireless headphones · $129.99',pill('5 days','amber'))}${rrow('B','Best Buy','HDMI cable 6 ft · $24.99',pill('6 days','amber'))}</div>
+ <div class="sechd" style="margin-top:16px"><div class="t-label" style="letter-spacing:.6px">RETURNED</div></div>
+ <div class="card">${rrow('K',"Kohl's",'Jeans, 2 pairs · $58.00',pill('Returned','green'))}${rrow('J','J.Crew','Wool sweater · $98.00',pill('Returned','green'))}</div></div>`;
+S.receipts=phone(S_receiptsBody+tabbar('receipt'));
+
+S.limit=phone(`<div class="content" style="padding-top:4px;opacity:.6"><div class="t-display" style="margin-bottom:14px">Receipts</div><div class="card">${rrow('T','Target','$48.20',pill('2 days','red'))}${rrow('A','Amazon','$129.99',pill('5 days','amber'))}${rrow('B','Best Buy','$24.99',pill('6 days','amber'))}</div></div>${tabbar('receipt')}
+ <div class="scrim"></div><div class="sheet"><div class="grab"></div>
+ <div style="text-align:center;padding:8px 6px 0"><div style="width:72px;height:72px;border-radius:36px;background:var(--primarySoft);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">${I('receipt',34,'#0F766E')}</div>
+ <div class="t-title" style="margin-bottom:8px">You've used all 5 free receipts</div><div class="t-body muted" style="margin-bottom:18px">Mark one as returned or kept to free a spot, or go Pro for unlimited receipts.</div>
+ <div style="height:10px;border-radius:5px;background:var(--primarySoft);margin-bottom:6px;overflow:hidden"><div style="width:100%;height:100%;background:var(--primary)"></div></div><div class="t-cap" style="text-align:right;margin-bottom:20px">5 of 5 active</div>
+ <div class="btn primary" style="margin-bottom:4px">See Pro plans</div><div class="btn text" style="color:var(--ink2)">Not now</div></div></div>`);
+
+S.warranties=phone(`<div class="content" style="padding-top:4px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="t-display">Warranties</div><span class="pill teal">${I('spark',14,'#115E59')}&nbsp;Pro</span></div>
+ <div class="t-cap" style="margin:4px 0 14px;font-size:14px">4 products covered</div>
+ <div class="banner warn" style="margin-bottom:14px">${I('clock',20,'#B45309')}<div><b>Dyson vacuum</b> warranty ends in 4 months. Check it works before Mar 20.</div></div>
+ <div class="card">${rrow('T','Dyson vacuum','Target · ends Mar 20, 2027',pill('4 mo','amber'))}${rrow('A','Sony headphones','Amazon · ends Oct 2, 2027',pill('11 mo','gray'))}${rrow('W','Air fryer 5.8 qt','Walmart · ends Nov 12, 2027',pill('1 yr','gray'))}${rrow('C','65" TV','Costco · ends Sep 3, 2028',pill('1 yr 10 mo','gray'))}</div>
+ <div class="btn soft" style="margin-top:16px">${I('plus',20)}Add warranty</div></div>${tabbar('shield')}`);
+
+S.warrantiesLocked=phone(`<div class="content" style="padding-top:4px"><div class="t-display">Warranties</div><div class="t-cap" style="margin:4px 0 14px;font-size:14px">Know when coverage ends</div>
+ <div class="card" style="filter:blur(3px);opacity:.6">${rrow('T','Dyson vacuum','Target · ends Mar 20, 2027',pill('4 mo','amber'))}${rrow('A','Sony headphones','Amazon · ends Oct 2, 2027',pill('11 mo','gray'))}${rrow('W','Air fryer','Walmart · ends Nov 12, 2027',pill('1 yr','gray'))}</div>
+ <div class="card" style="padding:22px;text-align:center;margin-top:-120px;position:relative;box-shadow:0 12px 30px rgba(15,23,42,.12)"><div style="width:60px;height:60px;border-radius:30px;background:var(--primarySoft);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">${I('lock',28,'#0F766E')}</div>
+ <div class="t-title" style="margin-bottom:6px">Track warranties with Pro</div><div class="t-body muted" style="margin-bottom:18px">Save warranty end dates and get reminded before coverage runs out.</div><div class="btn primary">See Pro plans</div></div></div>${tabbar('shield')}`);
+
+const paywall=(p)=>phone(`<div class="content" style="padding:0 22px"><div style="display:flex;justify-content:space-between;align-items:center;margin:0 -8px"><div class="iconbtn">${I('x',24,'var(--ink2)')}</div><span style="color:var(--ink2);font-weight:600;font-size:14px;margin-right:8px">Restore</span></div>
+ <div style="display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:14px">${mark(64)}<div class="t-display" style="margin-top:12px">ReturnSafe Pro</div><div class="t-body muted">One saved return pays for a year.</div></div>
+ <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px">${['Unlimited receipts','Reminders 7, 3 and 1 day before','Warranty tracking','Up to 5 photos per receipt','Export to PDF and CSV'].map(t=>`<div style="display:flex;gap:10px;align-items:center;font-size:15px"><span style="width:22px;height:22px;border-radius:11px;background:var(--primarySoft);display:flex;align-items:center;justify-content:center">${I('check',14,'#0F766E',3)}</span>${t}</div>`).join('')}</div>
+ <div style="border:2px solid var(--primary);border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;position:relative;margin-bottom:10px;background:var(--surface)"><span style="position:absolute;top:-11px;right:14px;background:var(--warning);color:#0F172A;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">SAVE 44%</span><div class="radio on"></div><div style="flex:1"><div style="font-weight:700;font-size:16px">Yearly</div><div class="t-cap">7-day free trial, then $19.99/year</div></div><div style="text-align:right"><div style="font-weight:700">$1.67</div><div class="t-cap" style="font-size:11.5px">per month</div></div></div>
+ <div class="card" style="padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="radio"></div><div style="flex:1"><div style="font-weight:700;font-size:16px">Monthly</div><div class="t-cap">Billed monthly</div></div><div style="font-weight:700">$2.99</div></div>
+ <div class="btn primary" style="margin-bottom:10px">Start 7-day free trial</div>
+ <div style="font-size:10.5px;line-height:14px;color:var(--ink2);text-align:center">Free for 7 days, then $19.99 per year. Renews automatically unless cancelled at least 24 hours before the end of the period. Charged to your ${p==='ios'?'Apple ID':'Google Play account'}. Manage or cancel in ${p==='ios'?'Settings › Apple ID › Subscriptions':'Play Store › Payments & subscriptions'}.<br><span style="color:var(--primary);font-weight:600">Terms of Use</span> · <span style="color:var(--primary);font-weight:600">Privacy Policy</span></div></div>`,{p});
+S.paywall=paywall('ios'); S.paywallAnd=paywall('android');
+
+const srow=(ic,t,right='',col='')=>`<div class="lrow" style="padding:13px 14px">${I(ic,21,col||'var(--ink2)')}<div class="mid" style="font-size:15.5px;font-weight:500;${col?`color:${col}`:''}">${t}</div>${right}${right===''?I('right',18,'#94A3B8'):''}</div>`;
+S.settings=phone(`<div class="content" style="padding-top:4px"><div class="t-display" style="margin-bottom:14px">Settings</div>
+ <div class="card" style="padding:14px;display:flex;gap:12px;align-items:center;margin-bottom:16px"><div class="av" style="background:var(--primary);color:#fff;border-radius:24px;width:48px;height:48px">S</div><div style="flex:1"><div class="nm" style="font-weight:600;font-size:16px">Sam Lee</div><div class="t-cap">sam.lee@gmail.com</div></div><span class="pill gray">Free</span></div>
+ <div style="background:var(--primary);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;color:#fff">${I('spark',24,'#fff')}<div style="flex:1"><div style="font-weight:700">Upgrade to Pro</div><div style="font-size:12.5px;opacity:.9">Unlimited receipts and warranties</div></div>${I('right',20,'#fff')}</div>
+ <div class="card" style="margin-bottom:14px">${srow('bell','Reminders')}${srow('export','Export receipts',`<span class="lock" style="margin-right:6px">${I('lock',11,'#115E59',2.4)}PRO</span>`)}${srow('restore','Restore purchases')}${srow('card','Manage subscription')}</div>
+ <div class="card">${srow('user','Account')}${srow('help','Help and support')}${srow('doc','Privacy and terms')}</div>
+ <div class="t-cap" style="text-align:center;margin-top:12px;font-size:12px">Version 1.0.0 (1)</div></div>${tabbar('gear')}`);
+
+S.reminders=phone(`${nav('Reminders')}<div class="content" style="padding-top:4px">
+ <div class="card" style="margin-bottom:8px"><div class="lrow"><div class="mid"><div class="nm">Return reminders</div><div class="sub">Before a return window closes</div></div><div class="toggle"></div></div><div class="lrow"><div class="mid"><div class="nm">Time of day</div></div><span style="color:var(--primary);font-weight:600">9:00 AM</span></div></div>
+ <div class="t-label" style="margin:18px 4px 8px;letter-spacing:.6px">REMIND ME</div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip">${I('lock',13,'var(--ink2)',2.4)}7 days before</span><span class="chip">${I('lock',13,'var(--ink2)',2.4)}3 days before</span><span class="chip on">${I('check',15,'#fff',3)}1 day before</span></div>
+ <div class="t-cap" style="margin:8px 4px 0">Pro adds reminders 7 and 3 days before.</div>
+ <div class="t-label" style="margin:22px 4px 8px;letter-spacing:.6px">WARRANTIES</div>
+ <div class="card"><div class="lrow"><div class="mid"><div class="nm">Warranty reminders</div><div class="sub">30 days before coverage ends</div></div><span class="lock">${I('lock',11,'#115E59',2.4)}PRO</span></div></div>
+ <div class="t-label" style="margin:22px 4px 8px;letter-spacing:.6px">PHONE SETTINGS</div>
+ <div class="card"><div class="lrow">${I('check',20,'#16A34A',2.6)}<div class="mid"><div class="nm">Notifications allowed</div><div class="sub">Change in your phone's Settings</div></div>${I('right',18,'#94A3B8')}</div></div></div>`);
+
+S.account=phone(`${nav('Account')}<div class="content" style="padding-top:4px">
+ <div class="banner info" style="margin-bottom:16px;flex-direction:column;gap:6px;padding:16px"><div style="display:flex;gap:10px;align-items:center;font-weight:700;font-size:15px">${I('alert',20,'#0F766E')}You're using a guest account</div><div>Save your account so your receipts stay safe if you lose or change your phone.</div></div>
+ <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:26px"><div class="btn apple"><span style="font-size:20px;margin-top:-3px"></span>Sign in with Apple</div><div class="btn google">${G}Continue with Google</div><div class="btn secondary">${I('mail',20)}Continue with email</div></div>
+ <div class="card">${srow('logout','Sign out','')}${srow('trash','Delete account','','var(--danger)')}</div>
+ <div class="t-cap" style="margin:10px 4px">Signing out of a guest account deletes its receipts. Save your account first.</div></div>`);
+
+S.del=phone(`${nav('Delete account')}<div class="content" style="padding-top:6px">
+ <div style="width:64px;height:64px;border-radius:32px;background:var(--dangerSoft);display:flex;align-items:center;justify-content:center;margin-bottom:16px">${I('trash',30,'#DC2626')}</div>
+ <div class="t-title" style="margin-bottom:8px">Delete your account?</div><div class="t-body muted" style="margin-bottom:14px">This permanently deletes:</div>
+ <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;font-size:15px">${['All 12 receipts and their photos','Your reminders and settings','Your login'].map(t=>`<div style="display:flex;gap:10px;align-items:center">${I('x',16,'#DC2626',2.6)}${t}</div>`).join('')}</div>
+ <div class="banner warn" style="margin-bottom:18px">${I('card',20,'#B45309')}<div>Deleting your account <b>does not cancel</b> your Pro subscription. <span style="font-weight:700;text-decoration:underline">Manage subscription</span></div></div>
+ ${field('Type DELETE to confirm','DELET',{cls:'focus'})}
+ <div class="btn disabled" style="margin-top:6px">Delete account permanently</div></div>`);
+
+S.exportSheet=phone(`<div class="content" style="padding-top:4px;opacity:.6"><div class="t-display" style="margin-bottom:14px">Settings</div></div>${tabbar('gear')}
+ <div class="scrim"></div><div class="sheet"><div class="grab"></div><div class="t-title" style="margin-bottom:4px">Export receipts</div><div class="t-cap" style="margin-bottom:18px">For insurance, taxes or your records.</div>
+ <div style="border:2px solid var(--primary);border-radius:14px;padding:14px;display:flex;gap:12px;align-items:center;margin-bottom:10px">${I('doc',24,'#0F766E')}<div style="flex:1"><div style="font-weight:600">PDF report</div><div class="t-cap">With photos, one receipt per page</div></div><div class="radio on"></div></div>
+ <div class="card" style="padding:14px;display:flex;gap:12px;align-items:center;margin-bottom:16px">${I('receipt',24,'var(--ink2)')}<div style="flex:1"><div style="font-weight:600">CSV spreadsheet</div><div class="t-cap">Opens in Excel, Numbers or Sheets</div></div><div class="radio"></div></div>
+ <div class="field"><div class="lbl">Include</div><div class="input">All receipts (12)${I('down',20,'#94A3B8')}</div></div>
+ <div class="btn primary">${I('export',20,'#fff')}Export</div></div>`);
+
+const days=[];for(let i=0;i<6;i++)days.push('');for(let d=1;d<=31;d++)days.push(d);
+S.androidDate=phone(nav('Edit receipt',{left:'arrow'})+receiptForm(false,'android')+`<div class="scrim"></div>
+ <div style="position:absolute;left:24px;right:24px;top:150px;background:#F3F6F6;border-radius:28px;z-index:5;padding:22px 20px 14px;box-shadow:0 10px 30px rgba(0,0,0,.3)">
+ <div style="font-size:13px;color:#475569;margin-bottom:22px">Select date</div><div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #CBD5E1;padding-bottom:14px;margin-bottom:12px"><div style="font-size:30px;color:#0F172A">Sun, Aug 16</div>${I('cal',22,'#475569')}</div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;font-weight:600;color:#334155"><span>August 2026 ▾</span><span style="display:flex;gap:18px">${I('left',20)}${I('right',20)}</span></div>
+ <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:13px;row-gap:4px">${['S','M','T','W','T','F','S'].map(d=>`<div style="color:#64748B;height:34px;line-height:34px">${d}</div>`).join('')}${days.map(d=>`<div style="height:38px;display:flex;align-items:center;justify-content:center"><span style="width:36px;height:36px;line-height:36px;border-radius:18px;${d===16?'background:#0F766E;color:#fff;font-weight:600':d===12?'':''}">${d}</span></div>`).join('')}</div>
+ <div style="display:flex;justify-content:flex-end;gap:28px;margin-top:10px;font-weight:600;color:#0F766E;font-size:14px;padding:8px 6px"><span>Cancel</span><span>OK</span></div></div>`,{p:'android'});
+
+S.offline=phone(`<div class="content" style="padding-top:4px"><div class="t-display" style="margin-bottom:12px">Receipts</div>
+ <div class="banner off" style="margin-bottom:14px">${I('wifiOff',20,'#F1F5F9')}<div>You're offline. Changes are saved and will sync when you're back online.</div></div>
+ <div class="card" style="margin-bottom:16px">${rrow('W','Walmart','Air fryer 5.8 qt · $89.00',`<span class="pill gray">${I('sync',13,'#475569',2.4)}&nbsp;Waiting to sync</span>`)}</div>
+ <div class="t-label" style="margin:0 4px 10px;letter-spacing:.6px">LOADING STATE</div>
+ <div class="card">${[1,2,3].map(()=>`<div class="lrow"><div class="skel" style="width:42px;height:42px;border-radius:12px"></div><div class="mid"><div class="skel" style="height:13px;width:45%;margin-bottom:8px"></div><div class="skel" style="height:11px;width:75%"></div></div><div class="skel" style="width:54px;height:24px;border-radius:12px"></div></div>`).join('')}</div>
+ <div class="t-label" style="margin:16px 4px 10px;letter-spacing:.6px">ERROR STATE</div>
+ <div class="card" style="padding:18px;text-align:center"><div style="font-weight:600;margin-bottom:4px">Couldn't load receipts</div><div class="t-cap" style="margin-bottom:12px">Check your connection and try again.</div><div class="btn secondary" style="height:42px;width:120px;margin:0 auto;font-size:14px">Retry</div></div></div>${tabbar('receipt')}`);
+
+S.lock=phone(`<div style="flex:1;position:relative;background:linear-gradient(160deg,#134E4A 0%,#0F172A 70%);color:#fff;display:flex;flex-direction:column;align-items:center">
+ <div style="margin-top:30px;font-size:19px;font-weight:600;opacity:.9">Saturday, November 7</div><div style="font-size:92px;font-weight:700;letter-spacing:-3px;line-height:100px">9:00</div>
+ <div style="margin-top:auto;margin-bottom:300px;width:345px;background:rgba(255,255,255,.88);color:#0F172A;border-radius:22px;padding:14px;display:flex;gap:12px;backdrop-filter:blur(10px)">${mark(40)}<div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13px"><b>ReturnSafe</b><span style="color:#64748B">now</span></div><div style="font-size:15px;font-weight:600;margin-top:2px">Target return closes in 7 days</div><div style="font-size:14px;color:#334155;line-height:19px">$48.20 · Kids sneakers, bath towels. Tap to see your receipt.</div></div></div></div>`,{bg:'#134E4A',lightBar:true});
+
+// ---------- design-system page ----------
+const swatches=[['primary','#0F766E','Buttons, brand'],['primaryPressed','#115E59','Pressed'],['primarySoft','#CCFBF1','Tints, chips'],['warning','#F59E0B','Due in 3–7 days'],['danger','#DC2626','Due in 0–2 days'],['success','#16A34A','Returned, saved'],['ink','#0F172A','Main text'],['inkSecondary','#475569','Secondary text'],['border','#E2E8F0','Dividers'],['background','#F8FAFC','Screen']];
+const dsPage=`<div class="ph"><div><div class="sec">Brand</div><h2>Logo, colours and type</h2></div><div class="pn">2</div></div>
+<div style="display:flex;gap:24px">
+ <div class="panel" style="width:520px"><h3>Logo</h3><img src="../brand/logo-lockup.svg" style="width:460px;display:block;margin-bottom:22px">
+  <div style="display:flex;gap:18px;align-items:flex-end;margin-bottom:20px">${[120,76,48,29].map(s=>`<div style="text-align:center"><img src="../brand/logo-mark.svg" width="${s}"><div style="font-size:11px;color:#64748B;margin-top:4px">${s}px</div></div>`).join('')}<div style="background:#0B1220;padding:14px;border-radius:14px"><img src="../brand/logo-mark.svg" width="76"></div></div>
+  <div style="display:flex;gap:18px;align-items:center">${[['iOS','border-radius:22%'],['Android circle','border-radius:50%'],['Android squircle','border-radius:32%']].map(([l,r])=>`<div style="text-align:center"><div style="width:84px;height:84px;${r};overflow:hidden;background:#0F766E"><img src="../brand/android-adaptive-foreground.svg" width="84" style="transform:scale(1.25)"></div><div style="font-size:11px;color:#64748B;margin-top:6px">${l}</div></div>`).join('')}<div style="text-align:center"><div style="width:84px;height:84px;border-radius:50%;background:#E2E8F0;display:flex;align-items:center;justify-content:center"><img src="../brand/android-monochrome.svg" width="84" style="opacity:.75"></div><div style="font-size:11px;color:#64748B;margin-top:6px">Themed (mono)</div></div></div>
+  <p style="font-size:12.5px;color:#475569;margin-top:18px;line-height:1.5">Receipt = what you keep. U-turn arrow = taking it back. Amber dot = the reminder. The Android foreground keeps the mark inside the 66% safe zone so no launcher mask clips it.</p></div>
+ <div style="flex:1;display:flex;flex-direction:column;gap:24px">
+  <div class="panel"><h3>Colours</h3><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">${swatches.map(([n,h,u])=>`<div class="sw" style="width:auto"><div class="c" style="background:${h}"></div><b>${n}</b><span>${h} · ${u}</span></div>`).join('')}</div></div>
+  <div class="panel"><h3>Type · Inter</h3><div style="display:flex;flex-direction:column;gap:10px">
+   <div style="display:flex;align-items:baseline;gap:20px"><span style="width:150px;font-size:12px;color:#64748B">Display 28/34 Bold</span><span class="t-display">Your returns</span></div>
+   <div style="display:flex;align-items:baseline;gap:20px"><span style="width:150px;font-size:12px;color:#64748B">Title 22/28 Semibold</span><span class="t-title">No receipts yet</span></div>
+   <div style="display:flex;align-items:baseline;gap:20px"><span style="width:150px;font-size:12px;color:#64748B">Headline 17/22 Semibold</span><span class="t-head">Due soon</span></div>
+   <div style="display:flex;align-items:baseline;gap:20px"><span style="width:150px;font-size:12px;color:#64748B">Body 16/22 Regular</span><span class="t-body">Take a photo and we read the store, date and total.</span></div>
+   <div style="display:flex;align-items:baseline;gap:20px"><span style="width:150px;font-size:12px;color:#64748B">Caption 13/18</span><span class="t-cap">Bought Aug 16, 2026 · 90-day policy</span></div></div></div></div></div>`;
+
+const compPage=`<div class="ph"><div><div class="sec">Design system</div><h2>Components and states</h2></div><div class="pn">3</div></div>
+<div style="display:flex;gap:24px">
+ <div class="panel" style="width:400px"><h3>Buttons · 52 tall, radius 14</h3><div style="display:flex;flex-direction:column;gap:12px">
+  <div class="btn primary">Primary</div><div class="btn secondary">Secondary</div><div class="btn soft">${I('plus',20)}Soft</div><div class="btn danger">Destructive</div><div class="btn disabled">Disabled</div><div class="btn apple"><span style="font-size:20px;margin-top:-3px"></span>Sign in with Apple</div><div class="btn google">${G}Continue with Google</div><div class="btn text">Text button</div></div></div>
+ <div class="panel" style="width:400px"><h3>Inputs · 52 tall, radius 12</h3>
+  ${field('Default','Email',{ph:true})}${field('Focused','sam.lee@gmail.com',{cls:'focus'})}${field('Error','•••••',{cls:'error',err:'Email or password is incorrect'})}${field('With helper','$89.00',{help:'Amount on the receipt, with tax'})}
+  <h3 style="margin-top:18px">Toggles and choices</h3><div style="display:flex;gap:16px;align-items:center"><div class="toggle"></div><div class="toggle offt"></div><div class="radio on"></div><div class="radio"></div><span class="lock">${I('lock',11,'#115E59',2.4)}PRO</span></div></div>
+ <div style="flex:1;display:flex;flex-direction:column;gap:24px">
+  <div class="panel"><h3>Deadline pills</h3><div style="display:flex;gap:10px;flex-wrap:wrap">${pill('2 days','red')}${pill('5 days','amber')}${pill('23 days','gray')}${pill('Returned','green')}${pill('Kept','teal')}${pill('Expired','gray')}</div>
+   <p style="font-size:12.5px;color:#475569;margin-top:12px;line-height:1.5">Red: 0–2 days left. Amber: 3–7 days. Grey: 8+ days or expired. Colour is never the only signal: the number of days is always written.</p>
+   <h3 style="margin-top:18px">Filter chips</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip on">All <span class="n">12</span></span><span class="chip">Due soon <span class="n">3</span></span><span class="chip">Returned <span class="n">5</span></span></div></div>
+  <div class="panel"><h3>List row and banners</h3><div class="card" style="margin-bottom:12px">${rrow('T','Target','Kids sneakers, bath towels · $48.20',pill('2 days','red'))}</div>
+   <div class="banner warn" style="margin-bottom:10px">${I('bellOff',20,'#B45309')}<div><b>Reminders are off.</b> Turn them on.</div></div><div class="banner info" style="margin-bottom:10px">${I('alert',20,'#0F766E')}<div>You're using a guest account.</div></div><div class="banner off">${I('wifiOff',20,'#F1F5F9')}<div>You're offline. Changes will sync later.</div></div></div>
+  <div class="panel" style="padding:20px 26px"><h3>Spacing</h3><p style="font-size:13px;color:#475569;line-height:1.55">4-point grid · screen padding 20 · card radius 16 · gap between cards 12 · tap targets at least 48×48 (meets Apple 44 pt and Android 48 dp) · text scales with the system up to 1.4×.</p></div></div></div>`;
+
+// ---------- navigation map ----------
+const box=(x,y,w,t,s,acc)=>`<g><rect x="${x}" y="${y}" width="${w}" height="${s?62:44}" rx="10" fill="${acc?'#CCFBF1':'#fff'}" stroke="${acc?'#0F766E':'#94A3B8'}" stroke-width="${acc?2:1.3}"/><text x="${x+w/2}" y="${y+(s?26:28)}" text-anchor="middle" font-size="15" font-weight="600" fill="#0F172A">${t}</text>${s?`<text x="${x+w/2}" y="${y+46}" text-anchor="middle" font-size="12" fill="#475569">${s}</text>`:''}</g>`;
+const ar=(d)=>`<path d="${d}" fill="none" stroke="#64748B" stroke-width="1.6" marker-end="url(#ah)"/>`;
+const lbl=(x,y,t)=>`<text x="${x}" y="${y}" font-size="12" fill="#475569" text-anchor="middle">${t}</text>`;
+const navPage=`<div class="ph"><div><div class="sec">Structure</div><h2>Navigation map</h2></div><div class="pn">4</div></div>
+<div class="panel" style="padding:20px"><svg viewBox="0 0 1240 800" width="1248" height="805">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#64748B"/></marker></defs>
+<rect x="10" y="10" width="300" height="770" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-dasharray="6 5"/><text x="30" y="40" font-size="13" font-weight="700" fill="#475569" letter-spacing="1">AUTH STACK</text>
+<rect x="350" y="10" width="880" height="770" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-dasharray="6 5"/><text x="370" y="40" font-size="13" font-weight="700" fill="#475569" letter-spacing="1">MAIN · 5 BOTTOM TABS</text>
+${box(60,60,200,'S01 Splash','checks login state')}
+${box(60,170,200,'S02 Onboarding','3 cards, first launch')}
+${box(60,280,200,'S03 Welcome','Apple · Google · Email · Guest',true)}
+${box(30,400,120,'S04 Sign up')}${box(170,400,120,'S05 Log in')}
+${box(170,490,120,'S06 Forgot')}
+${box(60,590,200,'S07 Notification primer','then Home')}
+${ar('M160 122V170')}${ar('M160 232V280')}${ar('M120 342V400')}${ar('M200 342V400')}${ar('M230 444V490')}
+${ar('M90 444V590')}${ar('M290 422 H302 V612 H262')}
+<path d="M262 280 C 330 280, 330 240, 262 230" fill="none"/>
+${lbl(206,155,'first launch')}
+${ar('M60 300 H40 V700 H160 V652')}${lbl(40,720,'guest')}
+${ar('M262 632 H380 V101 H400')}
+${box(400,70,150,'S08 Home','Tab',true)}${box(570,70,150,'S13 Receipts','Tab',true)}${box(740,70,150,'S09 Scan','Tab · modal',true)}${box(910,70,150,'S14 Warranties','Tab',true)}${box(1070,70,140,'S16 Settings','Tab',true)}
+${box(400,250,150,'S12 Receipt detail','push')}${ar('M475 132V250')}${ar('M645 132 V200 H520 V250')}
+${box(400,370,150,'S21 Edit receipt','modal')}${ar('M475 312V370')}
+${box(740,250,150,'S10 Review receipt','scan or manual')}${ar('M815 132V250')}
+${box(740,370,150,'S11 Store picker','sheet')}${ar('M815 312V370')}
+${box(600,500,180,'S15 Paywall','modal, from many places')}
+${ar('M845 312 V320 H900 V470 H760 V500')}${lbl(940,420,'6th receipt')}
+${ar('M985 132V470 H740 V500')}${lbl(1030,300,'locked (Free)')}
+${box(1092,250,128,'S17 Reminders','push')}${box(1092,340,128,'S18 Account','push')}${box(1092,430,128,'S20 Export','sheet · Pro')}${box(1092,520,128,'S19 Delete','from S18')}
+<path d="M1140 132 V146 H1078 V461" fill="none" stroke="#64748B" stroke-width="1.6"/>${ar('M1078 281H1090')}${ar('M1078 371H1090')}${ar('M1078 461H1090')}${ar('M1156 402 V412 H1226 V551 H1222')}
+${box(400,640,300,'Push notification tap','opens S12 for that receipt')}${ar('M550 640 V600 H580 V281 H552')}
+<text x="740" y="680" font-size="13" fill="#475569">Back: iOS edge swipe · Android system back.</text><text x="740" y="702" font-size="13" fill="#475569">Android back on Home leaves the app.</text><text x="740" y="724" font-size="13" fill="#475569">Sign out returns to S03 and clears the stack.</text>
+</svg></div>`;
+
+// ---------- cover ----------
+const cover=`<div style="position:absolute;inset:0;background:#0F766E;color:#fff;padding:90px 100px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:22px">${mark(96).replace('border-radius','box-shadow:0 0 0 3px rgba(255,255,255,.25);border-radius')}<div style="font-size:44px;font-weight:800;letter-spacing:-1px">ReturnSafe</div></div>
+<div style="font-size:64px;font-weight:800;letter-spacing:-2px;line-height:1.05;margin-top:120px">App design<br>for iOS and Android</div>
+<div style="font-size:22px;opacity:.85;margin-top:24px;max-width:760px;line-height:1.45">Every screen of version 1.0, the brand, the component system and the navigation map. React Native (Expo) and Firebase, US launch.</div>
+<div style="margin-top:auto;display:flex;gap:60px;font-size:15px;opacity:.9">
+<div><b style="display:block;font-size:13px;opacity:.7;letter-spacing:1px;margin-bottom:6px">CONTENTS</b>1 · Cover &nbsp; 2 · Brand &nbsp; 3 · Components &nbsp; 4 · Navigation &nbsp; 5–15 · Screens</div>
+<div><b style="display:block;font-size:13px;opacity:.7;letter-spacing:1px;margin-bottom:6px">VERSION</b>1.0 · November 12, 2026</div>
+<div><b style="display:block;font-size:13px;opacity:.7;letter-spacing:1px;margin-bottom:6px">FRAMES</b>iPhone 375×812 · Android 375×812</div></div></div>`;
+
+// ---------- screen pages ----------
+const screenPages=[
+ ['Getting started','Splash and onboarding',[[S.splash,'S01','Splash','Logo on teal while the saved login loads. Android 12+ shows the same icon and colour.'],[S.onb1,'S02','Onboarding · 1 of 3','Shown on first launch only. Skip is always visible. Swipe or Next moves between cards.'],[S.onb3,'S02','Onboarding · 3 of 3','"Get started" opens Welcome. Card 2 ("We remember the deadline") uses the same layout with the reminder illustration.']]],
+ ['Login and signup','Welcome on each platform',[[S.welcomeIOS,'S03','Welcome','Apple first (App Store rule 4.8). Guest uses Firebase anonymous login and can be saved later.','iOS'],[S.welcomeAnd,'S03','Welcome','No Apple button on Android. Google first, then email and guest. Same spacing and type as iOS.','Android'],[S.onb2,'S02','Onboarding · 2 of 3','Shown for completeness: the middle onboarding card.']]],
+ ['Login and signup','Email flows',[[S.signup,'S04','Sign up','Name optional. Password rule shown before the user makes a mistake. Show/hide eye on the password.'],[S.login,'S05','Log in · error state','One generic error for a wrong email or password, so the app never reveals which emails are registered.'],[S.forgot,'S06','Forgot password · sent','Neutral confirmation for any email. Resend unlocks after 60 seconds.']]],
+ ['Core','Permissions and Home',[[S.primer,'S07','Notification primer','Explains the value first, then triggers the system prompt (iOS, Android 13+). "Not now" never blocks the app.'],[S.home,'S08','Home','Money protected and saved up top. Due soon sorted by days left. Raised Scan button in the centre of the tab bar.'],[S.homeEmpty,'S08','Home · empty, reminders off','First-run state with a single clear action. Amber banner appears whenever notifications are disabled.']]],
+ ['Core','Adding a receipt',[[S.scan,'S09','Scan','VisionKit (iOS) and ML Kit (Android) find the receipt edges and capture automatically. "Enter manually" is always one tap away.'],[S.review,'S10','Review receipt','Fields pre-filled from the scan. Deadline computed from the store policy and shown in plain words. Same form is used for manual entry.'],[S.storePicker,'S11','Store picker','Searchable list of built-in US stores with their return window, or add a custom store and window.']]],
+ ['Core','Receipt detail and list',[[S.detail,'S12','Receipt detail','Countdown ring turns red in the last 2 days. Primary action: "I returned it" (adds to money saved). "Keep it" stops reminders.'],[S.receipts,'S13','Receipts','Search by store or item. Filter chips with counts. Grouped by urgency, returned items lower down.'],[S.limit,'S13','Free limit reached','Shown when a Free user tries to add a 6th active receipt. Offers a way to stay free, not only the upgrade.']]],
+ ['Pro','Warranties and paywall',[[S.warranties,'S14','Warranties · Pro','Sorted by end date. An amber banner warns 4 months before coverage ends.'],[S.warrantiesLocked,'S14','Warranties · Free','Blurred preview with a clear upgrade card.'],[S.paywall,'S15','Paywall','Yearly selected by default with the trial. Price, period, renewal and cancel text, Restore, Terms and Privacy are all visible, as both stores require.','iOS']]],
+ ['Settings','Settings and account',[[S.settings,'S16','Settings','Account card, upgrade banner for Free users, then grouped rows.'],[S.reminders,'S17','Reminder settings','Time of day for all reminders. Pro-only options show a lock and open the paywall.'],[S.account,'S18','Account · guest','Guests are pushed to save an account before anything is lost. Delete account is always reachable here.']]],
+ ['Settings','Delete, export and platform details',[[S.del,'S19','Delete account','Lists exactly what is deleted, warns that the subscription must be cancelled separately, and requires typing DELETE.'],[S.exportSheet,'S20','Export · Pro','PDF with photos or CSV, shared through the system share sheet.'],[S.androidDate,'S21','Edit receipt · date picker','Android uses the Material date dialog; iOS uses an inline calendar in a sheet. The form itself is identical.','Android']]],
+ ['States','Dark mode, offline and notifications',[[S.homeDark,'S08','Home · dark mode','Every screen has a dark version from the same tokens. Brand teal lightens to #2DD4BF for contrast.'],[S.offline,'—','Offline, loading and error','Offline edits are kept and synced later. Skeleton rows while loading. Every error has a Retry.'],[S.lock,'—','Reminder notification','Store, days left, amount and items. Tapping opens that receipt (S12) even from a closed app.']]],
+ ['Android','The same screens on Android',[[phone(homeBody(false)+tabbar('home'),{p:'android'}),'S08','Home','Identical layout. Edge-to-edge drawing with insets for the status and gesture bars.','Android'],[phone(S_receiptsBody+tabbar('receipt'),{p:'android'}),'S13','Receipts','Same list and chips. System back from a pushed screen returns here; back on a tab root leaves the app.','Android'],[S.paywallAnd,'S15','Paywall','Same layout; the legal text names Google Play and its subscription settings.','Android']]],
+];
+
+let html=`<section class="page" style="padding:0">${cover}</section><section class="page">${dsPage}</section><section class="page">${compPage}</section><section class="page">${navPage}</section>`;
+screenPages.forEach(([sec,title,cells],i)=>{
+ html+=`<section class="page"><div class="ph"><div><div class="sec">${sec}</div><h2>${title}</h2></div><div class="pn">${i+5}</div></div><div class="row3">${cells.map(([ph,id,t,txt,tag])=>`<div class="cell">${ph}${cap(id,t,txt,tag||'')}</div>`).join('')}</div></section>`;
+});
+document.getElementById('root').innerHTML=html;
+const m=location.hash.match(/^#p(\d+)$/);
+if(m){document.querySelectorAll('.page').forEach((p,i)=>{if(i!==+m[1]-1)p.style.display='none'});}
+</script>
+</body>
+</html>
