@@ -1,3 +1,4 @@
+/* global output, maestro, http */
 // Reads users/{uid} from the Firestore emulator. maestro.copiedText is "uid:<uid>" from the Account screen.
 const uid = maestro.copiedText.replace('uid:', '').trim();
 output.uid = uid;

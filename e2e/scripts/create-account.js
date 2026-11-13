@@ -1,3 +1,4 @@
+/* global output, http, PREFIX */
 // Creates an email/password account in the auth emulator: output.email (password Test1234).
 output.email = `${PREFIX}-${Date.now()}@example.com`;
 const res = http.post(
