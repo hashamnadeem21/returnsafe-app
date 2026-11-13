@@ -33,7 +33,7 @@ export function SignUpForm({ submitLabel, busy, error, errorAction, onSubmit, on
       <Controller
         control={control}
         name="name"
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <TextField
             label="Name (optional)"
             value={field.value ?? ''}
@@ -46,6 +46,7 @@ export function SignUpForm({ submitLabel, busy, error, errorAction, onSubmit, on
             textContentType="name"
             autoCapitalize="words"
             returnKeyType="next"
+            error={fieldState.error?.message}
             testID="signup-name"
           />
         )}

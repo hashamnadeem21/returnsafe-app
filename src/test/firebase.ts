@@ -5,6 +5,7 @@ const fake = require('./fakeFirebase') as {
     currentUser: { uid: string; isAnonymous: boolean; email: string | null } | null;
     accounts: Map<string, { password: string; user: unknown }>;
     callables: { name: string; data: unknown }[];
+    failing: Set<string>;
   };
   reset: () => void;
   fakeAuth: { signInAnonymously: () => Promise<unknown> };

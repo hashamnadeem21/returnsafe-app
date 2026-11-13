@@ -9,6 +9,8 @@ const state = {
   listeners: new Set(),
   nextUid: 1,
   callables: [],
+  /** Callable names that throw a network error, to test retries. */
+  failing: new Set(),
 };
 
 function makeUser(fields) {
@@ -82,7 +84,14 @@ const fakeAuth = {
     state.accounts.set(cred.email, { password: cred.password, user });
     return { user };
   }),
-  signInWithCredential: jest.fn(async () => ({ user: state.currentUser })),
+  signInWithCredential: jest.fn(async (_a, cred) => {
+    const acct = cred.email ? state.accounts.get(cred.email) : undefined;
+    if (acct) {
+      if (acct.password !== cred.password) throw authError('auth/invalid-credential');
+      setCurrent(acct.user);
+    }
+    return { user: state.currentUser };
+  }),
   reauthenticateWithCredential: jest.fn(async () => undefined),
   fetchSignInMethodsForEmail: jest.fn(async (_a, email) =>
     state.accounts.has(email) ? ['password'] : [],
@@ -108,6 +117,8 @@ const fakeFunctions = {
   httpsCallable: (_f, name) =>
     jest.fn(async (data) => {
       state.callables.push({ name, data });
+      if (state.failing.has(name))
+        throw Object.assign(new Error('offline'), { code: 'unavailable' });
       if (name === 'deleteAccount') {
         state.accounts.forEach((v, k) => v.user === state.currentUser && state.accounts.delete(k));
       }
@@ -120,6 +131,7 @@ function reset() {
   state.accounts.clear();
   state.listeners.clear();
   state.callables = [];
+  state.failing.clear();
   state.nextUid = 1;
 }
 

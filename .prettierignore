@@ -3,3 +3,4 @@ ios/
 android/
 coverage/
 package-lock.json
+functions/lib

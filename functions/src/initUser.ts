@@ -17,7 +17,7 @@ export const initUser = onCall<InitUserData>(async (req) => {
 
   const record = await adminAuth.getUser(uid);
   const email = record.email ?? null;
-  const displayName = cleanName(req.data?.displayName) ?? record.displayName ?? null;
+  const displayName = cleanName(req.data?.displayName) ?? cleanName(record.displayName) ?? null;
   const ref = db.doc(`users/${uid}`);
 
   return db.runTransaction(async (tx) => {

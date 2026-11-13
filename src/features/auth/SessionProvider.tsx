@@ -2,6 +2,7 @@ import { onAuthStateChanged, onIdTokenChanged, signOut } from '@react-native-fir
 import { useEffect, type ReactNode } from 'react';
 
 import { auth, configureFirebase } from '@/lib/firebase';
+import { finishPendingSignIn } from '@/features/auth/authService';
 import { takeFreshInstall } from '@/lib/install';
 import { useSession } from '@/stores/session';
 
@@ -17,8 +18,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       // A login left in the iOS Keychain by a deleted install must not sign the new install in.
       if (await takeFreshInstall()) await signOut(auth()).catch(() => undefined);
       if (!alive) return;
+      let restored = false;
       unsubs = [
-        onAuthStateChanged(auth(), (user) => setUser(user)),
+        onAuthStateChanged(auth(), (user) => {
+          setUser(user);
+          // A session restored at launch never went through a sign-in call, so retry the user doc
+          // and any guest merge that failed then (both are idempotent).
+          if (!restored && user) void finishPendingSignIn().catch(() => undefined);
+          restored = true;
+        }),
         // Also refresh on token changes (email verified, profile/provider linked).
         onIdTokenChanged(auth(), (user) => setUser(user)),
       ];

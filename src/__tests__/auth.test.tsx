@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
 
+import { PENDING_MERGE_KEY } from '@/features/auth/authService';
 import { mapAuthError, resetSentMessage } from '@/features/auth/errors';
 import { logInSchema, passwordSchema, signUpSchema } from '@/features/auth/schemas';
 import { INSTALL_KEY } from '@/lib/install';
@@ -162,6 +163,83 @@ describe('auth screens', () => {
     expect(await screen.findByTestId('account-email')).toHaveTextContent('saved@example.com');
     expect(fakeState.currentUser?.uid).toBe(guestUid);
     expect(fakeState.currentUser?.isAnonymous).toBe(false);
+    // The verify-email note appears without leaving and reopening Account.
+    expect(screen.getByTestId('account-verify-banner')).toBeTruthy();
+  });
+
+  it('guest who signs in to an existing account leaves Save account', async () => {
+    fakeState.accounts.set('taken@example.com', {
+      password: 'Test1234',
+      user: { uid: 'existing', email: 'taken@example.com', isAnonymous: false, providerData: [] },
+    });
+    await signInAnonymously();
+    await start('/settings/account');
+    await fireEvent.press(await screen.findByTestId('account-save-email'));
+    await type('signup-email', 'taken@example.com');
+    await type('signup-password', 'Test1234');
+    await waitFor(() => expect(screen.getByTestId('signup-submit')).toBeEnabled());
+    await fireEvent.press(screen.getByTestId('signup-submit'));
+    await fireEvent.press(await screen.findByTestId('credential-in-use-sign-in'));
+    expect(await screen.findByTestId('screen-settings-account')).toBeTruthy();
+    expect(screen.queryByTestId('signup-submit')).toBeNull();
+    expect(fakeState.currentUser?.uid).toBe('existing');
+    expect(fakeState.callables.map((c) => c.name)).toContain('mergeGuestAccount');
+    expect(await AsyncStorage.getItem(PENDING_MERGE_KEY)).toBeNull();
+  });
+
+  it('leaves Save account even when the user doc and merge fail, keeping the merge pending', async () => {
+    fakeState.accounts.set('taken@example.com', {
+      password: 'Test1234',
+      user: { uid: 'existing', email: 'taken@example.com', isAnonymous: false, providerData: [] },
+    });
+    fakeState.failing.add('initUser');
+    fakeState.failing.add('mergeGuestAccount');
+    await signInAnonymously();
+    await start('/settings/account');
+    await fireEvent.press(await screen.findByTestId('account-save-email'));
+    await type('signup-email', 'taken@example.com');
+    await type('signup-password', 'Test1234');
+    await waitFor(() => expect(screen.getByTestId('signup-submit')).toBeEnabled());
+    await fireEvent.press(screen.getByTestId('signup-submit'));
+    await fireEvent.press(await screen.findByTestId('credential-in-use-sign-in'));
+    expect(await screen.findByTestId('screen-settings-account')).toBeTruthy();
+    expect(screen.queryByTestId('signup-submit')).toBeNull();
+    expect(fakeState.currentUser?.uid).toBe('existing');
+    expect(await AsyncStorage.getItem(PENDING_MERGE_KEY)).toBe('token');
+  });
+
+  it('a session restored at launch finishes a pending guest merge', async () => {
+    await signInAnonymously();
+    fakeState.currentUser!.isAnonymous = false;
+    await AsyncStorage.setItem(PENDING_MERGE_KEY, 'guest-token');
+    await start('/');
+    expect(await screen.findByTestId('screen-home')).toBeTruthy();
+    await waitFor(() =>
+      expect(fakeState.callables).toContainEqual({
+        name: 'mergeGuestAccount',
+        data: { guestIdToken: 'guest-token' },
+      }),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(await AsyncStorage.getItem(PENDING_MERGE_KEY)).toBeNull();
+  });
+
+  it('a session restored at launch retries the user doc', async () => {
+    await signInAnonymously();
+    await start('/');
+    expect(await screen.findByTestId('screen-home')).toBeTruthy();
+    await waitFor(() => expect(fakeState.callables.map((c) => c.name)).toContain('initUser'));
+  });
+
+  it('shows why a name over 60 characters is rejected', async () => {
+    await start('/sign-up');
+    await type('signup-name', 'N'.repeat(61));
+    await type('signup-email', 'new@example.com');
+    await type('signup-password', 'Test1234');
+    expect(await screen.findByTestId('signup-submit')).toBeDisabled();
+    expect(screen.getByText('Keep your name under 60 characters')).toBeTruthy();
   });
 
   it('TC-210 (unit): after sign-out, Home cannot be reached', async () => {

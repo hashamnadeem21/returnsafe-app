@@ -18,7 +18,7 @@ iOS and Android app that scans receipts and reminds you before store return wind
 
 Requirements: Node 22, Xcode 26.4 or newer (Expo SDK 58 minimum), Android Studio with an API 36 emulator, JDK 17 (JDK 21+ for the Firebase emulators), CocoaPods.
 
-1. `npm install`
+1. `npm install`, then `npm ci --prefix functions` for the Cloud Functions package (the emulators build it)
 2. Put the Firebase config files in `firebase/dev/` (see [firebase/README.md](firebase/README.md)).
 3. CocoaPods needs a UTF-8 shell: `export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`
 4. `npm run prebuild`, then `npm run ios` or `npm run android`
