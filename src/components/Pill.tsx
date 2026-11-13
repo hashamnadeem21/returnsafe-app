@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { fonts, useTheme, type Palette } from '@/theme';
 
 import { AppText } from './AppText';
+import { Icon, type IconName } from './Icon';
 
 export type PillTone = 'red' | 'amber' | 'gray' | 'green' | 'teal';
 
@@ -32,9 +33,9 @@ function toneColors(tone: PillTone, c: Palette, scheme: 'light' | 'dark') {
   }
 }
 
-type Props = { label: string; tone: PillTone; testID?: string };
+type Props = { label: string; tone: PillTone; icon?: IconName; testID?: string };
 
-export function Pill({ label, tone, testID }: Props) {
+export function Pill({ label, tone, icon, testID }: Props) {
   const { colors, radii, sizes, scheme } = useTheme();
   const t = toneColors(tone, colors, scheme);
   return (
@@ -53,6 +54,7 @@ export function Pill({ label, tone, testID }: Props) {
         },
       ]}
     >
+      {icon ? <Icon name={icon} size={13} color={t.fg} /> : null}
       <AppText variant="caption" style={[styles.text, { color: t.fg }]}>
         {label}
       </AppText>
@@ -63,6 +65,8 @@ export function Pill({ label, tone, testID }: Props) {
 const styles = StyleSheet.create({
   pill: {
     paddingHorizontal: 10,
+    flexDirection: 'row',
+    gap: 4,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-start',

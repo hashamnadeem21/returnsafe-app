@@ -1,0 +1,19 @@
+# TC-307: add Target, today, $48.20 by hand -> on Home with "90 days".
+appId: com.returnsafe.app
+name: TC-307 Add a receipt manually
+---
+- runFlow: subflows/guest-home.yaml
+- assertVisible:
+    id: home-empty
+- runFlow:
+    file: subflows/add-target.yaml
+    env:
+      AMOUNT: '48.20'
+- extendedWaitUntil:
+    visible:
+      id: home-later
+    timeout: 15000
+- assertVisible: '.*Target.*'
+- assertVisible: '.*\$48\.20.*'
+- assertVisible: '.*90 days.*'
+- takeScreenshot: tc307-home

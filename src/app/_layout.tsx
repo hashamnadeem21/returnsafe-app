@@ -12,8 +12,10 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { SnackbarHost } from '@/components';
 import { SessionProvider } from '@/features/auth/SessionProvider';
 import { OnboardingProvider, useOnboarding } from '@/features/onboarding/OnboardingProvider';
+import { ReceiptsProvider } from '@/features/receipts/ReceiptsProvider';
 import { useSession } from '@/stores/session';
 import { ThemeProvider, useTheme } from '@/theme';
 
@@ -52,15 +54,16 @@ function RootStack() {
           <Stack.Screen name="notification-primer" options={{ gestureEnabled: false }} />
           <Stack.Screen name="scanner" options={{ presentation: 'fullScreenModal' }} />
           <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="receipt/new" />
+          <Stack.Screen name="receipt/new" options={{ presentation: 'modal' }} />
           <Stack.Screen name="receipt/[id]/index" />
-          <Stack.Screen name="receipt/[id]/edit" />
+          <Stack.Screen name="receipt/[id]/edit" options={{ presentation: 'modal' }} />
           <Stack.Screen name="settings/reminders" />
           <Stack.Screen name="settings/account" />
           <Stack.Screen name="settings/save-account" />
           <Stack.Screen name="settings/delete-account" />
         </Stack.Protected>
       </Stack>
+      <SnackbarHost />
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </>
   );
@@ -75,7 +78,9 @@ export default function RootLayout() {
       <ThemeProvider>
         <OnboardingProvider>
           <SessionProvider>
-            <RootStack />
+            <ReceiptsProvider>
+              <RootStack />
+            </ReceiptsProvider>
           </SessionProvider>
         </OnboardingProvider>
       </ThemeProvider>

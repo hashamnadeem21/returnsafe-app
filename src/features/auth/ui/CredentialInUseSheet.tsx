@@ -25,7 +25,7 @@ export function CredentialInUseSheet({ visible, canSignIn, busy, onSignIn, onClo
       <View style={{ gap: spacing.md }}>
         <AppText variant="body" tone="ink2">
           {canSignIn
-            ? 'Sign in to that account instead? You will leave this guest account.'
+            ? 'Sign in to that account instead? Receipts from this guest account move to it.'
             : 'Log in to that account from the Welcome screen, or use a different email to save this one.'}
         </AppText>
         {canSignIn ? (

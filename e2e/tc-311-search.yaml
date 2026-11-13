@@ -1,0 +1,34 @@
+# TC-311: search "tar" -> only Target receipts.
+appId: com.returnsafe.app
+name: TC-311 Search receipts
+---
+- runFlow: subflows/guest-home.yaml
+- runFlow: subflows/copy-uid.yaml
+- runScript:
+    file: scripts/seed-receipts.js
+    env:
+      COUNT: '1'
+      STORE: 'Walmart'
+      STORE_ID: 'walmart'
+- runScript:
+    file: scripts/seed-receipts.js
+    env:
+      COUNT: '2'
+      STORE: 'Target'
+      STORE_ID: 'target'
+- tapOn:
+    id: tab-receipts
+- extendedWaitUntil:
+    visible: '.*Walmart.*'
+    timeout: 10000
+- assertVisible:
+    id: filter-all
+    text: '.*3.*'
+- tapOn:
+    id: receipts-search
+- inputText: 'tar'
+- assertNotVisible: '.*Walmart.*'
+- assertVisible:
+    text: '.*Target.*'
+    index: 1
+- takeScreenshot: tc311-search

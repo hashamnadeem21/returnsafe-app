@@ -1,0 +1,464 @@
+[
+  {
+    "id": "walmart",
+    "name": "Walmart",
+    "aliases": ["Walmart Supercenter", "Wal-Mart", "Walmart Neighborhood Market"],
+    "returnDays": 90,
+    "notes": "Most items. Some electronics 30 days.",
+    "policyUrl": "https://www.walmart.com/help/article/walmart-standard-return-policy/adc0dfb692954e67a4de206fb8d9e03a",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "target",
+    "name": "Target",
+    "aliases": ["SuperTarget", "Target Store"],
+    "returnDays": 90,
+    "notes": "Most items. Target Circle Card holders get 120 days.",
+    "policyUrl": "https://help.target.com/help/subcategoryarticle?childcat=Returns&parentcat=Returns+%26+Exchanges",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "amazon",
+    "name": "Amazon",
+    "aliases": ["Amazon.com", "AMZN", "Amazon Mktp", "Amazon Marketplace"],
+    "returnDays": 30,
+    "notes": "Most items, counted from delivery.",
+    "policyUrl": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GKM69DUUYKQWKWX7",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "costco",
+    "name": "Costco",
+    "aliases": ["Costco Wholesale"],
+    "returnDays": 90,
+    "notes": "Electronics and major appliances. Most other items have no time limit.",
+    "policyUrl": "https://help.costco.com/s/article/bd-What-is-Costcos-return-policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "home-depot",
+    "name": "Home Depot",
+    "aliases": ["The Home Depot", "HomeDepot"],
+    "returnDays": 90,
+    "notes": "Most items. Some categories 7 days; major appliances 48 hours.",
+    "policyUrl": "https://www.homedepot.com/c/Return_Policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "lowes",
+    "name": "Lowe's",
+    "aliases": ["Lowes", "Lowe's Home Improvement"],
+    "returnDays": 90,
+    "notes": "Most items. Electronics and some categories 30 days; major appliances 48 hours.",
+    "policyUrl": "https://www.lowes.com/l/help/returns-policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "best-buy",
+    "name": "Best Buy",
+    "aliases": ["BestBuy", "Best Buy Co"],
+    "returnDays": 15,
+    "notes": "Most items. Phones and cellular tablets 14 days; paid members 60 days.",
+    "policyUrl": "https://www.bestbuy.com/site/help-topics/return-exchange-policy/pcmcat260800050014.c?id=pcmcat260800050014",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "kohls",
+    "name": "Kohl's",
+    "aliases": ["Kohls"],
+    "returnDays": 90,
+    "notes": "Most items. Paid with a Kohl's Card: 120 days. Premium electronics 30 days.",
+    "policyUrl": "https://cs.kohls.com/app/answers/detail/a_id/893/~/returns",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "macys",
+    "name": "Macy's",
+    "aliases": ["Macys"],
+    "returnDays": 30,
+    "notes": "Most items. Tech accessories 14 days.",
+    "policyUrl": "https://www.macys.com/customer-service/articles/what-is-macys-return-policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "nordstrom",
+    "name": "Nordstrom",
+    "aliases": ["Nordstrom Rack"],
+    "returnDays": 365,
+    "notes": "No formal time limit; ReturnSafe uses 1 year.",
+    "policyUrl": "https://www.nordstrom.com/browse/customer-service/return-policy",
+    "verifiedAt": "2026-11-13",
+    "needsReview": true,
+    "reviewReason": "No fixed return window, so the 365 days is a ReturnSafe default"
+  },
+  {
+    "id": "tj-maxx",
+    "name": "T.J. Maxx",
+    "aliases": ["TJ Maxx", "TJMaxx", "TJX"],
+    "returnDays": 30,
+    "notes": "In-store purchases. Online orders 40 days.",
+    "policyUrl": "https://tjmaxx.tjx.com/store/jump/topic/find-help/return-policy-for-items-purchased-in-stores/18400006p",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "marshalls",
+    "name": "Marshalls",
+    "aliases": [],
+    "returnDays": 30,
+    "notes": "In-store purchases. Online orders 40 days.",
+    "policyUrl": "https://www.marshalls.com/us/store/jump/topic/Easy-Returns/Return-Policy-For-Items-Purchased-In-Stores/18400007p",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "homegoods",
+    "name": "HomeGoods",
+    "aliases": ["Home Goods"],
+    "returnDays": 30,
+    "notes": "Most items.",
+    "policyUrl": "https://www.homegoods.com/returns",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "ross",
+    "name": "Ross",
+    "aliases": ["Ross Dress for Less", "Ross Stores"],
+    "returnDays": 30,
+    "notes": "With the original receipt.",
+    "policyUrl": "https://www.rossstores.com/contact-us/",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "burlington",
+    "name": "Burlington",
+    "aliases": ["Burlington Coat Factory"],
+    "returnDays": 30,
+    "notes": "Most items. Loyalty members 45 days at select stores.",
+    "policyUrl": "https://www.burlington.com/helpcenter/return-policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "old-navy",
+    "name": "Old Navy",
+    "aliases": ["OldNavy", "Old Navy Outlet"],
+    "returnDays": 30,
+    "notes": "Most items.",
+    "policyUrl": "https://www.gap.com/customer-service/return-policy-faq?cid=1192370",
+    "verifiedAt": "2026-11-13",
+    "needsReview": true,
+    "reviewReason": "Only an Old Navy store page states the 30 days; the policy FAQ found is Gap Inc.'s shared page"
+  },
+  {
+    "id": "gap",
+    "name": "Gap",
+    "aliases": ["Gap Inc", "GapKids", "Gap Factory"],
+    "returnDays": 30,
+    "notes": "Most items. Encore members 45 or 60 days.",
+    "policyUrl": "https://www.gap.com/customer-service/return-policy-faq?cid=1192370",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "banana-republic",
+    "name": "Banana Republic",
+    "aliases": ["Banana Republic Factory"],
+    "returnDays": 30,
+    "notes": "Most items. Encore members 45 or 60 days.",
+    "policyUrl": "https://bananarepublic.gap.com/customerService/info.do?cid=80735",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "jcpenney",
+    "name": "JCPenney",
+    "aliases": ["JC Penney", "JCP", "Penneys"],
+    "returnDays": 60,
+    "notes": "Most items. Electronics and furniture 30 days.",
+    "policyUrl": "https://www.jcpenney.com/m/customer-service/returns",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "dicks",
+    "name": "Dick's Sporting Goods",
+    "aliases": ["Dicks", "Dick's", "DSG"],
+    "returnDays": 90,
+    "notes": "Most items. Warehouse stores 30 days.",
+    "policyUrl": "https://www.dickssportinggoods.com/s/return-policy",
+    "verifiedAt": "2026-11-13",
+    "needsReview": true,
+    "reviewReason": "Official pages disagree: 90 days on the main policy page, 60 days on the mobile page"
+  },
+  {
+    "id": "academy",
+    "name": "Academy Sports + Outdoors",
+    "aliases": ["Academy", "Academy Sports"],
+    "returnDays": 60,
+    "notes": "Most unused items.",
+    "policyUrl": "https://www.academy.com/return-policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "rei",
+    "name": "REI",
+    "aliases": ["REI Co-op", "Recreational Equipment"],
+    "returnDays": 90,
+    "notes": "Non-members. Co-op members get 1 year.",
+    "policyUrl": "https://www.rei.com/membership",
+    "verifiedAt": "2026-11-13",
+    "needsReview": true,
+    "reviewReason": "The 1-year member window is on rei.com; the 90-day non-member window appears only in an REI blog post"
+  },
+  {
+    "id": "nike",
+    "name": "Nike",
+    "aliases": ["Nike Store", "Nike Factory", "Nike Well Collective"],
+    "returnDays": 60,
+    "notes": "Most items.",
+    "policyUrl": "https://www.nike.com/help/a/returns-policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "adidas",
+    "name": "adidas",
+    "aliases": ["Adidas Store", "Adidas Outlet"],
+    "returnDays": 30,
+    "notes": "Most items.",
+    "policyUrl": "https://www.adidas.com/us/help-topics-returning.html",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "foot-locker",
+    "name": "Foot Locker",
+    "aliases": ["Footlocker", "Champs Sports", "Kids Foot Locker"],
+    "returnDays": 45,
+    "notes": "Most items.",
+    "policyUrl": "https://help.footlocker.com/hc/en-us/articles/360034123454-What-s-the-policy-for-returns",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "ulta",
+    "name": "Ulta Beauty",
+    "aliases": ["Ulta"],
+    "returnDays": 60,
+    "notes": "Most items.",
+    "policyUrl": "https://www.ulta.com/returns",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "sephora",
+    "name": "Sephora",
+    "aliases": [],
+    "returnDays": 30,
+    "notes": "Purchases made on or after April 24, 2025.",
+    "policyUrl": "https://www.sephora.com/beauty/returns-exchanges/",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "bath-body-works",
+    "name": "Bath & Body Works",
+    "aliases": ["Bath and Body Works", "BBW", "White Barn"],
+    "returnDays": 90,
+    "notes": "Refund within 90 days; merchandise credit after.",
+    "policyUrl": "https://customercare.bathandbodyworks.com/hc/en-us/articles/4410658681875-Store-Purchase-Return-Policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "cvs",
+    "name": "CVS",
+    "aliases": ["CVS Pharmacy", "CVS/pharmacy"],
+    "returnDays": 60,
+    "notes": "Most new, unopened items.",
+    "policyUrl": "https://www.cvs.com/retail/help/return_policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "walgreens",
+    "name": "Walgreens",
+    "aliases": ["Walgreen", "Walgreens Pharmacy"],
+    "returnDays": 30,
+    "notes": "Most items, with a receipt.",
+    "policyUrl": "https://www.walgreens.com/topic/help/shophelp/returns_help_main.jsp",
+    "verifiedAt": "2026-11-13",
+    "needsReview": true,
+    "reviewReason": "The official help page that states 30 days is several years old"
+  },
+  {
+    "id": "ikea",
+    "name": "IKEA",
+    "aliases": ["Ikea"],
+    "returnDays": 180,
+    "notes": "Opened items. Unopened items 365 days.",
+    "policyUrl": "https://www.ikea.com/us/en/customer-service/returns-claims/return-policy/",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "apple",
+    "name": "Apple",
+    "aliases": ["Apple Store", "Apple.com"],
+    "returnDays": 14,
+    "notes": "Most items.",
+    "policyUrl": "https://www.apple.com/shop/help/returns_refund",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "staples",
+    "name": "Staples",
+    "aliases": [],
+    "returnDays": 14,
+    "notes": "Technology and furniture. Office supplies any time; software 30 days.",
+    "policyUrl": "https://www.staples.com/sbd/cre/help-center/returns-policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "office-depot",
+    "name": "Office Depot",
+    "aliases": ["OfficeMax", "Office Depot OfficeMax"],
+    "returnDays": 14,
+    "notes": "Technology, electronics and furniture. Office supplies 90 days; ink 30 days.",
+    "policyUrl": "https://www.officedepot.com/l/help/returns",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "wayfair",
+    "name": "Wayfair",
+    "aliases": [],
+    "returnDays": 30,
+    "notes": "Most items, counted from delivery.",
+    "policyUrl": "https://www.wayfair.com/help/answer/20/what-is-your-return-policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "sams-club",
+    "name": "Sam's Club",
+    "aliases": ["Sams Club", "Sam's"],
+    "returnDays": 90,
+    "notes": "Electronics and major appliances. Phones and tablets 14 days; most other items no time limit.",
+    "policyUrl": "https://help.samsclub.com/app/answers/detail/a_id/4072/~/returns---sams-club",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "bjs",
+    "name": "BJ's Wholesale Club",
+    "aliases": ["BJs", "BJ's"],
+    "returnDays": 365,
+    "notes": "Most items. Electronics and groceries 90 days; some home items 30 days.",
+    "policyUrl": "https://www.bjs.com/info/returns/",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "petco",
+    "name": "Petco",
+    "aliases": ["Unleashed by Petco"],
+    "returnDays": 60,
+    "notes": "Refund within 30 days; merchandise credit from 31 to 60 days.",
+    "policyUrl": "https://www.petco.com/returns",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "petsmart",
+    "name": "PetSmart",
+    "aliases": ["Pet Smart"],
+    "returnDays": 60,
+    "notes": "Most items.",
+    "policyUrl": "https://www.petsmart.com/help/returns-and-refunds-H0008a.html",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "michaels",
+    "name": "Michaels",
+    "aliases": ["Michaels Stores", "Michaels Arts and Crafts"],
+    "returnDays": 60,
+    "notes": "Most items.",
+    "policyUrl": "https://www.michaels.com/return-policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "hobby-lobby",
+    "name": "Hobby Lobby",
+    "aliases": ["HobbyLobby"],
+    "returnDays": 90,
+    "notes": "Most items, with a receipt.",
+    "policyUrl": "https://www.hobbylobby.com/customer-service/faq/returns/returns---in-store-purchases",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "gamestop",
+    "name": "GameStop",
+    "aliases": ["Game Stop"],
+    "returnDays": 15,
+    "notes": "New items. Pre-owned 7 days; Pro members 30 days.",
+    "policyUrl": "https://www.gamestop.com/fullreturnpolicy/",
+    "verifiedAt": "2026-11-13",
+    "needsReview": true,
+    "reviewReason": "The policy page says 15 days but product pages say 30 days"
+  },
+  {
+    "id": "barnes-noble",
+    "name": "Barnes & Noble",
+    "aliases": ["Barnes and Noble", "B&N"],
+    "returnDays": 30,
+    "notes": "Most items. NOOK devices 14 days.",
+    "policyUrl": "https://help.barnesandnoble.com/hc/en-us/articles/5324602017691-Refund-and-Return-Policies",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "williams-sonoma",
+    "name": "Williams Sonoma",
+    "aliases": ["Williams-Sonoma"],
+    "returnDays": 30,
+    "notes": "Most items.",
+    "policyUrl": "https://www.williams-sonoma.com/returnpolicy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "pottery-barn",
+    "name": "Pottery Barn",
+    "aliases": ["Pottery Barn Kids", "PBteen"],
+    "returnDays": 30,
+    "notes": "Most items, counted from delivery.",
+    "policyUrl": "https://www.potterybarn.com/customer-service/returns/",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "crate-barrel",
+    "name": "Crate & Barrel",
+    "aliases": ["Crate and Barrel", "CB2"],
+    "returnDays": 30,
+    "notes": "Most items, counted from receipt.",
+    "policyUrl": "https://www.crateandbarrel.com/Customer-Service/FAQ-Returns-Exchanges",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "autozone",
+    "name": "AutoZone",
+    "aliases": ["Auto Zone"],
+    "returnDays": 90,
+    "notes": "Unused items in original packaging.",
+    "policyUrl": "https://www.autozone.com/lp/termsAndConditions",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "harbor-freight",
+    "name": "Harbor Freight",
+    "aliases": ["Harbor Freight Tools"],
+    "returnDays": 90,
+    "notes": "Most items. Open-box items 5 days.",
+    "policyUrl": "https://www.harborfreight.com/customer-support/returns/policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "tractor-supply",
+    "name": "Tractor Supply",
+    "aliases": ["Tractor Supply Co", "TSC"],
+    "returnDays": 30,
+    "notes": "Most items.",
+    "policyUrl": "https://www.tractorsupply.com/tsc/cms/policies-information/customer-solutions/tsc-return-policy",
+    "verifiedAt": "2026-11-13"
+  },
+  {
+    "id": "lululemon",
+    "name": "lululemon",
+    "aliases": ["Lululemon Athletica"],
+    "returnDays": 30,
+    "notes": "Most items, unwashed and unworn.",
+    "policyUrl": "https://shop.lululemon.com/help/returns-and-refunds/policy",
+    "verifiedAt": "2026-11-13"
+  }
+]

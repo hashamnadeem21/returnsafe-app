@@ -1,0 +1,14 @@
+# From Home with one Target receipt: open it, Edit, and open the purchase date picker.
+appId: com.returnsafe.app
+---
+- tapOn: '.*Target.*'
+- tapOn:
+    id: receipt-more
+- tapOn:
+    id: receipt-edit
+- extendedWaitUntil:
+    visible:
+      id: screen-receipt-edit
+    timeout: 10000
+- tapOn:
+    id: receipt-date

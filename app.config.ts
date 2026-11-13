@@ -70,6 +70,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     '@react-native-firebase/app',
     '@react-native-firebase/auth',
     '@react-native-firebase/app-check',
+    '@react-native-community/datetimepicker',
     ...(IOS_GOOGLE_URL_SCHEME
       ? [
           [
