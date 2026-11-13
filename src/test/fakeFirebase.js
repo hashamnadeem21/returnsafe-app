@@ -9,6 +9,8 @@ const state = {
   listeners: new Set(),
   nextUid: 1,
   callables: [],
+  /** Callable names that throw a network error, to test retries. */
+  failing: new Set(),
 };
 
 function makeUser(fields) {
@@ -115,6 +117,8 @@ const fakeFunctions = {
   httpsCallable: (_f, name) =>
     jest.fn(async (data) => {
       state.callables.push({ name, data });
+      if (state.failing.has(name))
+        throw Object.assign(new Error('offline'), { code: 'unavailable' });
       if (name === 'deleteAccount') {
         state.accounts.forEach((v, k) => v.user === state.currentUser && state.accounts.delete(k));
       }
@@ -127,6 +131,7 @@ function reset() {
   state.accounts.clear();
   state.listeners.clear();
   state.callables = [];
+  state.failing.clear();
   state.nextUid = 1;
 }
 

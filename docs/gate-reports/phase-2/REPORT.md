@@ -59,7 +59,7 @@
 | TC-212 | Manual | — | — | Needs airplane mode on a real device (see below) |
 
 **Totals:**
-- Unit: 6 suites, 91 tests, 7 snapshots.
+- Unit: 6 suites, 93 tests, 7 snapshots.
 - Rules and functions: 2 files, 17 tests, run against the Auth, Firestore, Storage and Functions emulators (`npm run test:functions`).
 - Maestro: 9/9 flows on the iPhone 17 Pro Max simulator and 9/9 on the Medium Phone API 36.1 emulator. Release builds were built with `EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1`. The JUnit results are in this folder.
 
@@ -106,7 +106,7 @@ These came from CodeRabbit on PR #4 and were fixed in a follow-up PR, each with 
 - `deleteAccount` decides "guest" from the auth record, not the ID token. A guest token issued before the guest saved their account no longer skips the recent-login check.
 - `initUser` trims a name taken from the auth profile to 80 characters, as it does for a name sent by the app.
 - Account shows the verify-email note as soon as a guest saves with email.
-- After "Sign in to that account" from Save account, the app returns to Account, so the guest form can't create a second account.
+- After "Sign in to that account" from Save account, the app returns to Account, so the guest form can't create a second account. This holds even if creating the user doc or the guest merge fails afterwards: the guest token is saved and the merge is retried at the next launch, so the sign-in never runs twice.
 - A session restored at launch calls `initUser` again, so a user doc that failed to save at sign-in is created.
 - The "login already has an account" sheet no longer promises to move guest receipts. That move comes in Phase 3.
 - Sign up shows "Keep your name under 60 characters" instead of only disabling the button.

@@ -112,7 +112,7 @@ async function linkOrSignIn(credential: AuthCredential) {
   try {
     return await linkWithCredential(guest, credential);
   } catch (e) {
-    const code = codeOf(e);
+    const code = codeOf(e).replace(/^functions\//, '');
     if (code === 'auth/credential-already-in-use' || code === 'auth/email-already-in-use') {
       throw new CredentialInUseError(
         code === 'auth/credential-already-in-use' ? credential : null,
@@ -215,24 +215,52 @@ async function withProvider(method: 'google' | 'apple', get: () => Promise<Provi
 export const signInWithGoogle = () => withProvider('google', getGoogleCredential);
 export const signInWithApple = () => withProvider('apple', getAppleCredential);
 
+/** Guest token waiting to be merged into the signed-in account, kept until the merge succeeds. */
+export const PENDING_MERGE_KEY = 'rs.pendingMerge.v1';
+
+async function mergeGuest(guestIdToken: string): Promise<void> {
+  const merge = httpsCallable<{ guestIdToken: string }, { moved: number }>(
+    functions(),
+    'mergeGuestAccount',
+  );
+  await merge({ guestIdToken });
+}
+
+/**
+ * Finishes work left over from an earlier sign-in: creates the user doc and retries a pending guest
+ * merge. Safe to call repeatedly; failures stay pending for the next launch.
+ */
+export async function finishPendingSignIn(): Promise<void> {
+  await ensureUserDoc().catch(() => undefined);
+  const pending = await AsyncStorage.getItem(PENDING_MERGE_KEY).catch(() => null);
+  if (!pending) return;
+  try {
+    await mergeGuest(pending);
+    await AsyncStorage.removeItem(PENDING_MERGE_KEY);
+  } catch (e) {
+    // An expired or rejected guest token can never succeed; anything else is retried later.
+    const code = codeOf(e).replace(/^functions\//, '');
+    if (code === 'invalid-argument' || code === 'permission-denied') {
+      await AsyncStorage.removeItem(PENDING_MERGE_KEY).catch(() => undefined);
+    }
+  }
+}
+
 /**
  * Guest chose to sign in to the existing account that owns the login.
  * Captures the guest's ID token first so the server can move guest data (Phase 3 implements the move).
+ * Once the sign-in succeeds the action counts as done: the user doc and merge are finished here when
+ * possible, and otherwise retried at the next launch, so the UI never repeats the sign-in.
  */
 export async function signInToExistingAndMerge(credential: AuthCredential): Promise<void> {
   await wrap(async () => {
     const guest = currentGuest();
     const guestIdToken = guest ? await guest.getIdToken() : undefined;
     await signInWithCredential(auth(), credential);
-    await ensureUserDoc();
-    if (guestIdToken) {
-      const merge = httpsCallable<{ guestIdToken: string }, { moved: number }>(
-        functions(),
-        'mergeGuestAccount',
-      );
-      await merge({ guestIdToken });
-    }
+    if (guestIdToken) await AsyncStorage.setItem(PENDING_MERGE_KEY, guestIdToken);
+    syncSession();
   });
+  await finishPendingSignIn();
 }
 
 /** Clears app caches so nothing from this account survives sign-out (onboarding and install flags are kept). */

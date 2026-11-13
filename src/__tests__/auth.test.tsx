@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
 
+import { PENDING_MERGE_KEY } from '@/features/auth/authService';
 import { mapAuthError, resetSentMessage } from '@/features/auth/errors';
 import { logInSchema, passwordSchema, signUpSchema } from '@/features/auth/schemas';
 import { INSTALL_KEY } from '@/lib/install';
@@ -182,6 +183,47 @@ describe('auth screens', () => {
     expect(await screen.findByTestId('screen-settings-account')).toBeTruthy();
     expect(screen.queryByTestId('signup-submit')).toBeNull();
     expect(fakeState.currentUser?.uid).toBe('existing');
+    expect(fakeState.callables.map((c) => c.name)).toContain('mergeGuestAccount');
+    expect(await AsyncStorage.getItem(PENDING_MERGE_KEY)).toBeNull();
+  });
+
+  it('leaves Save account even when the user doc and merge fail, keeping the merge pending', async () => {
+    fakeState.accounts.set('taken@example.com', {
+      password: 'Test1234',
+      user: { uid: 'existing', email: 'taken@example.com', isAnonymous: false, providerData: [] },
+    });
+    fakeState.failing.add('initUser');
+    fakeState.failing.add('mergeGuestAccount');
+    await signInAnonymously();
+    await start('/settings/account');
+    await fireEvent.press(await screen.findByTestId('account-save-email'));
+    await type('signup-email', 'taken@example.com');
+    await type('signup-password', 'Test1234');
+    await waitFor(() => expect(screen.getByTestId('signup-submit')).toBeEnabled());
+    await fireEvent.press(screen.getByTestId('signup-submit'));
+    await fireEvent.press(await screen.findByTestId('credential-in-use-sign-in'));
+    expect(await screen.findByTestId('screen-settings-account')).toBeTruthy();
+    expect(screen.queryByTestId('signup-submit')).toBeNull();
+    expect(fakeState.currentUser?.uid).toBe('existing');
+    expect(await AsyncStorage.getItem(PENDING_MERGE_KEY)).toBe('token');
+  });
+
+  it('a session restored at launch finishes a pending guest merge', async () => {
+    await signInAnonymously();
+    fakeState.currentUser!.isAnonymous = false;
+    await AsyncStorage.setItem(PENDING_MERGE_KEY, 'guest-token');
+    await start('/');
+    expect(await screen.findByTestId('screen-home')).toBeTruthy();
+    await waitFor(() =>
+      expect(fakeState.callables).toContainEqual({
+        name: 'mergeGuestAccount',
+        data: { guestIdToken: 'guest-token' },
+      }),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(await AsyncStorage.getItem(PENDING_MERGE_KEY)).toBeNull();
   });
 
   it('a session restored at launch retries the user doc', async () => {

@@ -2,7 +2,7 @@ import { onAuthStateChanged, onIdTokenChanged, signOut } from '@react-native-fir
 import { useEffect, type ReactNode } from 'react';
 
 import { auth, configureFirebase } from '@/lib/firebase';
-import { ensureUserDoc } from '@/features/auth/authService';
+import { finishPendingSignIn } from '@/features/auth/authService';
 import { takeFreshInstall } from '@/lib/install';
 import { useSession } from '@/stores/session';
 
@@ -23,8 +23,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         onAuthStateChanged(auth(), (user) => {
           setUser(user);
           // A session restored at launch never went through a sign-in call, so retry the user doc
-          // in case it failed then (initUser is idempotent).
-          if (!restored && user) void ensureUserDoc().catch(() => undefined);
+          // and any guest merge that failed then (both are idempotent).
+          if (!restored && user) void finishPendingSignIn().catch(() => undefined);
           restored = true;
         }),
         // Also refresh on token changes (email verified, profile/provider linked).
