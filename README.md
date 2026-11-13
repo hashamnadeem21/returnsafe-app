@@ -24,6 +24,22 @@ Requirements: Node 22, Xcode 26.4 or newer (Expo SDK 58 minimum), Android Studio
 4. `npm run prebuild`, then `npm run ios` or `npm run android`
 5. `npm run check` runs lint, type check, formatting and tests.
 
+## End-to-end tests
+
+Flows live in `e2e/` and run with [Maestro](https://maestro.mobile.dev) against a Release build (JS bundled, no Metro):
+
+```bash
+npx expo run:ios --configuration Release
+npm run e2e:ios
+```
+
+```bash
+npx expo run:android --variant release
+npm run e2e:android
+```
+
+Unit tests, lint, the hex-colour check, type check and formatting all run with `npm run check`.
+
 ## Build status
 
 | Phase | Scope                        | Gate                                                   |

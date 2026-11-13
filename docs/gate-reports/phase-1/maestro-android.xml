@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="Test Suite" device="Medium_Phone_API_36.1" tests="2" failures="0" time="82.576" timestamp="2026-11-13T15:30:07">
+    <testcase id="TC-101 Onboarding shows once" name="TC-101 Onboarding shows once" classname="TC-101 Onboarding shows once" file="e2e/tc-101-onboarding.yaml" time="43.017" timestamp="2026-11-13T15:30:07" status="SUCCESS"/>
+    <testcase id="TC-102 Tabs and Scan modal" name="TC-102 Tabs and Scan modal" classname="TC-102 Tabs and Scan modal" file="e2e/tc-102-tabs.yaml" time="39.546" timestamp="2026-11-13T15:30:50" status="SUCCESS"/>
+  </testsuite>
+</testsuites>
