@@ -26,14 +26,14 @@ Requirements: Node 22, Xcode 26.4 or newer (Expo SDK 58 minimum), Android Studio
 
 ## Build status
 
-| Phase | Scope                        | Gate        |
-| ----- | ---------------------------- | ----------- |
-| 0     | Foundation                   | Not started |
-| 1     | Design system and navigation | Not started |
-| 2     | Login and signup             | Not started |
-| 3     | Receipts core                | Not started |
-| 4     | Scanning and photos          | Not started |
-| 5     | Reminders                    | Not started |
-| 6     | Subscriptions and Pro        | Not started |
-| 7     | Polish and release prep      | Not started |
-| 8     | Launch                       | Not started |
+| Phase | Scope                        | Gate                                                   |
+| ----- | ---------------------------- | ------------------------------------------------------ |
+| 0     | Foundation                   | Passed ([report](docs/gate-reports/phase-0/REPORT.md)) |
+| 1     | Design system and navigation | Not started                                            |
+| 2     | Login and signup             | Not started                                            |
+| 3     | Receipts core                | Not started                                            |
+| 4     | Scanning and photos          | Not started                                            |
+| 5     | Reminders                    | Not started                                            |
+| 6     | Subscriptions and Pro        | Not started                                            |
+| 7     | Polish and release prep      | Not started                                            |
+| 8     | Launch                       | Not started                                            |
