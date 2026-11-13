@@ -1,0 +1,9 @@
+# From Welcome: Continue with email, then "Log in".
+appId: com.returnsafe.app
+---
+- tapOn:
+    id: welcome-email
+- tapOn:
+    id: signup-to-login
+- assertVisible:
+    id: screen-log-in-title

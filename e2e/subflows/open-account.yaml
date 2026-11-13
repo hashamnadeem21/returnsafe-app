@@ -1,0 +1,11 @@
+# From any tab: Settings, then Account.
+appId: com.returnsafe.app
+---
+- tapOn:
+    id: tab-settings
+- tapOn:
+    id: settings-account
+- extendedWaitUntil:
+    visible:
+      id: account-uid
+    timeout: 10000

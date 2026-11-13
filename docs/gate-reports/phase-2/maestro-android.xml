@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="Test Suite" device="Medium_Phone_API_36.1" tests="9" failures="0" time="260.17" timestamp="2026-11-13T19:45:43">
+    <testcase id="TC-201 Sign up" name="TC-201 Sign up" classname="TC-201 Sign up" file="e2e/tc-201-sign-up.yaml" time="32.792" timestamp="2026-11-13T19:45:43" status="SUCCESS"/>
+    <testcase id="TC-210 Sign out cannot go back" name="TC-210 Sign out cannot go back" classname="TC-210 Sign out cannot go back" file="e2e/tc-210-sign-out.yaml" time="36.425" timestamp="2026-11-13T19:46:16" status="SUCCESS"/>
+    <testcase id="TC-101 Onboarding shows once" name="TC-101 Onboarding shows once" classname="TC-101 Onboarding shows once" file="e2e/tc-101-onboarding.yaml" time="12.445" timestamp="2026-11-13T19:46:52" status="SUCCESS"/>
+    <testcase id="TC-203 Email already exists" name="TC-203 Email already exists" classname="TC-203 Email already exists" file="e2e/tc-203-email-exists.yaml" time="27.115" timestamp="2026-11-13T19:47:05" status="SUCCESS"/>
+    <testcase id="TC-205 Forgot password is neutral" name="TC-205 Forgot password is neutral" classname="TC-205 Forgot password is neutral" file="e2e/tc-205-forgot-password.yaml" time="43.195" timestamp="2026-11-13T19:47:32" status="SUCCESS"/>
+    <testcase id="TC-209 Guest saves account" name="TC-209 Guest saves account" classname="TC-209 Guest saves account" file="e2e/tc-209-guest-save.yaml" time="31.924" timestamp="2026-11-13T19:48:15" status="SUCCESS"/>
+    <testcase id="TC-208 Welcome sign-in buttons" name="TC-208 Welcome sign-in buttons" classname="TC-208 Welcome sign-in buttons" file="e2e/tc-208-welcome-buttons.yaml" time="6.223" timestamp="2026-11-13T19:48:47" status="SUCCESS"/>
+    <testcase id="TC-102 Tabs and Scan modal" name="TC-102 Tabs and Scan modal" classname="TC-102 Tabs and Scan modal" file="e2e/tc-102-tabs.yaml" time="21.01" timestamp="2026-11-13T19:48:53" status="SUCCESS"/>
+    <testcase id="TC-204 Wrong password" name="TC-204 Wrong password" classname="TC-204 Wrong password" file="e2e/tc-204-wrong-password.yaml" time="49.008" timestamp="2026-11-13T19:49:14" status="SUCCESS"/>
+  </testsuite>
+</testsuites>

@@ -16,7 +16,7 @@ iOS and Android app that scans receipts and reminds you before store return wind
 
 ## Local setup
 
-Requirements: Node 22, Xcode 26.4 or newer (Expo SDK 58 minimum), Android Studio with an API 36 emulator, JDK 17, CocoaPods.
+Requirements: Node 22, Xcode 26.4 or newer (Expo SDK 58 minimum), Android Studio with an API 36 emulator, JDK 17 (JDK 21+ for the Firebase emulators), CocoaPods.
 
 1. `npm install`
 2. Put the Firebase config files in `firebase/dev/` (see [firebase/README.md](firebase/README.md)).
@@ -26,17 +26,25 @@ Requirements: Node 22, Xcode 26.4 or newer (Expo SDK 58 minimum), Android Studio
 
 ## End-to-end tests
 
-Flows live in `e2e/` and run with [Maestro](https://maestro.mobile.dev) against a Release build (JS bundled, no Metro):
+Flows live in `e2e/` and run with [Maestro](https://maestro.mobile.dev) against a Release build (JS bundled, no Metro) that talks to the local Firebase emulators. The emulators need Java 21 or newer.
 
 ```bash
-npx expo run:ios --configuration Release
+npm run emulators
+```
+
+Then, in a second terminal:
+
+```bash
+EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo run:ios --configuration Release
 npm run e2e:ios
 ```
 
 ```bash
-npx expo run:android --variant release
+EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo run:android --variant release
 npm run e2e:android
 ```
+
+Firestore rules and Cloud Functions tests start their own emulators: `npm run test:functions`.
 
 Unit tests, lint, the hex-colour check, type check and formatting all run with `npm run check`.
 
@@ -45,8 +53,8 @@ Unit tests, lint, the hex-colour check, type check and formatting all run with `
 | Phase | Scope                        | Gate                                                   |
 | ----- | ---------------------------- | ------------------------------------------------------ |
 | 0     | Foundation                   | Passed ([report](docs/gate-reports/phase-0/REPORT.md)) |
-| 1     | Design system and navigation | Not started                                            |
-| 2     | Login and signup             | Not started                                            |
+| 1     | Design system and navigation | Passed ([report](docs/gate-reports/phase-1/REPORT.md)) |
+| 2     | Login and signup             | Passed ([report](docs/gate-reports/phase-2/REPORT.md)) |
 | 3     | Receipts core                | Not started                                            |
 | 4     | Scanning and photos          | Not started                                            |
 | 5     | Reminders                    | Not started                                            |

@@ -36,6 +36,10 @@ export type Palette = {
   /** Teal brand fill used by splash and onboarding art in both themes. */
   brand: string;
   white: string;
+  /** Google sign-in button (Google brand guidelines: light / dark neutral). */
+  googleBg: string;
+  googleFg: string;
+  googleBorder: string;
 };
 
 const light: Palette = {
@@ -67,6 +71,9 @@ const light: Palette = {
   skeletonHighlight: '#F1F5F9',
   brand: '#0F766E',
   white: '#FFFFFF',
+  googleBg: '#FFFFFF',
+  googleFg: '#1F1F1F',
+  googleBorder: '#DADCE0',
 };
 
 const dark: Palette = {
@@ -98,6 +105,9 @@ const dark: Palette = {
   skeletonHighlight: '#1F2937',
   brand: '#0F766E',
   white: '#FFFFFF',
+  googleBg: '#131314',
+  googleFg: '#E3E3E3',
+  googleBorder: '#8E918F',
 };
 
 export const palettes: Record<ColorScheme, Palette> = { light, dark };
@@ -115,6 +125,14 @@ export const avatarColors: Record<string, readonly [string, string]> = {
   K: ['#FCE7F3', '#BE185D'],
   L: ['#E0E7FF', '#4338CA'],
 };
+/** Google "G" logo colours (fixed by Google's brand guidelines). */
+export const googleLogoColors = {
+  red: '#EA4335',
+  blue: '#4285F4',
+  yellow: '#FBBC05',
+  green: '#34A853',
+} as const;
+
 export const avatarFallback = ['#E2E8F0', '#334155'] as const;
 
 export const fonts = {
