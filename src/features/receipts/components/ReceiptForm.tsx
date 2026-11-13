@@ -235,7 +235,10 @@ export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
             <AppText variant="body" style={{ flex: 1, fontFamily: fonts.medium }}>
               Add warranty
             </AppText>
-            <ProLock />
+            {/* ProLock aligns itself to the top; centre it in this row. */}
+            <View style={styles.lockWrap}>
+              <ProLock />
+            </View>
           </Pressable>
         </Card>
 
@@ -275,4 +278,5 @@ const styles = StyleSheet.create({
   deadline: { flexDirection: 'row', alignItems: 'center' },
   change: { alignItems: 'center', justifyContent: 'center' },
   warranty: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
+  lockWrap: { justifyContent: 'center' },
 });

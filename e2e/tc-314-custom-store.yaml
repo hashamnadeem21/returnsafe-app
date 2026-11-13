@@ -23,9 +23,11 @@ name: TC-314 Custom store window is remembered
     id: receipt-amount
 - inputText: '25'
 - tapOn:
+    id: receipt-deadline
+- tapOn:
     id: receipt-save
 - extendedWaitUntil:
-    visible: "Joe's Bikes"
+    visible: ".*Joe's Bikes.*"
     timeout: 10000
 # Second receipt for the same store: the saved window is offered and used.
 - tapOn:
@@ -35,7 +37,7 @@ name: TC-314 Custom store window is remembered
 - tapOn:
     id: receipt-store
 - inputText: 'joes'
-- assertVisible: 'Your store · 30 days'
+- assertVisible: '.*Your store · 30 days.*'
 - tapOn:
     id: store-option-custom-joesbikes
 - assertNotVisible:

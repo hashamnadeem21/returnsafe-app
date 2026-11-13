@@ -29,5 +29,17 @@ appId: com.returnsafe.app
 - tapOn:
     id: receipt-amount
 - inputText: ${AMOUNT}
+# The iOS number pad sometimes repeats a key under automation: type it again if so.
+- runFlow:
+    when:
+      notVisible:
+        id: receipt-amount
+        text: ${AMOUNT}
+    commands:
+      - eraseText: 12
+      - inputText: ${AMOUNT}
+# Close the keyboard so Save is on screen.
+- tapOn:
+    id: receipt-deadline
 - tapOn:
     id: receipt-save

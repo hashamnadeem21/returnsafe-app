@@ -46,6 +46,8 @@ npm run e2e:android
 
 Firestore rules and Cloud Functions tests start their own emulators: `npm run test:functions`.
 
+The 50 built-in store return policies live in `seed/stores.json`. Load them into a running emulator with `npm run seed:stores -- --emulator`, or into a real project with `npm run seed:stores -- --project <id>` (needs admin credentials).
+
 Unit tests, lint, the hex-colour check, type check and formatting all run with `npm run check`.
 
 ## Build status
@@ -55,7 +57,7 @@ Unit tests, lint, the hex-colour check, type check and formatting all run with `
 | 0     | Foundation                   | Passed ([report](docs/gate-reports/phase-0/REPORT.md)) |
 | 1     | Design system and navigation | Passed ([report](docs/gate-reports/phase-1/REPORT.md)) |
 | 2     | Login and signup             | Passed ([report](docs/gate-reports/phase-2/REPORT.md)) |
-| 3     | Receipts core                | Not started                                            |
+| 3     | Receipts core                | Passed ([report](docs/gate-reports/phase-3/REPORT.md)) |
 | 4     | Scanning and photos          | Not started                                            |
 | 5     | Reminders                    | Not started                                            |
 | 6     | Subscriptions and Pro        | Not started                                            |

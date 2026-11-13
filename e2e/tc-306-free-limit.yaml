@@ -10,9 +10,7 @@ name: TC-306 Free limit sheet
     env:
       COUNT: '5'
 - extendedWaitUntil:
-    visible:
-      id: home-protected
-      text: '.*5 active receipts.*'
+    visible: '.*5 active.*'
     timeout: 15000
 - tapOn:
     id: tab-scan

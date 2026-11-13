@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme';
@@ -28,7 +28,8 @@ export function Sheet({ visible, onClose, title, children, testID }: Props) {
     >
       <KeyboardAvoidingView
         style={styles.fill}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        // Android's modal window does not resize for the keyboard (edge-to-edge), so pad on both.
+        behavior="padding"
         accessibilityViewIsModal
         onAccessibilityEscape={onClose}
       >

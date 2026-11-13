@@ -19,7 +19,7 @@ name: TC-311 Search receipts
 - tapOn:
     id: tab-receipts
 - extendedWaitUntil:
-    visible: 'Walmart'
+    visible: '.*Walmart.*'
     timeout: 10000
 - assertVisible:
     id: filter-all
@@ -27,8 +27,8 @@ name: TC-311 Search receipts
 - tapOn:
     id: receipts-search
 - inputText: 'tar'
-- assertNotVisible: 'Walmart'
+- assertNotVisible: '.*Walmart.*'
 - assertVisible:
-    text: 'Target'
+    text: '.*Target.*'
     index: 1
 - takeScreenshot: tc311-search
