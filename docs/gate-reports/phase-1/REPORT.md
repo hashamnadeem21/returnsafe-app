@@ -52,6 +52,8 @@ Unit totals: 5 suites, 73 tests, 7 snapshots. The E2E runs used Release builds (
 
 ## Notes
 
+- Code review (5 minor findings) was fixed before merge: the colour check now handles paths with spaces, onboarding still exits if saving the flag fails, Welcome scrolls at large text sizes, the Sheet's VoiceOver boundary includes Close with escape support, and the dark-mode danger button label now has about 5.9:1 contrast. All checks and both E2E runs were repeated after the fixes.
+
 - The Sheet is built on React Native's `Modal` rather than `@gorhom/bottom-sheet`. Bottom-sheet 5 has not been verified against react-native-gesture-handler 3 in this SDK, and a plain modal sheet covers what the spec needs without another native dependency.
 - The Welcome screen is a Phase 1 shell. Apple and Google sign-in and real guest (anonymous) login arrive in Phase 2. Until then, "Continue as guest" goes straight to the tabs.
 - Maestro 2.12.1 is installed in `~/.maestro/maestro/bin`, checksum-verified against the official release.

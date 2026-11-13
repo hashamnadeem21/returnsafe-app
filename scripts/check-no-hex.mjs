@@ -2,8 +2,9 @@
 // Fails if any hex colour (#abc, #aabbcc, #aabbccdd) appears in src/ outside src/theme/tokens.ts.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('..', import.meta.url));
 const srcDir = join(root, 'src');
 const allowed = new Set(['src/theme/tokens.ts']);
 const HEX = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b/g;

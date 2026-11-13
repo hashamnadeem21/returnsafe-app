@@ -26,7 +26,7 @@ export function Sheet({ visible, onClose, title, children, testID }: Props) {
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={styles.fill}>
+      <View style={styles.fill} accessibilityViewIsModal onAccessibilityEscape={onClose}>
         <Pressable
           style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
           onPress={onClose}
@@ -35,7 +35,6 @@ export function Sheet({ visible, onClose, title, children, testID }: Props) {
         />
         <View
           testID={testID}
-          accessibilityViewIsModal
           style={[
             styles.sheet,
             {

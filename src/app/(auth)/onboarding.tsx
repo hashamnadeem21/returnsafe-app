@@ -46,7 +46,11 @@ export default function Onboarding() {
   const last = index === CARDS.length - 1;
 
   const finish = async () => {
-    await complete();
+    try {
+      await complete();
+    } catch {
+      // The flag could not be saved; continue for this session (onboarding may show again next launch).
+    }
     router.replace('/welcome');
   };
 

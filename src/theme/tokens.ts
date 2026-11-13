@@ -80,7 +80,7 @@ const dark: Palette = {
   warningSoft: '#422006',
   danger: '#F87171',
   dangerSoft: '#450A0A',
-  onDanger: '#FFFFFF',
+  onDanger: '#450A0A',
   success: '#4ADE80',
   successSoft: '#052E16',
   ink: '#F1F5F9',
