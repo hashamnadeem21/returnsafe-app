@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "returnsafe-app",
+    "dev": "returnsafe-app",
+    "prod": "returnsafe-prod"
+  }
+}
