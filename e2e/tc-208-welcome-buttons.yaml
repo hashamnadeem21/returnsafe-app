@@ -1,0 +1,26 @@
+# TC-208: Android Welcome has no Apple button and Google is first. iOS: Apple is shown first.
+appId: com.returnsafe.app
+name: TC-208 Welcome sign-in buttons
+---
+- runFlow: subflows/fresh-welcome.yaml
+- assertVisible:
+    id: auth-google
+- assertVisible:
+    id: welcome-email
+    below:
+      id: auth-google
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertNotVisible: '.*Apple.*'
+      - assertNotVisible:
+          id: auth-apple
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible:
+          id: auth-google
+          below: '.*Sign in with Apple.*'
+- takeScreenshot: tc208-welcome

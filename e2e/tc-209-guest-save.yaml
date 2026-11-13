@@ -1,0 +1,48 @@
+# TC-209: continue as guest, then save the account with email -> the user ID is unchanged.
+# (The "add a receipt" step arrives with receipts in Phase 3.)
+appId: com.returnsafe.app
+name: TC-209 Guest saves account
+---
+- runFlow: subflows/fresh-welcome.yaml
+- tapOn:
+    id: welcome-guest
+- extendedWaitUntil:
+    visible:
+      id: screen-home-title
+    timeout: 20000
+- runFlow: subflows/open-account.yaml
+- assertVisible:
+    id: account-guest
+- copyTextFrom:
+    id: account-uid
+- evalScript: ${output.guestUid = maestro.copiedText}
+- runScript:
+    file: scripts/new-email.js
+    env:
+      PREFIX: tc209
+- tapOn:
+    id: account-save-email
+- tapOn:
+    id: signup-email
+- inputText: ${output.email}
+- tapOn:
+    id: signup-password
+- inputText: 'Test1234'
+# Tap the title to close the keyboard (hideKeyboard can tap a button on iOS).
+- tapOn:
+    id: screen-save-account-title
+- tapOn:
+    id: signup-submit
+- extendedWaitUntil:
+    visible:
+      id: account-email
+      text: ${output.email}
+    timeout: 20000
+- assertNotVisible:
+    id: account-guest
+- copyTextFrom:
+    id: account-uid
+- assertTrue: ${maestro.copiedText == output.guestUid}
+- runScript: scripts/user-doc.js
+- assertTrue: ${output.userDocStatus == 200}
+- takeScreenshot: tc209-saved

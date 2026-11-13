@@ -1,0 +1,30 @@
+# TC-203: sign up with an email that already exists -> message with a Log in link.
+appId: com.returnsafe.app
+name: TC-203 Email already exists
+---
+- runScript:
+    file: scripts/create-account.js
+    env:
+      PREFIX: tc203
+- runFlow: subflows/fresh-welcome.yaml
+- tapOn:
+    id: welcome-email
+- tapOn:
+    id: signup-email
+- inputText: ${output.email}
+- tapOn:
+    id: signup-password
+- inputText: 'Test1234'
+# Tap the title to close the keyboard (hideKeyboard can tap a button on iOS).
+- tapOn:
+    id: screen-sign-up-title
+- tapOn:
+    id: signup-submit
+- extendedWaitUntil:
+    visible: 'An account with this email already exists'
+    timeout: 20000
+- takeScreenshot: tc203-email-exists
+- tapOn:
+    id: signup-error-action
+- assertVisible:
+    id: screen-log-in-title

@@ -1,0 +1,40 @@
+# TC-201: sign up with a new email and Test1234 -> notification primer, then Home; users/{uid} exists.
+appId: com.returnsafe.app
+name: TC-201 Sign up
+---
+- runFlow: subflows/fresh-welcome.yaml
+- runScript:
+    file: scripts/new-email.js
+    env:
+      PREFIX: tc201
+- tapOn:
+    id: welcome-email
+- tapOn:
+    id: signup-email
+- inputText: ${output.email}
+- tapOn:
+    id: signup-password
+- inputText: 'Test1234'
+# Tap the title to close the keyboard (hideKeyboard can tap a button on iOS).
+- tapOn:
+    id: screen-sign-up-title
+- tapOn:
+    id: signup-submit
+- extendedWaitUntil:
+    visible:
+      id: screen-notification-primer
+    timeout: 20000
+- tapOn:
+    id: primer-skip
+- assertVisible:
+    id: screen-home-title
+- runFlow: subflows/open-account.yaml
+# Loose match: Maestro's Android typing occasionally repeats the first character.
+- assertVisible:
+    id: account-email
+    text: '.*${output.email}'
+- copyTextFrom:
+    id: account-uid
+- runScript: scripts/user-doc.js
+- assertTrue: ${output.userDocStatus == 200}
+- takeScreenshot: tc201-account

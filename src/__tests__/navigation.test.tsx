@@ -1,7 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 
+import { INSTALL_KEY } from '@/lib/install';
 import { ONBOARDING_KEY } from '@/lib/onboarding';
+import { useSession } from '@/stores/session';
+import { reset, signInAnonymously } from '@/test/firebase';
 
 jest.mock('@expo-google-fonts/inter', () => ({
   useFonts: () => [true, null],
@@ -15,7 +18,12 @@ jest.mock('@expo-google-fonts/inter', () => ({
 const APP_DIR = 'src/app';
 
 describe('navigation', () => {
-  beforeEach(() => AsyncStorage.clear());
+  beforeEach(async () => {
+    reset();
+    useSession.setState({ ready: false, user: null, showPrimer: false });
+    await AsyncStorage.clear();
+    await AsyncStorage.setItem(INSTALL_KEY, '1');
+  });
 
   it('TC-101 (unit): first launch shows onboarding; Skip stores the flag and opens Welcome', async () => {
     await renderRouter(APP_DIR, { initialUrl: '/' });
@@ -34,6 +42,7 @@ describe('navigation', () => {
 
   it('TC-102 (unit): each tab shows its title and Scan opens the scanner modal', async () => {
     await AsyncStorage.setItem(ONBOARDING_KEY, '1');
+    await signInAnonymously();
     await renderRouter(APP_DIR, { initialUrl: '/home' });
     const tabs: [string, string][] = [
       ['receipts', 'Receipts'],

@@ -12,7 +12,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { SessionProvider } from '@/features/auth/SessionProvider';
 import { OnboardingProvider, useOnboarding } from '@/features/onboarding/OnboardingProvider';
+import { useSession } from '@/stores/session';
 import { ThemeProvider, useTheme } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
@@ -20,6 +22,8 @@ void SplashScreen.preventAutoHideAsync();
 function RootStack() {
   const { colors, scheme } = useTheme();
   const { ready } = useOnboarding();
+  const sessionReady = useSession((st) => st.ready);
+  const signedIn = useSession((st) => st.user !== null);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -27,41 +31,52 @@ function RootStack() {
     Inter_700Bold,
     Inter_800ExtraBold,
   });
-  const appReady = ready && (fontsLoaded || fontError !== null);
+  const appReady = ready && sessionReady && (fontsLoaded || fontError !== null);
 
   useEffect(() => {
     if (appReady) void SplashScreen.hideAsync();
   }, [appReady]);
 
-  // Hold the native splash until fonts and the onboarding flag are loaded.
+  // Hold the native splash until fonts, the onboarding flag and the saved login are loaded.
   if (!appReady) return null;
 
   return (
     <>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="scanner" options={{ presentation: 'fullScreenModal' }} />
-        <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="receipt/new" />
-        <Stack.Screen name="receipt/[id]/index" />
-        <Stack.Screen name="receipt/[id]/edit" />
-        <Stack.Screen name="settings/reminders" />
-        <Stack.Screen name="settings/account" />
-        <Stack.Screen name="settings/delete-account" />
+        <Stack.Protected guard={!signedIn}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="notification-primer" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="scanner" options={{ presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="receipt/new" />
+          <Stack.Screen name="receipt/[id]/index" />
+          <Stack.Screen name="receipt/[id]/edit" />
+          <Stack.Screen name="settings/reminders" />
+          <Stack.Screen name="settings/account" />
+          <Stack.Screen name="settings/save-account" />
+          <Stack.Screen name="settings/delete-account" />
+        </Stack.Protected>
       </Stack>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </>
   );
 }
 
+// Render errors show Expo Router's retry screen instead of crashing the app.
+export { ErrorBoundary } from 'expo-router';
+
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
         <OnboardingProvider>
-          <RootStack />
+          <SessionProvider>
+            <RootStack />
+          </SessionProvider>
         </OnboardingProvider>
       </ThemeProvider>
     </SafeAreaProvider>

@@ -1,0 +1,15 @@
+# Fresh install, skip onboarding, end on Welcome (signed out).
+appId: com.returnsafe.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: onboarding-skip
+    timeout: 20000
+- tapOn:
+    id: onboarding-skip
+- extendedWaitUntil:
+    visible:
+      id: screen-welcome
+    timeout: 10000

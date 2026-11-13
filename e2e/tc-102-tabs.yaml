@@ -12,9 +12,12 @@ name: TC-102 Tabs and Scan modal
     id: onboarding-skip
 - tapOn:
     id: welcome-guest
-- assertVisible:
-    id: screen-home-title
-    text: 'Your returns'
+# Guest sign-in goes to the auth emulator.
+- extendedWaitUntil:
+    visible:
+      id: screen-home-title
+      text: 'Your returns'
+    timeout: 20000
 - tapOn:
     id: tab-receipts
 - assertVisible:

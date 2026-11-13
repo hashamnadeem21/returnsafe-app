@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="Test Suite" device="iPhone 17 Pro Max - iOS 26.2 - 3559EF6A-1D33-4B88-942F-336866F34C56" tests="9" failures="0" time="184.573" timestamp="2026-11-13T19:35:32">
+    <testcase id="TC-201 Sign up" name="TC-201 Sign up" classname="TC-201 Sign up" file="e2e/tc-201-sign-up.yaml" time="22.442" timestamp="2026-11-13T19:35:32" status="SUCCESS"/>
+    <testcase id="TC-210 Sign out cannot go back" name="TC-210 Sign out cannot go back" classname="TC-210 Sign out cannot go back" file="e2e/tc-210-sign-out.yaml" time="30.559" timestamp="2026-11-13T19:35:54" status="SUCCESS"/>
+    <testcase id="TC-101 Onboarding shows once" name="TC-101 Onboarding shows once" classname="TC-101 Onboarding shows once" file="e2e/tc-101-onboarding.yaml" time="9.361" timestamp="2026-11-13T19:36:25" status="SUCCESS"/>
+    <testcase id="TC-203 Email already exists" name="TC-203 Email already exists" classname="TC-203 Email already exists" file="e2e/tc-203-email-exists.yaml" time="17.627" timestamp="2026-11-13T19:36:34" status="SUCCESS"/>
+    <testcase id="TC-205 Forgot password is neutral" name="TC-205 Forgot password is neutral" classname="TC-205 Forgot password is neutral" file="e2e/tc-205-forgot-password.yaml" time="30.668" timestamp="2026-11-13T19:36:52" status="SUCCESS"/>
+    <testcase id="TC-209 Guest saves account" name="TC-209 Guest saves account" classname="TC-209 Guest saves account" file="e2e/tc-209-guest-save.yaml" time="22.159" timestamp="2026-11-13T19:37:22" status="SUCCESS"/>
+    <testcase id="TC-208 Welcome sign-in buttons" name="TC-208 Welcome sign-in buttons" classname="TC-208 Welcome sign-in buttons" file="e2e/tc-208-welcome-buttons.yaml" time="6.476" timestamp="2026-11-13T19:37:44" status="SUCCESS"/>
+    <testcase id="TC-102 Tabs and Scan modal" name="TC-102 Tabs and Scan modal" classname="TC-102 Tabs and Scan modal" file="e2e/tc-102-tabs.yaml" time="15.003" timestamp="2026-11-13T19:37:51" status="SUCCESS"/>
+    <testcase id="TC-204 Wrong password" name="TC-204 Wrong password" classname="TC-204 Wrong password" file="e2e/tc-204-wrong-password.yaml" time="30.238" timestamp="2026-11-13T19:38:06" status="SUCCESS"/>
+  </testsuite>
+</testsuites>

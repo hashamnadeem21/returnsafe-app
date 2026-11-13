@@ -1,17 +1,21 @@
 import { router } from 'expo-router';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Linking, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Screen } from '@/components';
+import { continueAsGuest, signInWithApple, signInWithGoogle } from '@/features/auth/authService';
+import { FormError } from '@/features/auth/ui/FormError';
+import { SocialButtons } from '@/features/auth/ui/SocialButtons';
+import { useAuthAction } from '@/features/auth/ui/useAuthAction';
+import { PRIVACY_URL, TERMS_URL } from '@/lib/links';
 import { useTheme } from '@/theme';
 
 import logo from '../../../assets/images/logo-mark.png';
 
-/**
- * Welcome (S03). Phase 1 shell: Apple/Google sign-in and guest auth arrive in Phase 2.
- * "Continue as guest" goes straight to the tabs until then.
- */
+/** Welcome (S03): Apple (iOS), Google, email, or guest. The root auth gate moves on once signed in. */
 export default function Welcome() {
   const { spacing } = useTheme();
+  const { busy, error, run } = useAuthAction<'apple' | 'google' | 'guest'>();
+
   return (
     <Screen testID="screen-welcome">
       <ScrollView contentContainerStyle={styles.scroll} bounces={false}>
@@ -32,21 +36,49 @@ export default function Welcome() {
         <View
           style={{ paddingHorizontal: spacing.xxl, gap: spacing.md, paddingBottom: spacing.lg }}
         >
+          <FormError message={error?.message ?? null} />
+          <SocialButtons
+            busy={busy === 'apple' || busy === 'google' ? busy : null}
+            disabled={busy !== null}
+            onApple={() => void run('apple', signInWithApple)}
+            onGoogle={() => void run('google', signInWithGoogle)}
+          />
           <Button
             label="Continue with email"
             variant="secondary"
             icon="mail"
+            disabled={busy !== null}
             onPress={() => router.push('/sign-up')}
             testID="welcome-email"
           />
           <Button
             label="Continue as guest"
             variant="text"
-            onPress={() => router.replace('/home')}
+            loading={busy === 'guest'}
+            disabled={busy !== null && busy !== 'guest'}
+            onPress={() => void run('guest', continueAsGuest)}
             testID="welcome-guest"
           />
           <AppText variant="caption" align="center">
-            By continuing you agree to our Terms and Privacy Policy.
+            By continuing you agree to our{' '}
+            <AppText
+              variant="caption"
+              tone="primary"
+              accessibilityRole="link"
+              onPress={() => void Linking.openURL(TERMS_URL)}
+            >
+              Terms
+            </AppText>{' '}
+            and{' '}
+            <AppText
+              variant="caption"
+              tone="primary"
+              accessibilityRole="link"
+              onPress={() => void Linking.openURL(PRIVACY_URL)}
+            >
+              Privacy Policy
+            </AppText>
+            .
           </AppText>
         </View>
       </ScrollView>

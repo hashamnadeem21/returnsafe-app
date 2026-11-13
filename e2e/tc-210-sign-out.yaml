@@ -1,0 +1,64 @@
+# TC-210: sign out, then press or swipe back -> Welcome stays; Home is not reachable without signing in.
+appId: com.returnsafe.app
+name: TC-210 Sign out cannot go back
+---
+- runScript:
+    file: scripts/create-account.js
+    env:
+      PREFIX: tc210
+- runFlow: subflows/fresh-welcome.yaml
+- runFlow: subflows/open-log-in.yaml
+- tapOn:
+    id: login-email
+- inputText: ${output.email}
+- tapOn:
+    id: login-password
+- inputText: 'Test1234'
+# Tap the title to close the keyboard (hideKeyboard can tap a button on iOS).
+- tapOn:
+    id: screen-log-in-title
+- tapOn:
+    id: login-submit
+# iOS may offer "Save Password?" after logging in.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: 'Not Now'
+          optional: true
+- extendedWaitUntil:
+    visible:
+      id: screen-home-title
+    timeout: 20000
+- runFlow: subflows/open-account.yaml
+- tapOn:
+    id: account-sign-out
+- extendedWaitUntil:
+    visible:
+      id: screen-welcome
+    timeout: 20000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 2%, 50%
+          end: 90%, 50%
+      - assertVisible:
+          id: screen-welcome
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- assertNotVisible:
+    id: screen-home-title
+# Reopening the app still lands on Welcome.
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: screen-welcome
+    timeout: 20000
+- assertNotVisible:
+    id: screen-home-title
