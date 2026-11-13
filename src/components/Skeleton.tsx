@@ -1,0 +1,40 @@
+import { useEffect, useState } from 'react';
+import { Animated, type DimensionValue } from 'react-native';
+
+import { motion, useTheme } from '@/theme';
+
+type Props = { width?: DimensionValue; height?: number; radius?: number; testID?: string };
+
+/** Pulsing placeholder block while content loads. */
+export function Skeleton({ width = '100%', height = 16, radius = 8, testID }: Props) {
+  const { colors } = useTheme();
+  const [opacity] = useState(() => new Animated.Value(1));
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.5,
+          duration: motion.normal * 3,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: motion.normal * 3,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [opacity]);
+
+  return (
+    <Animated.View
+      testID={testID}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{ width, height, borderRadius: radius, backgroundColor: colors.border, opacity }}
+    />
+  );
+}

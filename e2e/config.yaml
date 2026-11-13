@@ -1,0 +1,5 @@
+# Maestro workspace config. Run against a release build (JS bundled in the app, no Metro):
+#   iOS:     npx expo run:ios --configuration Release   then  npm run e2e:ios
+#   Android: npx expo run:android --variant release     then  npm run e2e:android
+flows:
+  - 'tc-*.yaml'

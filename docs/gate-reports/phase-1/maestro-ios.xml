@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="Test Suite" device="iPhone 17 Pro Max - iOS 26.2 - 3559EF6A-1D33-4B88-942F-336866F34C56" tests="2" failures="0" time="25.044" timestamp="2026-11-13T15:46:21">
+    <testcase id="TC-101 Onboarding shows once" name="TC-101 Onboarding shows once" classname="TC-101 Onboarding shows once" file="e2e/tc-101-onboarding.yaml" time="10.899" timestamp="2026-11-13T15:46:21" status="SUCCESS"/>
+    <testcase id="TC-102 Tabs and Scan modal" name="TC-102 Tabs and Scan modal" classname="TC-102 Tabs and Scan modal" file="e2e/tc-102-tabs.yaml" time="14.136" timestamp="2026-11-13T15:46:32" status="SUCCESS"/>
+  </testsuite>
+</testsuites>
