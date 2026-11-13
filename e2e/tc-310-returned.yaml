@@ -1,0 +1,33 @@
+# TC-310: Returned, then wait -> under Returned; money saved +$48.20.
+appId: com.returnsafe.app
+name: TC-310 Returned is saved after the Undo window
+---
+- runFlow: subflows/guest-home.yaml
+- runFlow:
+    file: subflows/add-target.yaml
+    env:
+      AMOUNT: '48.20'
+- extendedWaitUntil:
+    visible:
+      id: home-saved-amount
+    timeout: 10000
+- tapOn: 'Target'
+- tapOn:
+    id: receipt-returned
+- extendedWaitUntil:
+    notVisible:
+      id: snackbar
+    timeout: 10000
+- tapOn:
+    id: header-back
+- assertVisible:
+    id: home-saved-amount
+    text: '$48.20'
+- tapOn:
+    id: tab-receipts
+- assertVisible: 'RETURNED'
+- assertVisible: 'Returned'
+- takeScreenshot: tc310-returned
+- runFlow: subflows/copy-uid.yaml
+- runScript: scripts/receipt-statuses.js
+- assertTrue: ${output.statuses == 'returned'}

@@ -1,0 +1,44 @@
+# TC-314: "Joe's Bikes" with a 30-day window, then another receipt there -> 30 days pre-filled.
+appId: com.returnsafe.app
+name: TC-314 Custom store window is remembered
+---
+- runFlow: subflows/guest-home.yaml
+- tapOn:
+    id: home-enter-manually
+- tapOn:
+    id: receipt-store
+- inputText: "Joe's Bikes"
+- tapOn:
+    id: store-add-new
+- extendedWaitUntil:
+    visible:
+      id: window-sheet
+    timeout: 5000
+- tapOn:
+    id: window-30
+- tapOn:
+    id: window-save
+- assertVisible: '.*30-day return window.*'
+- tapOn:
+    id: receipt-amount
+- inputText: '25'
+- tapOn:
+    id: receipt-save
+- extendedWaitUntil:
+    visible: "Joe's Bikes"
+    timeout: 10000
+# Second receipt for the same store: the saved window is offered and used.
+- tapOn:
+    id: tab-scan
+- tapOn:
+    id: scanner-enter-manually
+- tapOn:
+    id: receipt-store
+- inputText: 'joes'
+- assertVisible: 'Your store · 30 days'
+- tapOn:
+    id: store-option-custom-joesbikes
+- assertNotVisible:
+    id: window-sheet
+- assertVisible: '.*30-day return window.*'
+- takeScreenshot: tc314-prefilled

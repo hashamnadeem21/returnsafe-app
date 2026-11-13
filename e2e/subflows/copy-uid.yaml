@@ -1,0 +1,10 @@
+# Copies "uid:<uid>" from the Account screen into maestro.copiedText, then returns to Home.
+appId: com.returnsafe.app
+---
+- runFlow: open-account.yaml
+- copyTextFrom:
+    id: account-uid
+- tapOn:
+    id: header-back
+- tapOn:
+    id: tab-home

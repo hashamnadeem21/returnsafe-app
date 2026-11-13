@@ -1,0 +1,42 @@
+# TC-309: Returned, then Undo within 5 s -> back to active; money saved unchanged.
+appId: com.returnsafe.app
+name: TC-309 Undo returned
+---
+- runFlow: subflows/guest-home.yaml
+- runFlow:
+    file: subflows/add-target.yaml
+    env:
+      AMOUNT: '48.20'
+- extendedWaitUntil:
+    visible:
+      id: home-saved-amount
+    timeout: 10000
+- assertVisible:
+    id: home-saved-amount
+    text: '$0.00'
+- tapOn: 'Target'
+- tapOn:
+    id: receipt-returned
+- assertVisible: 'Marked as returned'
+- tapOn:
+    id: snackbar-action
+- assertVisible:
+    id: receipt-returned
+- takeScreenshot: tc309-undone
+- tapOn:
+    id: header-back
+- assertVisible:
+    id: home-saved-amount
+    text: '$0.00'
+- assertVisible: '90 days'
+# Well past the 5-second window: still active, nothing was saved.
+- extendedWaitUntil:
+    visible: 'NEVER_SHOWN_TEXT'
+    timeout: 6000
+    optional: true
+- assertVisible:
+    id: home-saved-amount
+    text: '$0.00'
+- runFlow: subflows/copy-uid.yaml
+- runScript: scripts/receipt-statuses.js
+- assertTrue: ${output.statuses == 'active'}
