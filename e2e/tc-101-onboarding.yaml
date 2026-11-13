@@ -1,0 +1,23 @@
+# TC-101: fresh install shows onboarding; after Skip and relaunch it is not shown again.
+appId: com.returnsafe.app
+name: TC-101 Onboarding shows once
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: screen-onboarding
+    timeout: 20000
+- assertVisible: 'Snap any receipt'
+- tapOn:
+    id: onboarding-skip
+- assertVisible:
+    id: screen-welcome
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: screen-welcome
+    timeout: 20000
+- assertNotVisible:
+    id: screen-onboarding

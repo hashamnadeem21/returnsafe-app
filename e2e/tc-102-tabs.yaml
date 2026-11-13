@@ -1,0 +1,46 @@
+# TC-102: tap each tab; each screen's title is visible; Scan opens a modal.
+appId: com.returnsafe.app
+name: TC-102 Tabs and Scan modal
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: onboarding-skip
+    timeout: 20000
+- tapOn:
+    id: onboarding-skip
+- tapOn:
+    id: welcome-guest
+- assertVisible:
+    id: screen-home-title
+    text: 'Your returns'
+- tapOn:
+    id: tab-receipts
+- assertVisible:
+    id: screen-receipts-title
+    text: 'Receipts'
+- tapOn:
+    id: tab-warranties
+- assertVisible:
+    id: screen-warranties-title
+    text: 'Warranties'
+- tapOn:
+    id: tab-settings
+- assertVisible:
+    id: screen-settings-title
+    text: 'Settings'
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: screen-home-title
+    text: 'Your returns'
+- tapOn:
+    id: tab-scan
+- assertVisible:
+    id: screen-scanner
+- assertVisible: 'Scan receipt'
+- tapOn:
+    id: header-back
+- assertVisible:
+    id: screen-home-title
