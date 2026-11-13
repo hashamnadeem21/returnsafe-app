@@ -2,7 +2,7 @@ import type { BottomTabBarProps } from 'expo-router/tabs';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { fonts, shadows, useTheme } from '@/theme';
+import { fonts, shadows, tabLabelMaxFontSizeMultiplier, useTheme } from '@/theme';
 
 import { AppText } from './AppText';
 import { Icon, type IconName } from './Icon';
@@ -68,7 +68,15 @@ export function TabBar({ state, navigateToTab, onScanPress }: Props) {
               >
                 <Icon name="scan" size={26} color={colors.onPrimary} strokeWidth={2.2} />
               </View>
-              <AppText variant="label" tone="muted" style={styles.scanLabel}>
+              <AppText
+                variant="label"
+                tone="muted"
+                numberOfLines={1}
+                maxFontSizeMultiplier={tabLabelMaxFontSizeMultiplier}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+                style={styles.scanLabel}
+              >
                 {meta.label}
               </AppText>
             </Pressable>
@@ -91,7 +99,11 @@ export function TabBar({ state, navigateToTab, onScanPress }: Props) {
             <Icon name={meta.icon} size={24} color={color} strokeWidth={focused ? 2.3 : 1.9} />
             <AppText
               variant="label"
-              style={{ color, fontFamily: focused ? fonts.semibold : fonts.medium }}
+              numberOfLines={1}
+              maxFontSizeMultiplier={tabLabelMaxFontSizeMultiplier}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+              style={[{ color, fontFamily: focused ? fonts.semibold : fonts.medium }]}
             >
               {meta.label}
             </AppText>

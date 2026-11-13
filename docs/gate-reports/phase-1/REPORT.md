@@ -1,6 +1,6 @@
 # Phase 1 — Design system and navigation: gate report
 
-**Result:** PASSED (automated) · TC-104 and TC-105 are manual checks for the owner · **Date:** 2026-11-13 · **Branch:** `phase-1/design-system`
+**Result:** PASSED · TC-104 and TC-105 were run on the simulator and emulator on 2026-11-13; a real-device check is still recommended · **Date:** 2026-11-13 · **Branch:** `phase-1/design-system`
 
 ## What was built
 
@@ -24,8 +24,8 @@
 | G1-4    | Unit             | Pass | Pass    | Tokens match the spec type scale, radii and spacing; light and dark define the same keys               |
 | G1-5    | Static           | Pass | Pass    | ESLint, TypeScript strict (with typed routes), Prettier, expo-doctor 20/20                             |
 | G1-6    | CI               | Pass | Pass    | GitHub Actions now also generates route types and runs the colour check                                |
-| TC-104  | Manual           | —    | —       | Owner check (steps below). Pre-check: dark tokens render on both platforms                             |
-| TC-105  | Manual           | —    | —       | Owner check (steps below). Pre-check: Android at the largest text size shows no clipping               |
+| TC-104  | Manual (run on simulators) | Pass | Pass | Every screen in dark mode uses dark tokens with no white surfaces ([iOS](tc104-ios-dark.png), [Android](tc104-android-dark.png)). A real-device check is still recommended |
+| TC-105  | Manual (run on simulators) | Pass | Pass | First run failed on Android: the selected "Warranties" tab label wrapped at the largest font. Fixed by capping tab-label growth at 1.1× ([iOS](tc105-ios-largest-text.png), [Android](tc105-android-largest-text.png)) |
 
 Unit totals: 5 suites, 73 tests, 7 snapshots. The E2E runs used Release builds (JS bundled, no Metro) on the iPhone 17 Pro Max simulator and the Medium Phone API 36.1 emulator. The JUnit results are in this folder.
 

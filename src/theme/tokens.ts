@@ -138,6 +138,8 @@ export const type: Record<TypeVariant, TextStyle> = {
 
 /** Max Dynamic Type / font scale multiplier for all text. */
 export const maxFontSizeMultiplier = 1.4;
+/** Tab bar labels share a fixed-width bar, so they grow less (system tab bars do not scale at all). */
+export const tabLabelMaxFontSizeMultiplier = 1.1;
 
 /** 4-point grid. */
 export const spacing = {

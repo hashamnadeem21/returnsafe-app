@@ -16,6 +16,7 @@ import {
   ScreenHeader,
   Sheet,
   Skeleton,
+  TabBar,
   TextField,
   toneForDaysLeft,
 } from '@/components';
@@ -106,5 +107,24 @@ describe('component behaviour', () => {
   it('CountdownRing clamps and labels days left', async () => {
     await renderWithTheme(<CountdownRing daysLeft={1} totalDays={30} testID="ring" />);
     expect(screen.getByLabelText('1 day left')).toBeTruthy();
+  });
+});
+
+describe('TC-105 tab labels at large text', () => {
+  it('keeps every tab label on one line and lets it shrink to fit', async () => {
+    const names = ['home', 'receipts', 'scan', 'warranties', 'settings'];
+    const state = { index: 3, routes: names.map((name) => ({ key: name, name })) };
+    const props = {
+      state,
+      navigateToTab: () => {},
+      onScanPress: () => {},
+    } as unknown as Parameters<typeof TabBar>[0];
+    await renderWithTheme(<TabBar {...props} />);
+    for (const label of ['Home', 'Receipts', 'Scan', 'Warranties', 'Settings']) {
+      const text = screen.getByText(label);
+      expect(text.props.numberOfLines).toBe(1);
+      expect(text.props.adjustsFontSizeToFit).toBe(true);
+      expect(text.props.maxFontSizeMultiplier).toBe(1.1);
+    }
   });
 });
