@@ -40,6 +40,13 @@ describe('initUser', () => {
     expect(doc?.timezone).toBe('America/New_York');
   });
 
+  it('trims an over-long name from the auth profile', async () => {
+    const me = await signUp(`longname-${Date.now()}@example.com`);
+    await adminAuth.updateUser(me.uid, { displayName: 'N'.repeat(200) });
+    await call('initUser', {}, me.idToken);
+    expect((await db.doc(`users/${me.uid}`).get()).get('displayName')).toBe('N'.repeat(80));
+  });
+
   it('rejects unauthenticated calls', async () => {
     const r = await call('initUser', {});
     expect(r.error?.status).toBe('UNAUTHENTICATED');
@@ -81,6 +88,18 @@ describe('deleteAccount', () => {
     expect(r.error?.status).toBe('FAILED_PRECONDITION');
     expect(r.error?.details).toEqual({ reason: 'requires-recent-login' });
     expect((await adminAuth.getUser(me.uid)).uid).toBe(me.uid);
+  });
+
+  it('ignores a stale guest token after the guest saved their account', async () => {
+    const guest = await signUp();
+    const old = tokenWithAuthTime(guest.uid, Math.floor(Date.now() / 1000) - 3600, 'anonymous');
+    await adminAuth.updateUser(guest.uid, {
+      email: `linked-${Date.now()}@example.com`,
+      password: 'Test1234',
+    });
+    const r = await call('deleteAccount', {}, old);
+    expect(r.error?.details).toEqual({ reason: 'requires-recent-login' });
+    expect((await adminAuth.getUser(guest.uid)).uid).toBe(guest.uid);
   });
 
   it('lets a guest delete without re-authenticating', async () => {

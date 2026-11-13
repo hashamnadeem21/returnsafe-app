@@ -162,6 +162,42 @@ describe('auth screens', () => {
     expect(await screen.findByTestId('account-email')).toHaveTextContent('saved@example.com');
     expect(fakeState.currentUser?.uid).toBe(guestUid);
     expect(fakeState.currentUser?.isAnonymous).toBe(false);
+    // The verify-email note appears without leaving and reopening Account.
+    expect(screen.getByTestId('account-verify-banner')).toBeTruthy();
+  });
+
+  it('guest who signs in to an existing account leaves Save account', async () => {
+    fakeState.accounts.set('taken@example.com', {
+      password: 'Test1234',
+      user: { uid: 'existing', email: 'taken@example.com', isAnonymous: false, providerData: [] },
+    });
+    await signInAnonymously();
+    await start('/settings/account');
+    await fireEvent.press(await screen.findByTestId('account-save-email'));
+    await type('signup-email', 'taken@example.com');
+    await type('signup-password', 'Test1234');
+    await waitFor(() => expect(screen.getByTestId('signup-submit')).toBeEnabled());
+    await fireEvent.press(screen.getByTestId('signup-submit'));
+    await fireEvent.press(await screen.findByTestId('credential-in-use-sign-in'));
+    expect(await screen.findByTestId('screen-settings-account')).toBeTruthy();
+    expect(screen.queryByTestId('signup-submit')).toBeNull();
+    expect(fakeState.currentUser?.uid).toBe('existing');
+  });
+
+  it('a session restored at launch retries the user doc', async () => {
+    await signInAnonymously();
+    await start('/');
+    expect(await screen.findByTestId('screen-home')).toBeTruthy();
+    await waitFor(() => expect(fakeState.callables.map((c) => c.name)).toContain('initUser'));
+  });
+
+  it('shows why a name over 60 characters is rejected', async () => {
+    await start('/sign-up');
+    await type('signup-name', 'N'.repeat(61));
+    await type('signup-email', 'new@example.com');
+    await type('signup-password', 'Test1234');
+    expect(await screen.findByTestId('signup-submit')).toBeDisabled();
+    expect(screen.getByText('Keep your name under 60 characters')).toBeTruthy();
   });
 
   it('TC-210 (unit): after sign-out, Home cannot be reached', async () => {

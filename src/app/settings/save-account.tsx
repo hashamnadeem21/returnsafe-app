@@ -50,7 +50,10 @@ export default function SaveAccount() {
         onClose={dismissCredentialInUse}
         onSignIn={() => {
           const cred = credentialInUse?.credential;
-          if (cred) void run('merge', () => signInToExistingAndMerge(cred));
+          if (!cred) return;
+          void run('merge', () => signInToExistingAndMerge(cred)).then((ok) => {
+            if (ok) router.back();
+          });
         }}
       />
     </Screen>

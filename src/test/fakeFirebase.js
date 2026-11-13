@@ -82,7 +82,14 @@ const fakeAuth = {
     state.accounts.set(cred.email, { password: cred.password, user });
     return { user };
   }),
-  signInWithCredential: jest.fn(async () => ({ user: state.currentUser })),
+  signInWithCredential: jest.fn(async (_a, cred) => {
+    const acct = cred.email ? state.accounts.get(cred.email) : undefined;
+    if (acct) {
+      if (acct.password !== cred.password) throw authError('auth/invalid-credential');
+      setCurrent(acct.user);
+    }
+    return { user: state.currentUser };
+  }),
   reauthenticateWithCredential: jest.fn(async () => undefined),
   fetchSignInMethodsForEmail: jest.fn(async (_a, email) =>
     state.accounts.has(email) ? ['password'] : [],

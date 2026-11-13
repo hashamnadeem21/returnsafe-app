@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { AppText, Banner, Button, Card, Screen, ScreenHeader } from '@/components';
@@ -25,7 +24,7 @@ export default function Account() {
   const { busy, error, credentialInUse, run, dismissCredentialInUse } = useAuthAction<
     'apple' | 'google' | 'merge' | 'signout'
   >();
-  const [verifyNote] = useState(() => user?.email && !user.emailVerified && !guest);
+  const verifyNote = !guest && !!user?.email && !user.emailVerified;
 
   const doSignOut = () => void run('signout', signOut);
   const confirmSignOut = () => {
