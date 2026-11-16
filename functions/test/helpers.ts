@@ -75,3 +75,41 @@ export type CallResult<T> = {
 export function call<T>(name: string, data: unknown, token?: string): Promise<CallResult<T>> {
   return post<CallResult<T>>(`${FUNCTIONS}/${name}`, { data }, token);
 }
+
+/** A valid receipt document as the app writes it. */
+export function receipt(fields: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    storeId: 'target',
+    storeName: 'Target',
+    purchaseDate: '2026-11-01',
+    amountCents: 4820,
+    items: ['Kids sneakers'],
+    returnDays: 90,
+    returnDeadline: '2027-01-30',
+    warrantyMonths: null,
+    warrantyEnd: null,
+    status: 'active',
+    photoPaths: [],
+    ocrText: null,
+    statusChangedAt: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...fields,
+  };
+}
+
+/** Waits for the onReceiptWrite trigger to settle users/{uid}.activeCount on a value. */
+export async function waitForActiveCount(
+  uid: string,
+  expected: number,
+  timeoutMs = 15000,
+): Promise<void> {
+  const end = Date.now() + timeoutMs;
+  let last: unknown;
+  while (Date.now() < end) {
+    last = (await db.doc(`users/${uid}`).get()).get('activeCount');
+    if (last === expected) return;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  throw new Error(`activeCount for ${uid} stayed ${String(last)}, expected ${expected}`);
+}

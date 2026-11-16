@@ -1,0 +1,29 @@
+# TC-306 (app part): a free user with 5 active receipts tries a 6th -> limit sheet; paywall link.
+# The rule that denies the 6th write is covered by the rules tests.
+appId: com.returnsafe.app
+name: TC-306 Free limit sheet
+---
+- runFlow: subflows/guest-home.yaml
+- runFlow: subflows/copy-uid.yaml
+- runScript:
+    file: scripts/seed-receipts.js
+    env:
+      COUNT: '5'
+- extendedWaitUntil:
+    visible: '.*5 active.*'
+    timeout: 15000
+- tapOn:
+    id: tab-scan
+- tapOn:
+    id: scanner-enter-manually
+- extendedWaitUntil:
+    visible:
+      id: limit-sheet
+    timeout: 10000
+- assertVisible: "You've used all 5 free receipts"
+- assertVisible: '5 of 5 active'
+- takeScreenshot: tc306-limit
+- tapOn:
+    id: limit-see-pro
+- assertVisible:
+    id: screen-paywall

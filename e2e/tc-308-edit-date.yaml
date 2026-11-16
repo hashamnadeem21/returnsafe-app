@@ -1,0 +1,56 @@
+# TC-308: edit the purchase date to 80 days ago -> "10 days left".
+appId: com.returnsafe.app
+name: TC-308 Edit date
+---
+- runFlow: subflows/guest-home.yaml
+- runFlow:
+    file: subflows/add-target.yaml
+    env:
+      AMOUNT: '48.20'
+- extendedWaitUntil:
+    visible:
+      id: home-later
+    timeout: 15000
+- runFlow: subflows/open-edit-date.yaml
+- runScript:
+    file: scripts/date-ago.js
+    env:
+      DAYS_AGO: '80'
+# iOS: inline calendar in a sheet.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - repeat:
+          times: ${output.monthsBack}
+          commands:
+            - tapOn:
+                id: DatePicker.PreviousMonth
+      - tapOn: '.*, ${output.monthDay}'
+      - tapOn:
+          id: date-done
+# Android: Material date dialog.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - repeat:
+          times: ${output.monthsBack}
+          commands:
+            - tapOn:
+                id: android:id/prev
+      - tapOn: '${output.androidDay}'
+      - tapOn:
+          id: android:id/button1
+- tapOn:
+    id: receipt-save
+- extendedWaitUntil:
+    visible:
+      id: screen-receipt-detail
+    timeout: 10000
+- assertVisible: '.*10 days left.*'
+- takeScreenshot: tc308-detail
+- tapOn:
+    id: header-back
+- assertVisible: '.*10 days.*'
+- takeScreenshot: tc308-home

@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Phase 2: users/{uid} only. Everything else stays denied until the phase that needs it.
+// users/{uid}, its receipts and custom stores, and the read-only store list. Everything else is denied.
 service cloud.firestore {
   match /databases/{database}/documents {
     function isOwner(uid) {
@@ -22,11 +22,87 @@ service cloud.firestore {
         && d.timezone is string && d.timezone.size() <= 64;
     }
 
+    function isDate(v) {
+      return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function optional(d, key) {
+      return d.get(key, null);
+    }
+
+    function underFreeLimit(uid) {
+      let user = get(/databases/$(database)/documents/users/$(uid)).data;
+      return user.isPro == true || user.activeCount < user.freeLimit;
+    }
+
+    function validReceipt(d) {
+      return d.keys().hasAll(['storeName', 'purchaseDate', 'amountCents', 'items', 'returnDays',
+          'returnDeadline', 'status', 'photoPaths', 'createdAt', 'updatedAt'])
+        && d.keys().hasOnly(['storeId', 'storeName', 'purchaseDate', 'amountCents', 'items',
+          'returnDays', 'returnDeadline', 'warrantyMonths', 'warrantyEnd', 'status', 'photoPaths',
+          'ocrText', 'statusChangedAt', 'createdAt', 'updatedAt'])
+        && (optional(d, 'storeId') == null || (d.storeId is string && d.storeId.size() <= 40))
+        && d.storeName is string && d.storeName.size() >= 1 && d.storeName.size() <= 80
+        && isDate(d.purchaseDate)
+        && isDate(d.returnDeadline)
+        && d.amountCents is int && d.amountCents >= 1 && d.amountCents <= 9999999
+        && d.items is list && d.items.size() <= 50
+        && d.returnDays is int && d.returnDays >= 0 && d.returnDays <= 365
+        && d.status in ['active', 'returned', 'kept', 'expired']
+        && d.photoPaths is list && d.photoPaths.size() <= 5
+        && (optional(d, 'warrantyMonths') == null
+          || (d.warrantyMonths is int && d.warrantyMonths >= 1 && d.warrantyMonths <= 120))
+        && (optional(d, 'warrantyEnd') == null || isDate(d.warrantyEnd))
+        && (optional(d, 'ocrText') == null || (d.ocrText is string && d.ocrText.size() <= 20000))
+        && (optional(d, 'statusChangedAt') == null || d.statusChangedAt is timestamp)
+        && d.createdAt is timestamp
+        && d.updatedAt is timestamp;
+    }
+
+    function validCustomStore(d) {
+      return d.keys().hasOnly(['name', 'returnDays', 'updatedAt'])
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 80
+        && d.returnDays is int && d.returnDays >= 1 && d.returnDays <= 365
+        && d.updatedAt is timestamp;
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid);
       // Created by the initUser function and deleted by deleteAccount, never by the client.
       allow create, delete: if false;
       allow update: if isOwner(uid) && onlyEditableFields() && validValues();
+
+      // Receipts. activeCount is kept in step by the onReceiptWrite function.
+      match /receipts/{receiptId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && validReceipt(request.resource.data)
+          && request.resource.data.status in ['active', 'returned', 'kept']
+          && (request.resource.data.status != 'active' || underFreeLimit(uid));
+        allow update: if isOwner(uid)
+          && validReceipt(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt
+          // "expired" is set only by the server; the app may keep it but never set it.
+          && (request.resource.data.status == resource.data.status
+            || request.resource.data.status in ['active', 'returned', 'kept'])
+          // Moving a receipt back to active counts against the free limit like a new one.
+          && (request.resource.data.status != 'active'
+            || resource.data.status == 'active'
+            || underFreeLimit(uid));
+        allow delete: if isOwner(uid);
+      }
+
+      // Return window remembered for a store the user typed in.
+      match /customStores/{storeId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validCustomStore(request.resource.data);
+      }
+    }
+
+    // Built-in store policies, loaded by scripts/seed-stores.mjs with the Admin SDK.
+    match /stores/{storeId} {
+      allow read: if request.auth != null;
+      allow write: if false;
     }
 
     match /{document=**} {

@@ -77,6 +77,47 @@ const ICONS = {
     </>
   ),
   plus: <Path d="M12 5v14M5 12h14" />,
+  search: (
+    <>
+      <Circle cx="11" cy="11" r="7" />
+      <Path d="M20 20l-4-4" />
+    </>
+  ),
+  cal: (
+    <>
+      <Rect x="3" y="5" width="18" height="16" rx="2" />
+      <Path d="M3 10h18M8 3v4M16 3v4" />
+    </>
+  ),
+  clock: (
+    <>
+      <Circle cx="12" cy="12" r="9" />
+      <Path d="M12 7v5l3 2" />
+    </>
+  ),
+  image: (
+    <>
+      <Rect x="3" y="5" width="18" height="14" rx="2" />
+      <Circle cx="9" cy="10" r="1.5" />
+      <Path d="M3 17l5-5 4 4 3-3 6 6" />
+    </>
+  ),
+  more: <Path d="M5 12h.01M12 12h.01M19 12h.01" strokeWidth={3.2} />,
+  sync: (
+    <>
+      <Path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9" />
+      <Path d="M18 3v4h-4M6 21v-4h4" />
+    </>
+  ),
+  down: <Path d="M6 9l6 6 6-6" />,
+  bellOff: (
+    <>
+      <Path d="M6 9a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8" />
+      <Path d="M10 21h4M3 3l18 18" />
+    </>
+  ),
+  edit: <Path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4" />,
+  trash: <Path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />,
 } as const;
 
 export type IconName = keyof typeof ICONS;

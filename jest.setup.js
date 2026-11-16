@@ -4,7 +4,9 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(() => Promise.resolve()),
+  notificationAsync: jest.fn(() => Promise.resolve()),
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
+  NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
 }));
 
 // Firebase: in-memory fakes (see src/test/fakeFirebase.js); native sign-in sheets are stubbed.
@@ -14,12 +16,18 @@ jest.mock(
   '@react-native-firebase/functions',
   () => require('./src/test/fakeFirebase').fakeFunctions,
 );
-jest.mock('@react-native-firebase/firestore', () => ({
-  getFirestore: () => ({}),
-  connectFirestoreEmulator: jest.fn(),
-  terminate: jest.fn(async () => undefined),
-  clearPersistence: jest.fn(async () => undefined),
-}));
+jest.mock(
+  '@react-native-firebase/firestore',
+  () => require('./src/test/fakeFirestore').fakeFirestore,
+);
+// FlashList ships ES modules only; a FlatList renders the same rows in tests.
+jest.mock('@shopify/flash-list', () => ({ FlashList: require('react-native').FlatList }));
+jest.mock('@react-native-community/datetimepicker', () => {
+  const { createElement } = require('react');
+  const { View } = require('react-native');
+  const Picker = (props) => createElement(View, props);
+  return { __esModule: true, default: Picker, DateTimePickerAndroid: { open: jest.fn() } };
+});
 jest.mock('@react-native-firebase/app-check', () => ({
   initializeAppCheck: jest.fn(async () => undefined),
   ReactNativeFirebaseAppCheckProvider: class {

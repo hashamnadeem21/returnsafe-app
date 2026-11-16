@@ -1,0 +1,10 @@
+# Fresh install, continue as guest, end on Home.
+appId: com.returnsafe.app
+---
+- runFlow: fresh-welcome.yaml
+- tapOn:
+    id: welcome-guest
+- extendedWaitUntil:
+    visible:
+      id: screen-home-title
+    timeout: 20000

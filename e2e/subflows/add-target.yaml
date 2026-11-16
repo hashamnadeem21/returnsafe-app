@@ -1,0 +1,45 @@
+# From Home: New receipt, Target, today, ${AMOUNT}, save.
+appId: com.returnsafe.app
+---
+- runFlow:
+    when:
+      visible:
+        id: home-enter-manually
+    commands:
+      - tapOn:
+          id: home-enter-manually
+- runFlow:
+    when:
+      notVisible:
+        id: screen-receipt-new
+    commands:
+      - tapOn:
+          id: tab-scan
+      - tapOn:
+          id: scanner-enter-manually
+- extendedWaitUntil:
+    visible:
+      id: screen-receipt-new
+    timeout: 10000
+- tapOn:
+    id: receipt-store
+- inputText: 'Tar'
+- tapOn:
+    id: store-option-target
+- tapOn:
+    id: receipt-amount
+- inputText: ${AMOUNT}
+# The iOS number pad sometimes repeats a key under automation: type it again if so.
+- runFlow:
+    when:
+      notVisible:
+        id: receipt-amount
+        text: ${AMOUNT}
+    commands:
+      - eraseText: 12
+      - inputText: ${AMOUNT}
+# Close the keyboard so Save is on screen.
+- tapOn:
+    id: receipt-deadline
+- tapOn:
+    id: receipt-save

@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { adminAuth, bucket, call, db, signUp, tokenWithAuthTime } from './helpers';
+import {
+  adminAuth,
+  bucket,
+  call,
+  db,
+  receipt,
+  signUp,
+  tokenWithAuthTime,
+  waitForActiveCount,
+} from './helpers';
 
 describe('initUser', () => {
   it('creates users/{uid} with server defaults on first sign-in (TC-201 backend)', async () => {
@@ -114,17 +123,112 @@ describe('deleteAccount', () => {
   });
 });
 
-describe('mergeGuestAccount (stub)', () => {
-  it('accepts a guest token and rejects a non-guest token', async () => {
+describe('onReceiptWrite', () => {
+  it('keeps activeCount right through create, status change, update and delete', async () => {
+    const me = await signUp(`count-${Date.now()}@example.com`);
+    await call('initUser', {}, me.idToken);
+    const col = db.collection(`users/${me.uid}/receipts`);
+
+    const a = await col.add(receipt());
+    const b = await col.add(receipt());
+    await col.add(receipt({ status: 'kept' }));
+    await waitForActiveCount(me.uid, 2);
+
+    await b.update({ status: 'returned' });
+    await waitForActiveCount(me.uid, 1);
+
+    await a.update({ amountCents: 999 }); // not a status change
+    await b.update({ status: 'active' });
+    await waitForActiveCount(me.uid, 2);
+
+    await a.delete();
+    await waitForActiveCount(me.uid, 1);
+  });
+});
+
+describe('mergeGuestAccount', () => {
+  it("moves the guest's receipts, photos and custom stores, then deletes the guest", async () => {
     const guest = await signUp();
+    await call('initUser', {}, guest.idToken);
     const me = await signUp(`merge-${Date.now()}@example.com`);
-    const ok = await call<{ moved: number }>(
+    await call('initUser', {}, me.idToken);
+    const photo = `users/${guest.uid}/receipts/r1/receipt.jpg`;
+    await bucket.file(photo).save(Buffer.from('jpg'), { contentType: 'image/jpeg' });
+    await db.doc(`users/${guest.uid}/receipts/r1`).set(receipt({ photoPaths: [photo] }));
+    await db.doc(`users/${guest.uid}/receipts/r2`).set(receipt({ status: 'returned' }));
+    await db
+      .doc(`users/${guest.uid}/customStores/joes-bikes`)
+      .set({ name: "Joe's Bikes", returnDays: 30 });
+    await db
+      .doc(`users/${me.uid}/customStores/corner-shop`)
+      .set({ name: 'Corner Shop', returnDays: 14 });
+    await db
+      .doc(`users/${guest.uid}/customStores/corner-shop`)
+      .set({ name: 'Corner Shop', returnDays: 60 });
+
+    const r = await call<{ moved: number }>(
       'mergeGuestAccount',
       { guestIdToken: guest.idToken },
       me.idToken,
     );
-    expect(ok.result).toEqual({ moved: 0 });
+    expect(r.result).toEqual({ moved: 2 });
+
+    const moved = await db.doc(`users/${me.uid}/receipts/r1`).get();
+    const newPhoto = `users/${me.uid}/receipts/r1/receipt.jpg`;
+    expect(moved.get('photoPaths')).toEqual([newPhoto]);
+    expect((await bucket.file(newPhoto).exists())[0]).toBe(true);
+    expect((await db.doc(`users/${me.uid}/receipts/r2`).get()).get('status')).toBe('returned');
+    expect((await db.doc(`users/${me.uid}/customStores/joes-bikes`).get()).get('returnDays')).toBe(
+      30,
+    );
+    // The account's own window for a store wins.
+    expect((await db.doc(`users/${me.uid}/customStores/corner-shop`).get()).get('returnDays')).toBe(
+      14,
+    );
+    await waitForActiveCount(me.uid, 1);
+
+    expect((await db.doc(`users/${guest.uid}`).get()).exists).toBe(false);
+    expect((await db.collection(`users/${guest.uid}/receipts`).get()).size).toBe(0);
+    await expect(adminAuth.getUser(guest.uid)).rejects.toMatchObject({
+      code: 'auth/user-not-found',
+    });
+
+    // A retry after success is harmless.
+    const again = await call<{ moved: number }>(
+      'mergeGuestAccount',
+      { guestIdToken: guest.idToken },
+      me.idToken,
+    );
+    // The emulator refuses tokens of deleted users; production returns moved: 0. Either way the app
+    // drops its pending merge and nothing moves twice.
+    if (again.error) expect(again.error.status).toBe('PERMISSION_DENIED');
+    else expect(again.result).toEqual({ moved: 0 });
+    expect((await db.collection(`users/${me.uid}/receipts`).get()).size).toBe(2);
+  });
+
+  it('rejects a non-guest token and a guest that has since saved its account', async () => {
+    const me = await signUp(`merge-bad-${Date.now()}@example.com`);
     const bad = await call('mergeGuestAccount', { guestIdToken: me.idToken }, me.idToken);
     expect(bad.error?.status).toBe('PERMISSION_DENIED');
+
+    const guest = await signUp();
+    await db.doc(`users/${guest.uid}/receipts/keep`).set(receipt());
+    await adminAuth.updateUser(guest.uid, {
+      email: `saved-${Date.now()}@example.com`,
+      password: 'Test1234',
+    });
+    const linked = await call('mergeGuestAccount', { guestIdToken: guest.idToken }, me.idToken);
+    expect(linked.error?.status).toBe('PERMISSION_DENIED');
+    expect((await db.doc(`users/${guest.uid}/receipts/keep`).get()).exists).toBe(true);
+  });
+
+  it('rejects unauthenticated calls and a missing token', async () => {
+    expect((await call('mergeGuestAccount', { guestIdToken: 'x' })).error?.status).toBe(
+      'UNAUTHENTICATED',
+    );
+    const me = await signUp(`merge-none-${Date.now()}@example.com`);
+    expect((await call('mergeGuestAccount', {}, me.idToken)).error?.status).toBe(
+      'INVALID_ARGUMENT',
+    );
   });
 });
