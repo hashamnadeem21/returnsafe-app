@@ -6,6 +6,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { deleteObject, putFile, ref } from '@react-native-firebase/storage';
+import { File } from 'expo-file-system';
 
 import { storage } from '@/lib/firebase';
 
@@ -29,6 +30,8 @@ export type Remover = (path: string) => Promise<void>;
 
 export const QUEUE_KEY = 'rs.uploadQueue';
 const FIRST_RETRY_MS = 2_000;
+const SAVE_RETRY_MS = 5_000;
+const SAVE_TRIES = 3;
 const MAX_RETRY_MS = 5 * 60_000;
 
 /** Wait before the next try: 2 s, 4 s, 8 s … up to 5 minutes. */
@@ -59,8 +62,11 @@ let restored = false;
 let running = false;
 let uid: string | null = null;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
 /** Device photos to delete once the queue without their jobs is saved. */
 let toForget: string[] = [];
+/** Saves run one after another, so an older snapshot can never land after a newer one. */
+let saving: Promise<boolean> = Promise.resolve(true);
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -73,10 +79,27 @@ export function subscribeUploads(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
+const isJob = (j: unknown): j is UploadJob =>
+  typeof j === 'object' &&
+  j !== null &&
+  typeof (j as UploadJob).uid === 'string' &&
+  typeof (j as UploadJob).path === 'string' &&
+  typeof (j as UploadJob).receiptId === 'string';
+
+/** The saved jobs; an unreadable or damaged value counts as an empty queue. */
+function parseSaved(raw: string | null): UploadJob[] {
+  try {
+    const value: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(value) ? value.filter(isJob) : [];
+  } catch {
+    return [];
+  }
+}
+
 function load(): Promise<void> {
   loaded ??= AsyncStorage.getItem(QUEUE_KEY).then(
     async (raw) => {
-      const saved = raw ? (JSON.parse(raw) as UploadJob[]) : [];
+      const saved = parseSaved(raw);
       // Jobs queued while this one loaded stay; saved copies of the same path are dropped.
       const queuedMeanwhile = jobs.length > 0;
       jobs = [...saved.filter((s) => !jobs.some((j) => j.path === s.path)), ...jobs];
@@ -92,18 +115,42 @@ function load(): Promise<void> {
   return loaded;
 }
 
-/** Saves the queue. False when it could not be saved (or the saved queue is not read yet). */
-async function save(): Promise<boolean> {
-  if (!restored) return false;
-  try {
-    await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(jobs));
-  } catch {
-    return false;
-  }
-  // The saved queue no longer lists these photos, so their device copies can go.
-  for (const id of toForget) forgetLocalPhoto(id);
-  toForget = [];
-  return true;
+function retrySaveLater() {
+  saveTimer ??= setTimeout(() => {
+    saveTimer = null;
+    void save();
+  }, SAVE_RETRY_MS);
+}
+
+/**
+ * Saves the queue. False when it could not be saved (or the saved queue is not read yet); a failed
+ * save is tried again a little later. Device photos are deleted only by the save whose snapshot
+ * no longer lists their jobs.
+ */
+function save(): Promise<boolean> {
+  if (!restored) return Promise.resolve(false);
+  saving = saving.then(async () => {
+    // Taken together: the snapshot and the photos whose jobs it no longer lists.
+    const snapshot = JSON.stringify(jobs);
+    const freed = toForget;
+    toForget = [];
+    try {
+      await AsyncStorage.setItem(QUEUE_KEY, snapshot);
+    } catch {
+      toForget = [...freed, ...toForget];
+      retrySaveLater();
+      return false;
+    }
+    for (const id of freed) forgetLocalPhoto(id);
+    return true;
+  });
+  return saving;
+}
+
+/** Saves now, trying a few times, for changes that must be on disk before going on. */
+async function saveNow(): Promise<boolean> {
+  for (let i = 0; i < SAVE_TRIES; i++) if (await save()) return true;
+  return false;
 }
 
 /** Drops jobs, and their device photos once that is saved. */
@@ -127,13 +174,21 @@ async function run(): Promise<void> {
     for (;;) {
       const job = jobs.find((j) => j.uid === uid);
       if (!job) return;
+      if (!job.kind && !new File(job.localUri).exists) {
+        // The device copy is gone (for example the app's files were cleared): it can never
+        // upload, so drop it instead of blocking the jobs behind it.
+        await drop((j) => j === job);
+        continue;
+      }
       try {
         if (job.kind === 'delete') await remover(job.path);
         else await uploader(job);
         await drop((j) => j === job);
       } catch {
-        // Offline or a passing error: try again later, starting with this same job.
+        // Offline or a passing error: try again later. The job moves to the back, so one that
+        // keeps failing never holds up the others.
         job.attempts += 1;
+        jobs = [...jobs.filter((j) => j !== job), job];
         await save();
         clearRetry();
         retryTimer = setTimeout(kickUploads, retryDelay(job.attempts));
@@ -178,7 +233,8 @@ export async function enqueueUpload(job: Omit<UploadJob, 'attempts' | 'kind'>): 
 
 /**
  * Drops a deleted receipt's uploads and queues its photos for deletion, so a delete that fails
- * offline is tried again later instead of leaving the photo behind.
+ * offline is tried again later instead of leaving the photo behind. Resolves once the delete jobs
+ * are saved on the device (or could not be after a few tries).
  */
 export async function cancelUploads(
   receiptId: string,
@@ -200,7 +256,7 @@ export async function cancelUploads(
       attempts: 0,
     });
   }
-  await save();
+  await saveNow();
   kickUploads();
 }
 
@@ -217,6 +273,9 @@ export function resetUploadsForTests(next?: Uploader, nextRemover?: Remover): vo
   loaded = null;
   restored = false;
   toForget = [];
+  saving = Promise.resolve(true);
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = null;
   running = false;
   uid = null;
   clearRetry();

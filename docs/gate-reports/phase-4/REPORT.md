@@ -62,7 +62,7 @@
 | TC-405 | Manual | — | — | Offline save, then online (see below); covered by G4-1 and G4-2 |
 
 **Totals:**
-- **Unit:** 14 suites, 233 tests, 7 snapshots.
+- **Unit:** 14 suites, 239 tests, 7 snapshots.
 - **Rules and functions:** 3 files, 41 tests, run against the Auth, Firestore, Storage and Functions emulators.
 - **Maestro:** 17/17 flows on the iPhone 17 Pro Max simulator and 17/17 on the Medium Phone API 36.1 emulator. Earlier phases' flows are included as regression checks. Release builds were built with `EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1`.
 
@@ -181,6 +181,18 @@ On Android, Play services' scanner handles the camera itself, so the app never a
 - **TC-402 flow:**
   - The flow adds the receipt image to the device itself (no manual step) and waits for the background upload before checking Storage.
   - The flow checks that the photo itself loaded, not just its placeholder.
+
+### Second review round
+
+- **Upload queue:**
+  - Saves run one at a time, and a device photo is deleted only by the save whose snapshot no longer lists its job. A failed save is tried again.
+  - A damaged saved queue counts as empty instead of breaking every upload.
+  - A job whose device photo is gone is dropped, and a job that keeps failing moves behind the others, so nothing blocks the queue.
+  - Deleting a receipt saves the photo-delete job on the device before the receipt is deleted.
+- **Saving right after sign-in:** if the profile still can't be created after the wait, nothing is saved; the form stays open with "Couldn't save the receipt. Check your connection and try again." Closing the screen while it waits cancels the save.
+- **Receipt photo:** the `receipt-photo` test id appears only once the image has loaded, with separate loading, error and empty states.
+- **TC-402:** looks for the uploaded photo again every 3 s, up to 6 times, and checks the latest result.
+- **Scanner on Android:** once the emulator has the Play services scanner module, the scanner really opens with the virtual camera, and leaving it asks "Discard scan?". The shared scanner step now answers Discard. After this change both suites passed again: iOS 17/17, Android 17/17, and 5 of 5 extra Android TC-402 runs.
 
 ## Notes
 

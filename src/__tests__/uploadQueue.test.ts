@@ -24,6 +24,7 @@ const job = (n = 1) => ({
   path: photoPath(UID, `r${n}`, `p${n}`),
   localUri: `file:///docs/receipt-photos/p${n}.jpg`,
 });
+const savedQueue = async () => JSON.parse((await AsyncStorage.getItem(QUEUE_KEY)) ?? '[]');
 
 /** Lets queued promise callbacks (uploads, saves) run. */
 const settle = async () => {
@@ -33,6 +34,8 @@ const settle = async () => {
 beforeEach(async () => {
   jest.useFakeTimers();
   resetScan();
+  // The compressed copies of the queued photos are on the device, as after a scan.
+  for (const n of [1, 2, 3]) files.add(job(n).localUri);
   resetUploadsForTests();
   await AsyncStorage.clear();
 });
@@ -198,6 +201,90 @@ describe('upload queue', () => {
     expect(listener).toHaveBeenCalled();
     expect(queuedPhoto(job(1).path)?.localUri).toBe(job(1).localUri);
     unsubscribe();
+  });
+
+  it('treats a damaged saved queue as empty instead of failing every call', async () => {
+    await AsyncStorage.setItem(QUEUE_KEY, '{not json');
+    await startUploads(UID);
+    await enqueueUpload(job(1));
+    await settle();
+    expect([...uploads.keys()]).toEqual([job(1).path]);
+
+    resetUploadsForTests();
+    await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify({ not: 'a list' }));
+    await startUploads(UID);
+    await enqueueUpload(job(2));
+    await settle();
+    expect(uploads.has(job(2).path)).toBe(true);
+  });
+
+  it('drops a job whose device photo is gone, so later jobs still upload', async () => {
+    await enqueueUpload(job(1));
+    await enqueueUpload(job(2));
+    files.delete(job(1).localUri);
+    await startUploads(UID);
+    await settle();
+    expect([...uploads.keys()]).toEqual([job(2).path]);
+    expect(await savedQueue()).toEqual([]);
+  });
+
+  it('moves a failing job behind the others', async () => {
+    await enqueueUpload(job(1));
+    await enqueueUpload(job(2));
+    storageState.failNext = 1;
+    await startUploads(UID);
+    await settle();
+    // Job 1 failed and went to the back; job 2 is next.
+    expect((await savedQueue()).map((j: { path: string }) => j.path)).toEqual([
+      job(2).path,
+      job(1).path,
+    ]);
+    expect(uploads.has(job(2).path)).toBe(false);
+    await jest.advanceTimersByTimeAsync(retryDelay(1));
+    await settle();
+    expect(storageState.putCalls).toEqual([job(1).path, job(2).path, job(1).path]);
+  });
+
+  it('frees a device photo only with the save that no longer lists its job', async () => {
+    await startUploads(UID);
+    // The save that removes job 1 after its upload fails; an earlier save of the queue succeeds.
+    const write = jest.mocked(AsyncStorage.setItem);
+    const realWrite = write.getMockImplementation()!;
+    let calls = 0;
+    write.mockImplementation((key, value) => {
+      calls += 1;
+      return calls === 2 ? Promise.reject(new Error('disk full')) : realWrite(key, value);
+    });
+    await enqueueUpload(job(1));
+    await settle();
+    expect(uploads.has(job(1).path)).toBe(true);
+    expect(files.has(job(1).localUri)).toBe(true);
+    // The failed save is tried again shortly; then the photo can go.
+    await jest.advanceTimersByTimeAsync(5_000);
+    await settle();
+    expect(files.has(job(1).localUri)).toBe(false);
+    expect(await savedQueue()).toEqual([]);
+    write.mockImplementation(realWrite);
+  });
+
+  it('saves a photo delete before going on, even if the first save fails', async () => {
+    await startUploads(UID);
+    await enqueueUpload(job(1));
+    await settle();
+    storageState.failDeletes = 1;
+    jest
+      .mocked(AsyncStorage.setItem)
+      .mockImplementationOnce(() => Promise.reject(new Error('disk full')));
+    await cancelUploads('r1', UID, [job(1).path]);
+    // On disk before the receipt is deleted, so a restart keeps the cleanup.
+    expect(await savedQueue()).toEqual([
+      expect.objectContaining({ kind: 'delete', path: job(1).path }),
+    ]);
+
+    resetUploadsForTests();
+    await startUploads(UID);
+    await settle();
+    expect(uploads.has(job(1).path)).toBe(false);
   });
 
   it('backs off up to five minutes', () => {

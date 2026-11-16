@@ -168,6 +168,26 @@ describe('Home', () => {
     ensure.mockRestore();
   });
 
+  it('keeps the form and says so when the profile cannot be created', async () => {
+    await AsyncStorage.setItem(ONBOARDING_KEY, '1');
+    const { user } = (await signInAnonymously()) as { user: { uid: string } };
+    const ensure = jest
+      .spyOn(authService, 'ensureUserDoc')
+      .mockRejectedValue(Object.assign(new Error('offline'), { code: 'unavailable' }));
+    await renderRouter(APP_DIR, { initialUrl: '/receipt/new' });
+    await chooseStore('target', 'store-option-target');
+    await fireEvent.changeText(screen.getByTestId('receipt-amount'), '20');
+    await fireEvent.press(screen.getByTestId('receipt-save'));
+    await waitFor(() =>
+      expect(useSnackbar.getState().current?.message).toMatch(/Couldn't save the receipt/),
+    );
+    expect(screen.getByTestId('screen-receipt-new')).toBeTruthy();
+    expect(
+      [...firestoreDocs.keys()].filter((p) => p.startsWith(`users/${user.uid}/receipts/`)),
+    ).toHaveLength(0);
+    ensure.mockRestore();
+  });
+
   it('TC-312 (unit): a receipt only on this device shows Waiting to sync', async () => {
     await start('/home', [{ id: 'r1' }]);
     await act(async () => setPending(receiptPath('r1'), true));

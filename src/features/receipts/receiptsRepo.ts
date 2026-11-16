@@ -191,9 +191,11 @@ export function setReceiptStatus(uid: string, id: string, status: ReceiptStatus)
 
 /** Deletes the receipt and its photos (files still waiting to upload are dropped too). */
 export function deleteReceipt(uid: string, id: string, photoPaths: readonly string[] = []): void {
-  background(deleteDoc(doc(receiptsCol(uid), id)));
-  // Waiting uploads are dropped; the photos are deleted from Storage, retried until it works.
-  void cancelUploads(id, uid, photoPaths);
+  // Waiting uploads are dropped and the photos queued for deletion from Storage (retried until it
+  // works). That queue is saved on the device first, so the cleanup survives a restart.
+  void cancelUploads(id, uid, photoPaths)
+    .catch(() => undefined)
+    .then(() => background(deleteDoc(doc(receiptsCol(uid), id))));
 }
 
 /** Remembers the window chosen for a store that is not in the built-in list. */

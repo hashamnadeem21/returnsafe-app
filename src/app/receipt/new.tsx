@@ -23,18 +23,22 @@ const PROFILE_WAIT_MS = 8_000;
 /**
  * Right after sign-in the profile (users/{uid}) may not exist yet: the server creates it, and the
  * rules need it to check the free limit, so a receipt saved before it exists would be refused.
- * Creates it first (safe to repeat), waiting at most a few seconds.
+ * Creates it first (safe to repeat), waiting at most a few seconds. True once it surely exists.
  */
-async function profileReady(): Promise<void> {
-  if (useReceipts.getState().profile) return;
+async function profileReady(): Promise<boolean> {
+  if (useReceipts.getState().profile) return true;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  await Promise.race([
-    ensureUserDoc().catch(() => undefined),
-    new Promise<void>((resolve) => {
-      timer = setTimeout(resolve, PROFILE_WAIT_MS);
+  const ready = await Promise.race([
+    ensureUserDoc().then(
+      () => true,
+      () => false,
+    ),
+    new Promise<boolean>((resolve) => {
+      timer = setTimeout(() => resolve(false), PROFILE_WAIT_MS);
     }),
   ]);
   clearTimeout(timer);
+  return ready;
 }
 
 function initialValues(draft: ScanDraft | null, today: string): ReceiptFormValues {
@@ -69,10 +73,13 @@ export default function NewReceipt() {
   const [limitOpen, setLimitOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const saved = useRef(false);
+  // False once the screen is closed: a save still waiting for the profile is then dropped.
+  const open = useRef(true);
 
   // Leaving without saving drops the scanned photo kept on the device.
   useEffect(
     () => () => {
+      open.current = false;
       useScanDraft.getState().clear();
       if (draft && !saved.current) forgetLocalPhoto(draft.photoId);
     },
@@ -101,7 +108,15 @@ export default function NewReceipt() {
         submitLabel="Save receipt"
         onSubmit={async (input) => {
           if (!uid) return;
-          await profileReady();
+          const ready = await profileReady();
+          // Closed while waiting: nothing to save (a scanned photo is already discarded).
+          if (!open.current) return;
+          if (!ready) {
+            useSnackbar.getState().show({
+              message: "Couldn't save the receipt. Check your connection and try again.",
+            });
+            return;
+          }
           const st = useReceipts.getState();
           if (!canAddActive(st.profile, st.receipts)) {
             setLimitOpen(true);

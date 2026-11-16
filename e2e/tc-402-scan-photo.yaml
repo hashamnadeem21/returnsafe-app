@@ -41,25 +41,26 @@ name: TC-402 Scan a receipt photo (simulator)
     visible:
       id: home-later
     timeout: 5000
-# The upload runs in the background after saving, so look again for a few seconds if needed.
-- retry:
-    maxRetries: 5
+# The upload and the receipt write both finish in the background after saving: look again every
+# 3 seconds, up to 6 times, until Storage has the photo at the path saved on the receipt, then
+# check the latest result.
+- runScript: scripts/receipt-photos.js
+- repeat:
+    times: 6
+    while:
+      true: ${output.fileCount != 1 || output.files != output.photoPaths}
     commands:
+      # Home stays visible, so this just waits 3 seconds.
+      - extendedWaitUntil:
+          notVisible:
+            id: home-later
+          timeout: 3000
+          optional: true
       - runScript: scripts/receipt-photos.js
-      - runFlow:
-          when:
-            true: ${output.fileCount == 0}
-          commands:
-            # Home stays visible, so this just waits 3 seconds before the next look.
-            - extendedWaitUntil:
-                notVisible:
-                  id: home-later
-                timeout: 3000
-                optional: true
-      - assertTrue: ${output.fileCount == 1}
+- assertTrue: ${output.fileCount == 1}
 - assertTrue: ${output.files == output.photoPaths}
 - tapOn: '.*Walmart.*'
-# receipt-photo is the loaded image; the placeholder is receipt-photo-empty.
+# receipt-photo appears only once the image has loaded (-loading, -error and -empty otherwise).
 - extendedWaitUntil:
     visible:
       id: receipt-photo

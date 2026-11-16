@@ -129,6 +129,8 @@ describe('Scan (S09) and review (S10)', () => {
     expect(await screen.findByTestId('scan-status')).toHaveTextContent(
       "We couldn't read this receipt",
     );
+    // The photo shows once the image has loaded.
+    await fireEvent(screen.getByTestId('scan-photo-loading'), 'load');
     expect(screen.getByTestId('scan-photo')).toBeTruthy();
     expect(screen.queryByTestId('detected-store')).toBeNull();
     expect(screen.queryByTestId('detected-total')).toBeNull();
@@ -256,7 +258,8 @@ describe('Scan (S09) and review (S10)', () => {
     const alert = jest.spyOn(Alert, 'alert');
     const { router } = jest.requireActual<typeof import('expo-router')>('expo-router');
     await act(async () => router.push({ pathname: '/receipt/[id]', params: { id } }));
-    expect(await screen.findByTestId('receipt-photo')).toBeTruthy();
+    await fireEvent(await screen.findByTestId('receipt-photo-loading'), 'load');
+    expect(screen.getByTestId('receipt-photo')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('receipt-more'));
     await fireEvent.press(await screen.findByTestId('receipt-delete'));
     const buttons = alert.mock.calls[0][2] as { text: string; onPress?: () => void }[];

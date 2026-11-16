@@ -58,13 +58,19 @@ type Props = {
   testID?: string;
 };
 
+type LoadState = { uri: string; state: 'loaded' | 'error' };
+
 /**
- * A receipt photo thumbnail, with a placeholder until it can be shown. The placeholder's testID
- * ends in "-empty", so tests can tell a shown photo from a missing one.
+ * A receipt photo thumbnail, with a placeholder until it can be shown. testIDs tell the states
+ * apart: `{testID}` only once the image has loaded, `-loading` while it loads, `-error` if it
+ * failed, and `-empty` when there is no photo to show yet.
  */
 export function ReceiptPhoto({ path, localUri, width, height, testID }: Props) {
   const { colors, radii, sizes } = useTheme();
   const uri = usePhotoUri(path, localUri);
+  // Kept per URI, so a new URI starts out loading again.
+  const [load, setLoad] = useState<LoadState | null>(null);
+  const state = load && load.uri === uri ? load.state : 'loading';
   const box = {
     width,
     height,
@@ -86,7 +92,9 @@ export function ReceiptPhoto({ path, localUri, width, height, testID }: Props) {
       style={box}
       resizeMode="cover"
       accessibilityIgnoresInvertColors
-      testID={testID}
+      onLoad={() => setLoad({ uri, state: 'loaded' })}
+      onError={() => setLoad({ uri, state: 'error' })}
+      testID={testID && (state === 'loaded' ? testID : `${testID}-${state}`)}
     />
   );
 }
