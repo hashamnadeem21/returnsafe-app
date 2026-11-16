@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
 import { useSnackbar } from '@/components/Snackbar';
+import { ensureUserDoc } from '@/features/auth/authService';
 import { kickUploads, startUploads, stopUploads } from '@/features/scan/uploadQueue';
 import { useSession } from '@/stores/session';
 
@@ -13,6 +14,45 @@ import {
 } from './receiptsRepo';
 import { useReceipts } from './receiptsStore';
 import { flushStatus } from './statusActions';
+
+const FIRST_PROFILE_RETRY_MS = 2_000;
+const MAX_PROFILE_RETRY_MS = 60_000;
+
+/**
+ * Creates users/{uid} again when it is missing (the call at sign-in failed, for example offline).
+ * Without it the rules can't check the free limit, so every new receipt would be refused. Tries
+ * with growing waits until it works; the returned function stops it.
+ */
+function profileCreator(): { request: () => void; stop: () => void } {
+  let stopped = false;
+  let busy = false;
+  let tries = 0;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const request = () => {
+    if (stopped || busy || timer) return;
+    busy = true;
+    ensureUserDoc()
+      .catch(() => {
+        if (stopped) return;
+        const wait = Math.min(FIRST_PROFILE_RETRY_MS * 2 ** tries, MAX_PROFILE_RETRY_MS);
+        tries += 1;
+        timer = setTimeout(() => {
+          timer = null;
+          request();
+        }, wait);
+      })
+      .finally(() => {
+        busy = false;
+      });
+  };
+  return {
+    request,
+    stop: () => {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+    },
+  };
+}
 
 /**
  * Listens to the signed-in user's receipts, profile and custom stores, and uploads their queued
@@ -32,6 +72,7 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
     useReceipts.getState().reset(uid);
     if (!uid) return;
     const st = () => useReceipts.getState();
+    const creator = profileCreator();
     const unsubs = [
       subscribeReceipts(
         uid,
@@ -42,6 +83,7 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
         uid,
         (p) => st().setProfile(p),
         () => undefined,
+        creator.request,
       ),
       subscribeCustomStores(
         uid,
@@ -52,6 +94,7 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
     return () => {
       // Save any change still inside its Undo window before the user's data goes away.
       flushStatus();
+      creator.stop();
       unsubs.forEach((u) => u());
     };
   }, [uid, attempt]);

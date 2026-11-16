@@ -54,7 +54,12 @@ function stamp(value) {
 function snapshotFor(ref) {
   if (ref.kind === 'doc') {
     const data = docs.get(ref.path);
-    return { id: ref.id, exists: () => data !== undefined, data: () => data };
+    return {
+      id: ref.id,
+      exists: () => data !== undefined,
+      data: () => data,
+      metadata: { hasPendingWrites: false, fromCache: false },
+    };
   }
   const prefix = `${ref.path}/`;
   let rows = [...docs.entries()]

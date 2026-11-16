@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, AppState, Linking, Platform, StyleSheet, View } from 'react-native';
 import DocumentScanner, {
   ResponseType,
@@ -9,6 +9,7 @@ import DocumentScanner, {
 
 import { AppText, Button, EmptyState, Screen, ScreenHeader } from '@/components';
 import { useToday } from '@/features/receipts/useToday';
+import { forgetLocalPhoto } from '@/features/scan/photos';
 import { draftFromImage, useScanDraft } from '@/features/scan/scanDraft';
 import { useTheme } from '@/theme';
 
@@ -40,14 +41,27 @@ export default function Scanner() {
   const today = useToday();
   const [mode, setMode] = useState<Mode>('starting');
   const [notice, setNotice] = useState<string | null>(null);
+  // False once the screen is closed: a photo still being read is then thrown away.
+  const open = useRef(true);
+  useEffect(() => {
+    open.current = true;
+    return () => {
+      open.current = false;
+    };
+  }, []);
 
   const readImage = async (uri: string) => {
     setMode('reading');
     try {
       const draft = await draftFromImage(uri, today);
+      if (!open.current) {
+        forgetLocalPhoto(draft.photoId);
+        return;
+      }
       useScanDraft.getState().set(draft);
       router.replace({ pathname: '/receipt/new', params: { from: 'scan' } });
     } catch {
+      if (!open.current) return;
       setNotice("That photo couldn't be opened. Try again or enter the receipt by hand.");
       setMode('ready');
     }

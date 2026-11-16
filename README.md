@@ -44,15 +44,7 @@ EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo run:android --variant release
 npm run e2e:android
 ```
 
-The scan flow (TC-402) picks a receipt photo from the device's library, since simulators have no camera. Add the test receipt once per device before running it:
-
-```bash
-xcrun simctl addmedia booted e2e/assets/walmart-receipt.png
-```
-
-```bash
-adb push e2e/assets/walmart-receipt.png /sdcard/Pictures/walmart-receipt.png && adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Pictures/walmart-receipt.png
-```
+The scan flow (TC-402) picks a receipt photo from the device's library, since simulators have no camera. The flow adds `e2e/assets/walmart-receipt.png` to the device's photos itself (Maestro `addMedia`), so it is always the newest photo.
 
 `e2e/scripts/make-receipt-image.py` re-creates the image if needed.
 

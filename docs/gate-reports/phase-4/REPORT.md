@@ -62,7 +62,7 @@
 | TC-405 | Manual | — | — | Offline save, then online (see below); covered by G4-1 and G4-2 |
 
 **Totals:**
-- **Unit:** 14 suites, 225 tests, 7 snapshots.
+- **Unit:** 14 suites, 233 tests, 7 snapshots.
 - **Rules and functions:** 3 files, 41 tests, run against the Auth, Firestore, Storage and Functions emulators.
 - **Maestro:** 17/17 flows on the iPhone 17 Pro Max simulator and 17/17 on the Medium Phone API 36.1 emulator. Earlier phases' flows are included as regression checks. Release builds were built with `EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1`.
 
@@ -156,8 +156,31 @@ On Android, Play services' scanner handles the camera itself, so the app never a
 ## Fixed during testing
 
 - **Android emulator scanner:** with no internet, Play services shows "Something went wrong" while downloading the scanner. The app treats this like a closed scanner (Scan receipt, Choose photo, Enter manually), and the E2E flow cancels it.
+- **Photo not ready for text recognition:** saving the compressed photo finishes in the background, and the app didn't wait for it. Sometimes (mostly on Android) text recognition ran before the file was there and the receipt showed as unreadable. The app now waits, and the unit test fake behaves the same way so the race is covered.
+- **Receipts disappearing for a new guest:** a new guest's profile (`users/{uid}`) is created by a server call right after sign-in, and the rules need it to check the free limit. A receipt saved before it existed (slow call) or after the call failed was refused, so it vanished from Home. Now:
+  - Save first makes sure the profile exists (waiting up to 8 s, with the button showing it is busy), then saves.
+  - If the server says the profile is missing, the app creates it again, with growing waits until it works.
+  - Found because the functions emulator sometimes took over 20 s to create the profile.
 - **Android flows that open Scan:** the earlier flows that go Scan → Enter manually got stuck on the offline Play services screen. They now share one step (`e2e/subflows/open-scanner.yaml`) that waits for the scanner screen and cancels that screen if it appears.
 - **Android photo picker:** some versions select first and confirm with **Done**; the E2E flow handles both.
+
+## Fixed after code review
+
+- **Upload queue:**
+  - If the saved queue can't be read after a restart, nothing is written over it; it is read again next time, so earlier photos still upload.
+  - A device photo is deleted only after the queue without it is saved, so a failed save can't leave a job pointing at a missing file.
+  - Photos of deleted receipts are deleted through the same queue, so a delete that fails offline is retried. A photo that is already missing counts as deleted.
+- **Receipt photo:**
+  - The detail screen updates as soon as the saved queue is read or the upload finishes.
+  - A failed lookup is tried again every 15 seconds while the screen is open.
+- **Scanner:** closing the screen while a photo is being read discards that photo instead of opening the review.
+- **Android text recognition:** each recognizer is closed when it finishes.
+- **Parser:**
+  - "TOTAL TENDERED" and gift card balances are never taken as the total.
+  - A large "TOTAL" next to a smaller amount is kept on one row.
+- **TC-402 flow:**
+  - The flow adds the receipt image to the device itself (no manual step) and waits for the background upload before checking Storage.
+  - The flow checks that the photo itself loaded, not just its placeholder.
 
 ## Notes
 

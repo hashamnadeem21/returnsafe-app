@@ -1,4 +1,4 @@
-# Picks the newest photo in the system photo picker (the test receipt added per the README).
+# Picks the newest photo in the system photo picker (the test receipt the flow just added).
 appId: com.returnsafe.app
 ---
 - runFlow:

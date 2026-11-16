@@ -192,7 +192,7 @@ export function amountsIn(line: string): number[] {
 
 const TOTAL_WORDS = /\b(GRAND TOTAL|ORDER TOTAL|TOTAL|AMOUNT DUE|AMT DUE|BALANCE DUE|BALANCE)\b/;
 const NOT_TOTAL =
-  /SUB\s?-?\s?TOTAL|\bTAX\b|SAVINGS|SAVED|\bSAVE\b|DISCOUNT|\bITEMS?\b|\bQTY\b|POINTS|REWARD|CARD BALANCE|REMAINING|PREVIOUS|CHANGE|\bTIP\b|\bCOUNT\b|BEFORE/;
+  /SUB\s?-?\s?TOTAL|\bTAX\b|SAVINGS|SAVED|\bSAVE\b|DISCOUNT|\bITEMS?\b|\bQTY\b|POINTS|REWARD|CARD BALANCE|REMAINING|PREVIOUS|CHANGE|\bTIP\b|\bCOUNT\b|BEFORE|TEND|GIFT/;
 
 const AMOUNT_ONLY = /^[\s$\d.,Oo-]+$/;
 const isAmountOnly = (line: string) => AMOUNT_ONLY.test(line) && amountsIn(line).length > 0;

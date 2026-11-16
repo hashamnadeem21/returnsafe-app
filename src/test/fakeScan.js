@@ -6,7 +6,7 @@
 
 // ---- Firebase Storage: uploaded files by path, with a switch to fail the next uploads.
 const uploads = new Map();
-const storageState = { failNext: 0, putCalls: [] };
+const storageState = { failNext: 0, putCalls: [], failDeletes: 0, deleteCalls: [] };
 
 const fakeStorage = {
   getStorage: () => ({}),
@@ -22,6 +22,14 @@ const fakeStorage = {
     return Promise.resolve({ state: 'success' });
   }),
   deleteObject: jest.fn(async (ref) => {
+    storageState.deleteCalls.push(ref.fullPath);
+    if (storageState.failDeletes > 0) {
+      storageState.failDeletes -= 1;
+      throw Object.assign(new Error('retry limit'), { code: 'storage/retry-limit-exceeded' });
+    }
+    if (!uploads.has(ref.fullPath)) {
+      throw Object.assign(new Error('not found'), { code: 'storage/object-not-found' });
+    }
     uploads.delete(ref.fullPath);
   }),
   getDownloadURL: jest.fn(async (ref) => {
@@ -34,6 +42,8 @@ function resetStorage() {
   uploads.clear();
   storageState.failNext = 0;
   storageState.putCalls.length = 0;
+  storageState.failDeletes = 0;
+  storageState.deleteCalls.length = 0;
 }
 
 // ---- expo-file-system: a set of existing file URIs.
@@ -63,7 +73,9 @@ class File {
   delete() {
     files.delete(this.uri);
   }
-  move(target) {
+  // Like the native module, move finishes later (it returns a promise).
+  async move(target) {
+    for (let i = 0; i < 5; i++) await Promise.resolve();
     files.delete(this.uri);
     files.add(target.uri);
     this.uri = target.uri;

@@ -15,11 +15,9 @@ import {
   updateDoc,
 } from '@react-native-firebase/firestore';
 
-import { deleteObject, ref } from '@react-native-firebase/storage';
-
 import { cancelUploads } from '@/features/scan/uploadQueue';
 import { computeDeadline, DEFAULT_TIMEZONE } from '@/lib/dates';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 
 import { customStoreId } from './stores';
 import type { CustomStore, Receipt, ReceiptInput, ReceiptStatus, UserProfile } from './types';
@@ -85,16 +83,24 @@ export function subscribeReceipts(
   );
 }
 
+/**
+ * Listens to users/{uid}. `missing` is called when the server confirms the document does not exist
+ * (its creation at sign-in failed), so the caller can create it again.
+ */
 export function subscribeProfile(
   uid: string,
   next: (profile: UserProfile | null) => void,
   error: (e: unknown) => void,
+  missing?: () => void,
 ): Unsubscribe {
   return onSnapshot(
     doc(db(), 'users', uid),
     (snap) => {
       const d = snap.data() as Data | undefined;
-      if (!d) return next(null);
+      if (!d) {
+        if (!snap.metadata.fromCache) missing?.();
+        return next(null);
+      }
       next({
         isPro: d.isPro === true,
         activeCount: num(d.activeCount),
@@ -186,11 +192,8 @@ export function setReceiptStatus(uid: string, id: string, status: ReceiptStatus)
 /** Deletes the receipt and its photos (files still waiting to upload are dropped too). */
 export function deleteReceipt(uid: string, id: string, photoPaths: readonly string[] = []): void {
   background(deleteDoc(doc(receiptsCol(uid), id)));
-  void cancelUploads(id);
-  for (const path of photoPaths) {
-    // A photo that never finished uploading is already gone; nothing to report then.
-    deleteObject(ref(storage(), path)).catch(() => undefined);
-  }
+  // Waiting uploads are dropped; the photos are deleted from Storage, retried until it works.
+  void cancelUploads(id, uid, photoPaths);
 }
 
 /** Remembers the window chosen for a store that is not in the built-in list. */

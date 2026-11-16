@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 
 import { Screen, ScreenHeader, useSnackbar } from '@/components';
+import { ensureUserDoc } from '@/features/auth/authService';
 import { canAddActive, activeUsed } from '@/features/receipts/derive';
 import { LimitSheet } from '@/features/receipts/components/LimitSheet';
 import { ReceiptForm, type ScanReview } from '@/features/receipts/components/ReceiptForm';
@@ -16,6 +17,25 @@ import { centsToInput } from '@/lib/money';
 import { useSession } from '@/stores/session';
 
 const close = () => (router.canGoBack() ? router.back() : router.replace('/home'));
+
+const PROFILE_WAIT_MS = 8_000;
+
+/**
+ * Right after sign-in the profile (users/{uid}) may not exist yet: the server creates it, and the
+ * rules need it to check the free limit, so a receipt saved before it exists would be refused.
+ * Creates it first (safe to repeat), waiting at most a few seconds.
+ */
+async function profileReady(): Promise<void> {
+  if (useReceipts.getState().profile) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    ensureUserDoc().catch(() => undefined),
+    new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, PROFILE_WAIT_MS);
+    }),
+  ]);
+  clearTimeout(timer);
+}
 
 function initialValues(draft: ScanDraft | null, today: string): ReceiptFormValues {
   const p = draft?.parsed;
@@ -79,8 +99,9 @@ export default function NewReceipt() {
         initial={initial}
         scan={scan}
         submitLabel="Save receipt"
-        onSubmit={(input) => {
+        onSubmit={async (input) => {
           if (!uid) return;
+          await profileReady();
           const st = useReceipts.getState();
           if (!canAddActive(st.profile, st.receipts)) {
             setLimitOpen(true);

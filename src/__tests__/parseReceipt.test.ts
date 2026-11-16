@@ -117,6 +117,11 @@ describe('total', () => {
     expect(findTotal(['TOTAL 382.36', 'VISA 382.36', 'BALANCE DUE 0.00'])).toBe(38236);
   });
 
+  it('skips tendered amounts and gift card balances', () => {
+    expect(findTotal(['TOTAL 25.00', 'TOTAL TENDERED 40.00', 'CHANGE DUE 15.00'])).toBe(2500);
+    expect(findTotal(['TOTAL 25.00', 'GIFT BALANCE 60.00'])).toBe(2500);
+  });
+
   it('skips savings lines', () => {
     expect(findTotal(['TOTAL 86.80', 'TOTAL SAVINGS 132.00'])).toBe(8680);
   });

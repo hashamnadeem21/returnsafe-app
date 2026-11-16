@@ -54,7 +54,8 @@ export async function preparePhoto(sourceUri: string, photoId: string): Promise<
   const saved = await image.saveAsync({ compress: PHOTO_QUALITY, format: SaveFormat.JPEG });
   const target = localPhoto(photoId);
   if (target.exists) target.delete();
-  new File(saved.uri).move(target);
+  // move runs natively in the background; wait for it so the file is there when this returns.
+  await new File(saved.uri).move(target);
   return target.uri;
 }
 

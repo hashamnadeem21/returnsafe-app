@@ -11,6 +11,16 @@ type OcrRect = RecognizedLine['frame'];
 const centerY = (r: OcrRect) => (r.top + r.bottom) / 2;
 const heightOf = (r: OcrRect) => Math.max(1, r.bottom - r.top);
 
+/**
+ * Same printed row when the vertical centres are within half a typical line, or when the boxes
+ * overlap by at least half the shorter one (a large "TOTAL" next to a small amount).
+ */
+function sameRow(a: OcrRect, b: OcrRect, typical: number): boolean {
+  if (Math.abs(centerY(a) - centerY(b)) <= typical / 2) return true;
+  const overlap = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+  return overlap >= Math.min(heightOf(a), heightOf(b)) / 2;
+}
+
 /** Text with one receipt row per line, top to bottom and left to right. */
 export function textFromLines(recognized: readonly OcrLine[]): string {
   const lines = recognized.filter((l) => l.text.trim().length > 0);
@@ -23,8 +33,7 @@ export function textFromLines(recognized: readonly OcrLine[]): string {
   const rows: OcrLine[][] = [];
   for (const line of sorted) {
     const row = rows[rows.length - 1];
-    // Same row when the vertical centres are within half a line of each other.
-    if (row && Math.abs(centerY(line.frame) - centerY(row[0].frame)) <= typical / 2) row.push(line);
+    if (row && sameRow(line.frame, row[0].frame, typical)) row.push(line);
     else rows.push([line]);
   }
   return rows

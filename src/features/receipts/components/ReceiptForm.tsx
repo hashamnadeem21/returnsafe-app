@@ -30,7 +30,8 @@ export type ScanReview = {
 type Props = {
   initial: ReceiptFormValues;
   submitLabel: string;
-  onSubmit: (input: ReceiptInput) => void;
+  /** May return a promise; the Save button shows it is busy until it settles. */
+  onSubmit: (input: ReceiptInput) => void | Promise<void>;
   scan?: ScanReview;
 };
 
@@ -320,6 +321,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, scan }: Props) {
         <Button
           label={submitLabel}
           onPress={handleSubmit((v) => onSubmit(toReceiptInput(v)))}
+          loading={formState.isSubmitting}
           testID="receipt-save"
         />
       </ScrollView>

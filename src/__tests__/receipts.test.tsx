@@ -7,10 +7,12 @@ import { useSnackbar } from '@/components/Snackbar';
 import { addCalendarDays, computeDeadline, isoToPickerDate, todayIn } from '@/lib/dates';
 import { INSTALL_KEY } from '@/lib/install';
 import { ONBOARDING_KEY } from '@/lib/onboarding';
+import * as authService from '@/features/auth/authService';
 import { flushStatus } from '@/features/receipts/statusActions';
 import { useReceipts } from '@/features/receipts/receiptsStore';
 import { useSession } from '@/stores/session';
 import {
+  fakeState,
   firestoreDocs,
   firestoreWrites,
   reset,
@@ -124,6 +126,46 @@ describe('Home', () => {
     expect(screen.getByTestId('home-later')).toHaveTextContent(/Walmart.*90 days/);
     expect(screen.getByTestId('home-protected')).toHaveTextContent(/\$99\.00.*2 active receipts/);
     expect(screen.getByTestId('home-saved-amount')).toHaveTextContent('$58.00');
+  });
+
+  it('creates the profile again when it is missing, retrying until it works', async () => {
+    await AsyncStorage.setItem(ONBOARDING_KEY, '1');
+    await signInAnonymously();
+    // The call at sign-in failed, so there is no users/{uid} document.
+    fakeState.failing.add('initUser');
+    await renderRouter(APP_DIR, { initialUrl: '/home' });
+    const calls = () => fakeState.callables.filter((c) => c.name === 'initUser').length;
+    await waitFor(() => expect(calls()).toBeGreaterThanOrEqual(1));
+    const failed = calls();
+
+    fakeState.failing.delete('initUser');
+    // Tried again after a short wait (2 s), without the user doing anything.
+    await waitFor(() => expect(calls()).toBeGreaterThan(failed), { timeout: 5000 });
+  });
+
+  it('creates a missing profile before saving, so the receipt is not refused', async () => {
+    await AsyncStorage.setItem(ONBOARDING_KEY, '1');
+    const { user } = (await signInAnonymously()) as { user: { uid: string } };
+    // The server call that creates the profile is still running.
+    let finish = () => {};
+    const ensure = jest.spyOn(authService, 'ensureUserDoc').mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const saved = () =>
+      [...firestoreDocs.keys()].filter((p) => p.startsWith(`users/${user.uid}/receipts/`));
+    await renderRouter(APP_DIR, { initialUrl: '/receipt/new' });
+    await chooseStore('target', 'store-option-target');
+    await fireEvent.changeText(screen.getByTestId('receipt-amount'), '20');
+    await fireEvent.press(screen.getByTestId('receipt-save'));
+    // Nothing is written until the profile exists.
+    expect(saved()).toHaveLength(0);
+    await act(async () => finish());
+    await screen.findByTestId('screen-home');
+    expect(saved()).toHaveLength(1);
+    ensure.mockRestore();
   });
 
   it('TC-312 (unit): a receipt only on this device shows Waiting to sync', async () => {

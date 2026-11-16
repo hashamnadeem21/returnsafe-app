@@ -12,6 +12,7 @@ import {
   retryDelay,
   startUploads,
   stopUploads,
+  subscribeUploads,
 } from '@/features/scan/uploadQueue';
 import { files, manipulated, resetScan, storageState, uploads } from '@/test/fakeScan';
 
@@ -137,6 +138,68 @@ describe('upload queue', () => {
     expect([...uploads.keys()]).toEqual([job(2).path]);
   });
 
+  it('does not overwrite saved jobs when the saved queue could not be read', async () => {
+    await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify([{ ...job(1), attempts: 3 }]));
+    jest
+      .mocked(AsyncStorage.getItem)
+      .mockImplementationOnce(() => Promise.reject(new Error('disk')));
+    await enqueueUpload(job(2));
+    // Nothing written over the saved job while it could not be read.
+    expect(JSON.parse((await AsyncStorage.getItem(QUEUE_KEY)) ?? '[]')).toEqual([
+      expect.objectContaining({ path: job(1).path }),
+    ]);
+
+    // Next time the saved queue is read, both photos upload.
+    await startUploads(UID);
+    await settle();
+    expect([...uploads.keys()].sort()).toEqual([job(1).path, job(2).path]);
+    expect(JSON.parse((await AsyncStorage.getItem(QUEUE_KEY)) ?? '[]')).toEqual([]);
+  });
+
+  it('keeps the device photo until the queue without it is saved', async () => {
+    files.add(job(1).localUri);
+    await startUploads(UID);
+    await enqueueUpload(job(1));
+    jest
+      .mocked(AsyncStorage.setItem)
+      .mockImplementationOnce(() => Promise.reject(new Error('disk full')));
+    await settle();
+    expect(uploads.has(job(1).path)).toBe(true);
+    // The saved queue still lists the job, so its photo must stay for a re-upload.
+    expect(files.has(job(1).localUri)).toBe(true);
+
+    await enqueueUpload(job(2));
+    await settle();
+    expect(files.has(job(1).localUri)).toBe(false);
+  });
+
+  it('retries a failed photo delete and treats a missing photo as deleted', async () => {
+    await startUploads(UID);
+    await enqueueUpload(job(1));
+    await settle();
+    storageState.failDeletes = 1;
+    await cancelUploads('r1', UID, [job(1).path, photoPath(UID, 'r1', 'never-uploaded')]);
+    await settle();
+    expect(uploads.has(job(1).path)).toBe(true);
+    expect(JSON.parse((await AsyncStorage.getItem(QUEUE_KEY)) ?? '[]')).toHaveLength(2);
+
+    await jest.advanceTimersByTimeAsync(retryDelay(1));
+    await settle();
+    expect(uploads.has(job(1).path)).toBe(false);
+    expect(JSON.parse((await AsyncStorage.getItem(QUEUE_KEY)) ?? '[]')).toEqual([]);
+  });
+
+  it('tells listeners when the saved queue is read', async () => {
+    await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify([{ ...job(1), attempts: 1 }]));
+    const listener = jest.fn();
+    const unsubscribe = subscribeUploads(listener);
+    expect(queuedPhoto(job(1).path)).toBeUndefined();
+    await enqueueUpload(job(2));
+    expect(listener).toHaveBeenCalled();
+    expect(queuedPhoto(job(1).path)?.localUri).toBe(job(1).localUri);
+    unsubscribe();
+  });
+
   it('backs off up to five minutes', () => {
     expect([1, 2, 3, 4].map(retryDelay)).toEqual([2000, 4000, 8000, 16000]);
     expect(retryDelay(20)).toBe(5 * 60_000);
@@ -168,6 +231,20 @@ describe('OCR rows', () => {
     const labels = [line('SUBTOTAL', 10, 100), line('TOTAL', 10, 130)];
     const amounts = [line('89.00', 300, 102), line('95.23', 300, 131)];
     expect(textFromLines([...amounts, ...labels])).toBe('SUBTOTAL 89.00\nTOTAL 95.23');
+  });
+
+  it('keeps a large label and a smaller amount on one row', () => {
+    const body = [0, 1, 2].map((i) => ({
+      text: `LINE ${i}`,
+      frame: { left: 10, top: i * 20, right: 110, bottom: i * 20 + 10 },
+    }));
+    const total = { text: 'TOTAL', frame: { left: 10, top: 100, right: 110, bottom: 140 } };
+    const amount = { text: '89.00', frame: { left: 300, top: 120, right: 360, bottom: 140 } };
+    expect(
+      textFromLines([...body, amount, total])
+        .split('\n')
+        .pop(),
+    ).toBe('TOTAL 89.00');
   });
 
   it('keeps rows in reading order', () => {

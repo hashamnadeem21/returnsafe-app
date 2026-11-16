@@ -24,7 +24,8 @@ class ReceiptTextModule : Module() {
         promise.reject("ERR_IMAGE", "The photo could not be opened.", e)
         return@AsyncFunction
       }
-      TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+      val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+      recognizer
         .process(image)
         .addOnSuccessListener { result ->
           val lines = result.textBlocks.flatMap { block ->
@@ -44,6 +45,8 @@ class ReceiptTextModule : Module() {
           promise.resolve(lines)
         }
         .addOnFailureListener { e -> promise.reject("ERR_RECOGNIZE", e.message, e) }
+        // One recognizer per photo: release it however the task ends.
+        .addOnCompleteListener { recognizer.close() }
     }
   }
 }
