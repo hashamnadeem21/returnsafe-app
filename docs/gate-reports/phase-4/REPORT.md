@@ -62,7 +62,7 @@
 | TC-405 | Manual | — | — | Offline save, then online (see below); covered by G4-1 and G4-2 |
 
 **Totals:**
-- **Unit:** 14 suites, 239 tests, 7 snapshots.
+- **Unit:** 14 suites, 240 tests, 7 snapshots.
 - **Rules and functions:** 3 files, 41 tests, run against the Auth, Firestore, Storage and Functions emulators.
 - **Maestro:** 17/17 flows on the iPhone 17 Pro Max simulator and 17/17 on the Medium Phone API 36.1 emulator. Earlier phases' flows are included as regression checks. Release builds were built with `EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1`.
 
