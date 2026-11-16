@@ -185,6 +185,8 @@ async function run(): Promise<void> {
         else await uploader(job);
         await drop((j) => j === job);
       } catch {
+        // Cancelled while it was running (the receipt was deleted): never bring it back.
+        if (!jobs.includes(job)) continue;
         // Offline or a passing error: try again later. The job moves to the back, so one that
         // keeps failing never holds up the others.
         job.attempts += 1;

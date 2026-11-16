@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { putFile } from '@react-native-firebase/storage';
 
 import { textFromLines } from '@/features/scan/ocrLayout';
 import { MAX_PHOTO_SIDE, newPhotoId, photoPath, preparePhoto } from '@/features/scan/photos';
@@ -285,6 +286,32 @@ describe('upload queue', () => {
     await startUploads(UID);
     await settle();
     expect(uploads.has(job(1).path)).toBe(false);
+  });
+
+  it('never brings back an upload cancelled while it was running', async () => {
+    let fail: (e: Error) => void = () => undefined;
+    jest.mocked(putFile).mockImplementationOnce((ref: { fullPath: string }) => {
+      (storageState.putCalls as string[]).push(ref.fullPath);
+      return new Promise((_resolve, reject) => {
+        fail = reject;
+      }) as unknown as ReturnType<typeof putFile>;
+    });
+    await startUploads(UID);
+    await enqueueUpload(job());
+    await settle();
+    expect(storageState.putCalls).toEqual([job().path]);
+
+    // The receipt is deleted while its photo is uploading, and then the upload fails.
+    await cancelUploads('r1', UID, [job().path]);
+    fail(new Error('storage/retry-limit-exceeded'));
+    await settle();
+    expect((await savedQueue()).filter((j: { kind?: string }) => !j.kind)).toEqual([]);
+    await jest.advanceTimersByTimeAsync(10 * 60_000);
+    await settle();
+
+    expect(storageState.putCalls).toEqual([job().path]);
+    expect(storageState.deleteCalls).toEqual([job().path]);
+    expect(await savedQueue()).toEqual([]);
   });
 
   it('backs off up to five minutes', () => {
