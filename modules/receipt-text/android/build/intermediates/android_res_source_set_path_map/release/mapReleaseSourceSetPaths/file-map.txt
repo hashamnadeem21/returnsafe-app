@@ -1,0 +1,9 @@
+expo.modules.receipttext.receipt-text-pngs-0 /Users/proviloops/Desktop/Hasham/returnsafe-app/modules/receipt-text/android/build/generated/res/pngs/release
+expo.modules.receipttext.receipt-text-updated_navigation_xml-1 /Users/proviloops/Desktop/Hasham/returnsafe-app/modules/receipt-text/android/build/generated/updated_navigation_xml/release
+expo.modules.receipttext.receipt-text-mergeReleaseResources-2 /Users/proviloops/Desktop/Hasham/returnsafe-app/modules/receipt-text/android/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+expo.modules.receipttext.receipt-text-mergeReleaseResources-3 /Users/proviloops/Desktop/Hasham/returnsafe-app/modules/receipt-text/android/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+expo.modules.receipttext.receipt-text-release-4 /Users/proviloops/Desktop/Hasham/returnsafe-app/modules/receipt-text/android/build/intermediates/merged_res/release/mergeReleaseResources
+expo.modules.receipttext.receipt-text-release-5 /Users/proviloops/Desktop/Hasham/returnsafe-app/modules/receipt-text/android/build/intermediates/packaged_res/release/packageReleaseResources
+expo.modules.receipttext.receipt-text-main-6 /Users/proviloops/Desktop/Hasham/returnsafe-app/modules/receipt-text/android/src/main/res
+expo.modules.receipttext.receipt-text-release-7 /Users/proviloops/Desktop/Hasham/returnsafe-app/modules/receipt-text/android/src/release/res
+gradleHome-0 /Users/proviloops/.gradle

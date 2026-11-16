@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppText, Button, Card, Icon, LetterAvatar, ProLock, TextField } from '@/components';
+import { AppText, Button, Card, Icon, LetterAvatar, Pill, ProLock, TextField } from '@/components';
+import { ReceiptPhoto } from '@/features/scan/ReceiptPhoto';
 import { computeDeadline, formatLongDate, isIsoDate } from '@/lib/dates';
 import { fonts, useTheme } from '@/theme';
 
@@ -17,17 +18,31 @@ import { DateField } from './DateField';
 import { ReturnWindowSheet } from './ReturnWindowSheet';
 import { StorePickerSheet, type PickedStore } from './StorePickerSheet';
 
+/** A scanned receipt under review: its photo and which fields the parser filled in. */
+export type ScanReview = {
+  photoUri: string;
+  /** False: "We couldn't read this receipt", and the user fills in the form. */
+  readable: boolean;
+  detected: { store: boolean; date: boolean; total: boolean };
+  onRetake: () => void;
+};
+
 type Props = {
   initial: ReceiptFormValues;
   submitLabel: string;
   onSubmit: (input: ReceiptInput) => void;
+  scan?: ScanReview;
 };
+
+function Detected({ testID }: { testID: string }) {
+  return <Pill label="Detected" tone="teal" testID={testID} />;
+}
 
 /** iOS cannot present a sheet while another one is still sliding away. */
 const SHEET_SWAP_MS = Platform.OS === 'ios' ? 400 : 0;
 
 /** New and edit receipt form: store, date, total, items, and the deadline they give. */
-export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
+export function ReceiptForm({ initial, submitLabel, onSubmit, scan }: Props) {
   const { colors, radii, sizes, spacing } = useTheme();
   const today = useToday();
   const customStores = useReceipts((s) => s.customStores);
@@ -41,10 +56,16 @@ export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
   const [picker, setPicker] = useState(false);
   const [windowSheet, setWindowSheet] = useState(false);
 
-  const [storeName, storeId, purchaseDate, returnDays] = useWatch({
+  const [storeName, storeId, purchaseDate, returnDays, amount] = useWatch({
     control,
-    name: ['storeName', 'storeId', 'purchaseDate', 'returnDays'],
+    name: ['storeName', 'storeId', 'purchaseDate', 'returnDays', 'amount'],
   });
+  // A "Detected" badge stays only while the field still holds what the scan found.
+  const detected = {
+    store: !!scan?.detected.store && storeName === initial.storeName,
+    date: !!scan?.detected.date && purchaseDate === initial.purchaseDate,
+    total: !!scan?.detected.total && amount === initial.amount,
+  };
   const builtin = storeById(storeId);
   const deadline =
     storeName && isIsoDate(purchaseDate) ? computeDeadline(purchaseDate, returnDays) : null;
@@ -83,13 +104,56 @@ export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
+        {scan ? (
+          <Card
+            style={[
+              styles.scanCard,
+              { padding: spacing.md, gap: spacing.md, marginBottom: spacing.lg },
+            ]}
+            testID="scan-summary"
+          >
+            <ReceiptPhoto localUri={scan.photoUri} width={48} height={62} testID="scan-photo" />
+            <View style={styles.flex}>
+              <View style={[styles.inline, { gap: spacing.xs }]}>
+                <Icon
+                  name={scan.readable ? 'check' : 'alert'}
+                  size={18}
+                  color={scan.readable ? colors.success : colors.warning}
+                />
+                <AppText variant="body" style={{ fontFamily: fonts.semibold }} testID="scan-status">
+                  {scan.readable ? 'Receipt scanned' : "We couldn't read this receipt"}
+                </AppText>
+              </View>
+              <AppText variant="caption">
+                {scan.readable
+                  ? 'Check the details below'
+                  : 'Enter the details below. The photo is attached.'}
+              </AppText>
+            </View>
+            <Pressable
+              onPress={scan.onRetake}
+              accessibilityRole="button"
+              accessibilityLabel="Retake photo"
+              hitSlop={8}
+              style={[styles.retake, { minHeight: sizes.tapTarget }]}
+              testID="scan-retake"
+            >
+              <AppText variant="body" tone="primary" style={{ fontFamily: fonts.semibold }}>
+                Retake
+              </AppText>
+            </Pressable>
+          </Card>
+        ) : null}
+
         <AppText variant="caption" style={styles.label}>
           Store
         </AppText>
         <Pressable
           onPress={() => setPicker(true)}
           accessibilityRole="button"
-          accessibilityLabel={storeName ? `Store, ${storeName}` : 'Choose store'}
+          accessibilityLabel={
+            storeName ? `Store, ${storeName}${detected.store ? ', detected' : ''}` : 'Choose store'
+          }
           accessibilityHint={formState.errors.storeName?.message}
           testID="receipt-store"
           style={[
@@ -112,7 +176,11 @@ export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
           >
             {storeName || 'Choose store'}
           </AppText>
-          <Icon name="down" size={20} color={colors.muted} />
+          {detected.store ? (
+            <Detected testID="detected-store" />
+          ) : (
+            <Icon name="down" size={20} color={colors.muted} />
+          )}
         </Pressable>
         {formState.errors.storeName ? (
           <View style={styles.msgRow}>
@@ -131,6 +199,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
               render={({ field, fieldState }) => (
                 <DateField
                   label="Purchase date"
+                  badge={detected.date ? <Detected testID="detected-date" /> : undefined}
                   value={field.value}
                   maxDate={today}
                   onChange={field.onChange}
@@ -147,6 +216,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
               render={({ field, fieldState }) => (
                 <TextField
                   label="Total"
+                  badge={detected.total ? <Detected testID="detected-total" /> : undefined}
                   value={field.value}
                   onChangeText={field.onChange}
                   onBlur={field.onBlur}
@@ -279,6 +349,10 @@ const styles = StyleSheet.create({
   field: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 },
   msgRow: { marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6 },
   row: { flexDirection: 'row' },
+  inline: { flexDirection: 'row', alignItems: 'center' },
+  flex: { flex: 1 },
+  scanCard: { flexDirection: 'row', alignItems: 'center' },
+  retake: { justifyContent: 'center' },
   half: { flex: 1 },
   deadline: { flexDirection: 'row', alignItems: 'center' },
   change: { alignItems: 'center', justifyContent: 'center' },

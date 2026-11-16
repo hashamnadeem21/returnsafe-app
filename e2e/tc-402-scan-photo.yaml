@@ -1,0 +1,51 @@
+# Simulator stand-in for TC-402: the real scan pipeline on a receipt photo picked from the
+# library (the simulators have no camera). Text recognition (ML Kit), parsing, the review screen
+# with Detected badges, saving, and the photo upload to the Storage emulator all run for real.
+# Before running, add e2e/assets/walmart-receipt.png to the device's photos (see README).
+appId: com.returnsafe.app
+name: TC-402 Scan a receipt photo (simulator)
+---
+- runFlow: subflows/guest-home.yaml
+- runFlow: subflows/open-scanner.yaml
+- tapOn:
+    id: scanner-library
+- runFlow:
+    file: subflows/pick-first-photo.yaml
+- extendedWaitUntil:
+    visible:
+      id: scan-summary
+    timeout: 30000
+- assertVisible: '.*Receipt scanned.*'
+- assertVisible:
+    id: detected-store
+- assertVisible:
+    id: detected-date
+- assertVisible:
+    id: detected-total
+- assertVisible: '.*Walmart.*'
+- assertVisible: '.*90-day Walmart policy.*'
+- takeScreenshot: tc402-review
+- tapOn:
+    id: receipt-save
+- extendedWaitUntil:
+    visible:
+      id: home-later
+    timeout: 15000
+- assertVisible: '.*Walmart.*'
+- assertVisible: '.*\$89\.00.*'
+# The photo reaches Storage once, at the path saved on the receipt.
+- runFlow: subflows/copy-uid.yaml
+- extendedWaitUntil:
+    visible:
+      id: home-later
+    timeout: 5000
+- runScript: scripts/receipt-photos.js
+- assertTrue: ${output.fileCount == 1}
+- assertTrue: ${output.files == output.photoPaths}
+- tapOn: '.*Walmart.*'
+- extendedWaitUntil:
+    visible:
+      id: receipt-photo
+    timeout: 10000
+- assertVisible: '.*Attached.*'
+- takeScreenshot: tc402-detail

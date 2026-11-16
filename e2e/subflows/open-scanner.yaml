@@ -1,0 +1,35 @@
+# Opens the Scan tab and waits for the scanner screen's buttons. Simulators have no camera, so
+# the system scanner closes (iOS) or is cancelled (Android). An offline Android emulator shows
+# the Play services download screen for the scanner instead; that is cancelled too.
+appId: com.returnsafe.app
+---
+- tapOn:
+    id: tab-scan
+- runFlow:
+    when:
+      notVisible:
+        id: scanner-library
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: scanner-library
+          timeout: 8000
+          optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: scanner-library
+    commands:
+      - tapOn:
+          text: Cancel
+          optional: true
+      - runFlow:
+          when:
+            notVisible:
+              id: scanner-library
+          commands:
+            - back
+      - extendedWaitUntil:
+          visible:
+            id: scanner-library
+          timeout: 10000

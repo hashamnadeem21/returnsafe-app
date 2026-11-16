@@ -1,4 +1,4 @@
-import { useState, type ComponentRef, type Ref } from 'react';
+import { useState, type ComponentRef, type ReactNode, type Ref } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { maxFontSizeMultiplier, useTheme } from '@/theme';
@@ -9,6 +9,8 @@ import { Icon } from './Icon';
 type Props = Omit<TextInputProps, 'style'> & {
   ref?: Ref<ComponentRef<typeof TextInput>>;
   label: string;
+  /** Shown beside the label, e.g. a "Detected" pill on a scanned receipt. */
+  badge?: ReactNode;
   helper?: string;
   error?: string;
   /** Password field: hides text and shows a show/hide toggle. */
@@ -18,6 +20,7 @@ type Props = Omit<TextInputProps, 'style'> & {
 
 export function TextField({
   label,
+  badge,
   helper,
   error,
   secure = false,
@@ -35,9 +38,10 @@ export function TextField({
 
   return (
     <View style={{ marginBottom: spacing.md }}>
-      <AppText variant="caption" style={styles.label}>
-        {label}
-      </AppText>
+      <View style={styles.labelRow}>
+        <AppText variant="caption">{label}</AppText>
+        {badge}
+      </View>
       <View
         style={[
           styles.box,
@@ -101,7 +105,7 @@ export function TextField({
 }
 
 const styles = StyleSheet.create({
-  label: { marginBottom: 6 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   box: { flexDirection: 'row', alignItems: 'center', paddingLeft: 14 },
   input: { flex: 1, height: '100%', paddingVertical: 0 },
   toggle: { alignItems: 'center', justifyContent: 'center' },

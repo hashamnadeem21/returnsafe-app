@@ -6,6 +6,7 @@ import {
 import { connectAuthEmulator, getAuth } from '@react-native-firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from '@react-native-firebase/firestore';
 import { connectFunctionsEmulator, getFunctions } from '@react-native-firebase/functions';
+import { connectStorageEmulator, getStorage } from '@react-native-firebase/storage';
 import { Platform } from 'react-native';
 
 /** Build-time switch for E2E/dev: talk to the local Firebase Emulator Suite instead of the cloud. */
@@ -18,7 +19,7 @@ export const FUNCTIONS_REGION = 'us-central1';
 
 let configured = false;
 
-/** Call once at startup, before any auth/firestore/functions use. Safe to call again. */
+/** Call once at startup, before any auth/firestore/functions/storage use. Safe to call again. */
 export async function configureFirebase(): Promise<void> {
   if (configured) return;
   configured = true;
@@ -28,6 +29,7 @@ export async function configureFirebase(): Promise<void> {
     connectAuthEmulator(getAuth(app), `http://${EMULATOR_HOST}:9099`);
     connectFirestoreEmulator(getFirestore(app), EMULATOR_HOST, 8180);
     connectFunctionsEmulator(getFunctions(app, FUNCTIONS_REGION), EMULATOR_HOST, 5001);
+    connectStorageEmulator(getStorage(app), EMULATOR_HOST, 9199);
     return;
   }
 
@@ -48,3 +50,4 @@ export async function configureFirebase(): Promise<void> {
 export const auth = () => getAuth(getApp());
 export const db = () => getFirestore(getApp());
 export const functions = () => getFunctions(getApp(), FUNCTIONS_REGION);
+export const storage = () => getStorage(getApp());

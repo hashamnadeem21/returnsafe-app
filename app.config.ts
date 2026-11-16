@@ -13,6 +13,9 @@ const FIREBASE_DIR = `./firebase/${IS_PROD ? 'prod' : 'dev'}`;
 
 const BRAND_TEAL = '#0F766E';
 
+const CAMERA_USAGE = 'ReturnSafe uses the camera to scan your receipts.';
+const PHOTOS_USAGE = 'ReturnSafe uses your photo library to add a receipt photo.';
+
 /**
  * Google Sign-In on iOS needs the REVERSED_CLIENT_ID URL scheme from GoogleService-Info.plist.
  * The plist only contains it once the Google provider is enabled in the Firebase console;
@@ -71,6 +74,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     '@react-native-firebase/auth',
     '@react-native-firebase/app-check',
     '@react-native-community/datetimepicker',
+    // Receipt scanning: VisionKit (iOS) / ML Kit Document Scanner (Android), plus the photo library.
+    ['react-native-document-scanner-plugin', { cameraPermission: CAMERA_USAGE }],
+    [
+      'expo-image-picker',
+      {
+        cameraPermission: CAMERA_USAGE,
+        photosPermission: PHOTOS_USAGE,
+        microphonePermission: false,
+      },
+    ],
     ...(IOS_GOOGLE_URL_SCHEME
       ? [
           [

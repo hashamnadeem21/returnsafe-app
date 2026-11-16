@@ -44,7 +44,19 @@ EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo run:android --variant release
 npm run e2e:android
 ```
 
-Firestore rules and Cloud Functions tests start their own emulators: `npm run test:functions`.
+The scan flow (TC-402) picks a receipt photo from the device's library, since simulators have no camera. Add the test receipt once per device before running it:
+
+```bash
+xcrun simctl addmedia booted e2e/assets/walmart-receipt.png
+```
+
+```bash
+adb push e2e/assets/walmart-receipt.png /sdcard/Pictures/walmart-receipt.png && adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Pictures/walmart-receipt.png
+```
+
+`e2e/scripts/make-receipt-image.py` re-creates the image if needed.
+
+Firestore and Storage rules and Cloud Functions tests start their own emulators: `npm run test:functions`.
 
 The 51 built-in store return policies live in `seed/stores.json`. Load them into a running emulator with `npm run seed:stores -- --emulator`, or into a real project with `npm run seed:stores -- --project <id>` (needs admin credentials).
 
@@ -58,7 +70,7 @@ Unit tests, lint, the hex-colour check, type check and formatting all run with `
 | 1     | Design system and navigation | Passed ([report](docs/gate-reports/phase-1/REPORT.md)) |
 | 2     | Login and signup             | Passed ([report](docs/gate-reports/phase-2/REPORT.md)) |
 | 3     | Receipts core                | Passed ([report](docs/gate-reports/phase-3/REPORT.md)) |
-| 4     | Scanning and photos          | Not started                                            |
+| 4     | Scanning and photos          | Passed ([report](docs/gate-reports/phase-4/REPORT.md)) |
 | 5     | Reminders                    | Not started                                            |
 | 6     | Subscriptions and Pro        | Not started                                            |
 | 7     | Polish and release prep      | Not started                                            |

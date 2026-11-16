@@ -13,8 +13,7 @@ appId: com.returnsafe.app
       notVisible:
         id: screen-receipt-new
     commands:
-      - tapOn:
-          id: tab-scan
+      - runFlow: open-scanner.yaml
       - tapOn:
           id: scanner-enter-manually
 - extendedWaitUntil:

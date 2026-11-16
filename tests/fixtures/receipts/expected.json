@@ -1,0 +1,152 @@
+{
+  "01-walmart": {
+    "store": "walmart",
+    "date": "2026-11-12",
+    "totalCents": 8900
+  },
+  "02-target": {
+    "store": "target",
+    "date": "2026-10-03",
+    "totalCents": 5064
+  },
+  "03-costco": {
+    "store": "costco",
+    "date": "2026-09-28",
+    "totalCents": 88019
+  },
+  "04-home-depot": {
+    "store": "home-depot",
+    "date": "2026-08-14",
+    "totalCents": 23937
+  },
+  "05-lowes": {
+    "store": "lowes",
+    "date": "2026-07-22",
+    "totalCents": 2169
+  },
+  "06-best-buy": {
+    "store": "best-buy",
+    "date": "2026-11-02",
+    "totalCents": 40611
+  },
+  "07-kohls": {
+    "store": "kohls",
+    "date": "2026-10-18",
+    "totalCents": 8680
+  },
+  "08-macys": {
+    "store": "macys",
+    "date": "2026-10-21",
+    "totalCents": 12412
+  },
+  "09-tj-maxx": {
+    "store": "tj-maxx",
+    "date": "2026-09-30",
+    "totalCents": 4779
+  },
+  "10-marshalls": {
+    "store": "marshalls",
+    "date": "2026-10-05",
+    "totalCents": 4869
+  },
+  "11-ross": {
+    "store": "ross",
+    "date": "2026-11-08",
+    "totalCents": 4869
+  },
+  "12-old-navy": {
+    "store": "old-navy",
+    "date": "2026-10-27",
+    "totalCents": 4133
+  },
+  "13-dicks": {
+    "store": "dicks",
+    "date": "2026-09-19",
+    "totalCents": 14839
+  },
+  "14-rei": {
+    "store": "rei",
+    "date": "2026-08-30",
+    "totalCents": 35148
+  },
+  "15-ulta": {
+    "store": "ulta",
+    "date": "2026-10-14",
+    "totalCents": 8011
+  },
+  "16-cvs": {
+    "store": "cvs",
+    "date": "2026-11-10",
+    "totalCents": 3373
+  },
+  "17-walgreens": {
+    "store": "walgreens",
+    "date": "2026-11-02",
+    "totalCents": 3858
+  },
+  "18-ikea": {
+    "store": "ikea",
+    "date": "2026-07-04",
+    "totalCents": 23843
+  },
+  "19-apple": {
+    "store": "apple",
+    "date": "2026-10-30",
+    "totalCents": 79261
+  },
+  "20-staples": {
+    "store": "staples",
+    "date": "2026-10-09",
+    "totalCents": 11154
+  },
+  "21-sams-club": {
+    "store": "sams-club",
+    "date": "2026-11-01",
+    "totalCents": 5108
+  },
+  "22-petsmart": {
+    "store": "petsmart",
+    "date": "2026-09-07",
+    "totalCents": 6388
+  },
+  "23-gamestop": {
+    "store": "gamestop",
+    "date": "2026-10-22",
+    "totalCents": 7506
+  },
+  "24-barnes-noble": {
+    "store": "barnes-noble",
+    "date": "2026-11-09",
+    "totalCents": 5333
+  },
+  "25-walmart-ocr-typos": {
+    "store": "walmart",
+    "date": "2026-10-16",
+    "totalCents": 1892
+  },
+  "26-target-columns": {
+    "store": "target",
+    "date": "2026-09-12",
+    "totalCents": 3460
+  },
+  "27-best-buy-faded-header": {
+    "store": "best-buy",
+    "date": "2026-10-01",
+    "totalCents": 69468
+  },
+  "28-home-depot-no-date": {
+    "store": "home-depot",
+    "date": null,
+    "totalCents": 9501
+  },
+  "29-local-shop": {
+    "store": null,
+    "date": "2026-11-11",
+    "totalCents": 4200
+  },
+  "30-costco-balance-due": {
+    "store": "costco",
+    "date": "2026-11-14",
+    "totalCents": 38236
+  }
+}

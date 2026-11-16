@@ -15,8 +15,11 @@ import {
   updateDoc,
 } from '@react-native-firebase/firestore';
 
+import { deleteObject, ref } from '@react-native-firebase/storage';
+
+import { cancelUploads } from '@/features/scan/uploadQueue';
 import { computeDeadline, DEFAULT_TIMEZONE } from '@/lib/dates';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
 
 import { customStoreId } from './stores';
 import type { CustomStore, Receipt, ReceiptInput, ReceiptStatus, UserProfile } from './types';
@@ -139,16 +142,25 @@ function fields(input: ReceiptInput): Data {
   };
 }
 
+/** A new receipt id, made on the device (so a photo path can name it before saving). */
+export function newReceiptId(uid: string): string {
+  return doc(receiptsCol(uid)).id;
+}
+
 /** Saves a new active receipt and returns its id straight away (works offline). */
-export function createReceipt(uid: string, input: ReceiptInput): string {
-  const ref = doc(receiptsCol(uid));
+export function createReceipt(
+  uid: string,
+  input: ReceiptInput,
+  opts: { id?: string; photoPaths?: string[] } = {},
+): string {
+  const ref = opts.id ? doc(receiptsCol(uid), opts.id) : doc(receiptsCol(uid));
   background(
     setDoc(ref, {
       ...fields(input),
       warrantyMonths: null,
       warrantyEnd: null,
       status: 'active',
-      photoPaths: [],
+      photoPaths: opts.photoPaths ?? [],
       ocrText: null,
       statusChangedAt: null,
       createdAt: serverTimestamp(),
@@ -171,8 +183,14 @@ export function setReceiptStatus(uid: string, id: string, status: ReceiptStatus)
   );
 }
 
-export function deleteReceipt(uid: string, id: string): void {
+/** Deletes the receipt and its photos (files still waiting to upload are dropped too). */
+export function deleteReceipt(uid: string, id: string, photoPaths: readonly string[] = []): void {
   background(deleteDoc(doc(receiptsCol(uid), id)));
+  void cancelUploads(id);
+  for (const path of photoPaths) {
+    // A photo that never finished uploading is already gone; nothing to report then.
+    deleteObject(ref(storage(), path)).catch(() => undefined);
+  }
 }
 
 /** Remembers the window chosen for a store that is not in the built-in list. */

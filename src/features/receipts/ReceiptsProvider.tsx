@@ -1,6 +1,8 @@
 import { useEffect, type ReactNode } from 'react';
+import { AppState } from 'react-native';
 
 import { useSnackbar } from '@/components/Snackbar';
+import { kickUploads, startUploads, stopUploads } from '@/features/scan/uploadQueue';
 import { useSession } from '@/stores/session';
 
 import {
@@ -12,7 +14,10 @@ import {
 import { useReceipts } from './receiptsStore';
 import { flushStatus } from './statusActions';
 
-/** Listens to the signed-in user's receipts, profile and custom stores. */
+/**
+ * Listens to the signed-in user's receipts, profile and custom stores, and uploads their queued
+ * receipt photos (retrying whenever the app comes back to the foreground).
+ */
 export function ReceiptsProvider({ children }: { children: ReactNode }) {
   const uid = useSession((s) => s.user?.uid ?? null);
   const attempt = useReceipts((s) => s.attempt);
@@ -50,6 +55,18 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
       unsubs.forEach((u) => u());
     };
   }, [uid, attempt]);
+
+  useEffect(() => {
+    if (!uid) return;
+    void startUploads(uid);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') kickUploads();
+    });
+    return () => {
+      sub.remove();
+      stopUploads();
+    };
+  }, [uid]);
 
   return <>{children}</>;
 }
