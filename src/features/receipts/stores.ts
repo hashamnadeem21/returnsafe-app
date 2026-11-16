@@ -1,5 +1,5 @@
 /**
- * The 50 built-in US store policies. The same file seeds the read-only stores/ collection
+ * The 51 built-in US store policies. The same file seeds the read-only stores/ collection
  * (scripts/seed-stores.mjs); the app bundles it so the picker works offline.
  */
 import seed from '../../../seed/stores.json';
@@ -44,17 +44,23 @@ export function storeById(id: string | null | undefined): StorePolicy | undefine
   return id ? STORES.find((s) => s.id === id) : undefined;
 }
 
-/** Lower-case letters and digits only, so "Joe's Bikes" and "joes bikes" match. */
+/**
+ * Lower-case letters and digits only (in any script), so "Joe's Bikes" and "joes bikes" match and
+ * names such as "東京" stay searchable.
+ */
 export function normalizeStoreName(name: string): string {
   return name
     .toLowerCase()
     .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '');
+    .replace(/[^\p{L}\p{N}]+/gu, '');
 }
 
-/** Document id for a custom store window, the same for every spelling that normalises alike. */
+/**
+ * Document id for a custom store window, the same for every spelling that normalises alike. The
+ * whole name is used (at most 80 characters) so long names that start alike don't collide.
+ */
 export function customStoreId(name: string): string {
-  return normalizeStoreName(name).slice(0, 40) || 'store';
+  return normalizeStoreName(name) || 'store';
 }
 
 /** The built-in store whose name or alias is exactly this name, if any. */
@@ -96,8 +102,11 @@ export function searchStores(query: string, custom: readonly CustomStore[]): Sto
     .map((x) => x.m);
 }
 
-/** "Most items · 90 days" */
+/**
+ * "90 days · Most items. Some electronics 30 days." The whole note is kept so category exceptions
+ * are seen before the store is chosen.
+ */
 export function policySummary(returnDays: number, notes?: string): string {
-  const first = notes?.split('.')[0]?.trim();
-  return `${first || 'Most items'} · ${returnDays} days`;
+  const note = notes?.trim();
+  return note ? `${returnDays} days · ${note}` : `${returnDays} days`;
 }

@@ -1,6 +1,11 @@
 import { useSnackbar } from '@/components/Snackbar';
 import { useReceipts } from '@/features/receipts/receiptsStore';
-import { changeStatusWithUndo, UNDO_MS, undoStatus } from '@/features/receipts/statusActions';
+import {
+  changeStatusWithUndo,
+  flushStatus,
+  UNDO_MS,
+  undoStatus,
+} from '@/features/receipts/statusActions';
 import { firestoreWrites, resetFirestore, seedDoc } from '@/test/firebase';
 
 const PATH = 'users/u1/receipts/r1';
@@ -42,5 +47,15 @@ describe('status change with Undo', () => {
     jest.advanceTimersByTime(UNDO_MS * 2);
     expect(firestoreWrites).toHaveLength(0);
     expect(useReceipts.getState().pendingStatus).toEqual({});
+  });
+
+  it('saving early (sign-out) hides Undo, since the change can no longer be undone', () => {
+    changeStatusWithUndo('u1', 'r1', 'returned');
+    flushStatus();
+    expect(firestoreWrites).toHaveLength(1);
+    expect(useSnackbar.getState().current).toBeNull();
+    // A late Undo does nothing to the saved change.
+    undoStatus('r1');
+    expect(useReceipts.getState().pendingStatus).toEqual({ r1: 'returned' });
   });
 });

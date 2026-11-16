@@ -1,4 +1,4 @@
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, type DocumentData } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
@@ -7,7 +7,11 @@ import { deleteUserEverything } from './deleteAccount.js';
 
 type MergeData = { guestIdToken?: unknown };
 
-/** Moves a receipt photo from the guest's Storage folder to the account's. Missing files are skipped. */
+/**
+ * Moves a receipt photo from the guest's Storage folder to the account's. A photo missing from the
+ * guest's folder is skipped. Any other failure is thrown, so the guest's data is kept and the merge
+ * can be retried.
+ */
 async function movePhoto(path: unknown, from: string, to: string): Promise<string | null> {
   if (typeof path !== 'string') return null;
   const prefix = `users/${from}/`;
@@ -15,25 +19,32 @@ async function movePhoto(path: unknown, from: string, to: string): Promise<strin
   const target = `users/${to}/${path.slice(prefix.length)}`;
   try {
     await bucket().file(path).move(target);
+    return target;
   } catch (e) {
+    const [sourceExists] = await bucket().file(path).exists();
+    if (sourceExists) throw e;
     // Already moved by an earlier, interrupted call, or never uploaded.
-    const exists = await bucket()
-      .file(target)
-      .exists()
-      .then(([x]) => x)
-      .catch(() => false);
-    if (!exists) {
-      logger.warn('Guest photo not moved', { path, error: String(e) });
-      return null;
-    }
+    const [targetExists] = await bucket().file(target).exists();
+    if (targetExists) return target;
+    logger.warn('Guest photo missing, skipped', { path });
+    return null;
   }
-  return target;
 }
 
 /** Copies the guest's receipts (with photos) and custom stores into the account. Returns how many receipts moved. */
 export async function moveGuestData(from: string, to: string): Promise<number> {
   const receipts = await db.collection(`users/${from}/receipts`).get();
   const writer = db.bulkWriter();
+  // close() does not report failed writes, so each write's result is kept and checked.
+  const writes: Promise<unknown>[] = [];
+  const set = (path: string, data: DocumentData) =>
+    writes.push(
+      writer.set(db.doc(path), data).then(
+        () => null,
+        (e: unknown) => e ?? new Error('Write failed'),
+      ),
+    );
+
   for (const doc of receipts.docs) {
     const data = doc.data();
     const paths = Array.isArray(data.photoPaths) ? data.photoPaths : [];
@@ -41,7 +52,7 @@ export async function moveGuestData(from: string, to: string): Promise<number> {
       (p): p is string => p !== null,
     );
     // Receipt ids are random, so the guest's id is kept; a retry overwrites the same document.
-    void writer.set(db.doc(`users/${to}/receipts/${doc.id}`), {
+    set(`users/${to}/receipts/${doc.id}`, {
       ...data,
       photoPaths,
       updatedAt: FieldValue.serverTimestamp(),
@@ -55,9 +66,12 @@ export async function moveGuestData(from: string, to: string): Promise<number> {
   ]);
   const own = new Set(ownStores.docs.map((d) => d.id));
   for (const doc of guestStores.docs) {
-    if (!own.has(doc.id)) void writer.set(db.doc(`users/${to}/customStores/${doc.id}`), doc.data());
+    if (!own.has(doc.id)) set(`users/${to}/customStores/${doc.id}`, doc.data());
   }
   await writer.close();
+  // Stop before the guest's data is deleted if anything failed to copy.
+  const failed = (await Promise.all(writes)).find((e) => e !== null);
+  if (failed) throw failed;
   return receipts.size;
 }
 
@@ -80,7 +94,11 @@ export const mergeGuestAccount = onCall<MergeData>(async (req) => {
   if (guest.uid === uid)
     throw new HttpsError('invalid-argument', 'Already signed in as the guest.');
 
-  const record = await adminAuth.getUser(guest.uid).catch(() => null);
+  // Only a confirmed missing guest means "already merged"; other errors are thrown so it can be retried.
+  const record = await adminAuth.getUser(guest.uid).catch((e: unknown) => {
+    if ((e as { code?: unknown }).code === 'auth/user-not-found') return null;
+    throw e;
+  });
   // Already merged (and deleted) by an earlier call.
   if (!record) return { moved: 0 };
   // A token issued before the guest saved their account still says "anonymous"; the record does not.

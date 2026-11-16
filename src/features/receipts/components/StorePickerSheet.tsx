@@ -121,6 +121,7 @@ export function StorePickerSheet({ visible, customStores, onPick, onClose }: Pro
                 ? policySummary(m.store.returnDays, m.store.notes)
                 : `Your store · ${m.store.returnDays} days`
             }
+            subtitleLines={3}
             divider={i > 0}
             onPress={() => pick(m)}
             testID={`store-option-${m.kind === 'builtin' ? m.store.id : `custom-${m.store.id}`}`}

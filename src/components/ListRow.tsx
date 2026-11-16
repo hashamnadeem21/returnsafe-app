@@ -8,6 +8,10 @@ import { AppText } from './AppText';
 type Props = {
   title: string;
   subtitle?: string;
+  /** Lines the subtitle may wrap to before it is cut off. */
+  subtitleLines?: number;
+  /** Full screen-reader label. Defaults to the title and subtitle. */
+  accessibilityLabel?: string;
   /** Letter for the avatar; defaults to the first letter of the title. */
   letter?: string;
   right?: ReactNode;
@@ -41,6 +45,8 @@ export function LetterAvatar({ letter, size }: { letter: string; size?: number }
 export function ListRow({
   title,
   subtitle,
+  subtitleLines = 1,
+  accessibilityLabel,
   letter,
   right,
   onPress,
@@ -56,7 +62,7 @@ export function ListRow({
           {title}
         </AppText>
         {subtitle ? (
-          <AppText variant="caption" numberOfLines={1}>
+          <AppText variant="caption" numberOfLines={subtitleLines}>
             {subtitle}
           </AppText>
         ) : null}
@@ -81,7 +87,7 @@ export function ListRow({
       testID={testID}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
+      accessibilityLabel={accessibilityLabel ?? (subtitle ? `${title}, ${subtitle}` : title)}
       style={({ pressed }) => [rowStyle, pressed && { backgroundColor: colors.bg }]}
     >
       {content}

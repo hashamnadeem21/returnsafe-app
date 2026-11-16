@@ -48,10 +48,10 @@ export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
   const builtin = storeById(storeId);
   const deadline =
     storeName && isIsoDate(purchaseDate) ? computeDeadline(purchaseDate, returnDays) : null;
-  const policyLabel =
-    builtin && returnDays === builtin.returnDays
-      ? `${returnDays}-day ${builtin.name} policy`
-      : `${returnDays}-day return window`;
+  const usesPolicy = builtin !== undefined && returnDays === builtin.returnDays;
+  const policyLabel = usesPolicy
+    ? `${returnDays}-day ${builtin.name} policy`
+    : `${returnDays}-day return window`;
 
   const setStore = (s: PickedStore) => {
     setPicker(false);
@@ -200,6 +200,11 @@ export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
                 <AppText variant="headline" testID="receipt-deadline-date">
                   {formatLongDate(deadline)}
                 </AppText>
+                {usesPolicy && builtin.notes ? (
+                  <AppText variant="caption" tone="ink2" testID="receipt-policy-note">
+                    {builtin.notes}
+                  </AppText>
+                ) : null}
               </>
             ) : (
               <AppText variant="body" tone="ink2">

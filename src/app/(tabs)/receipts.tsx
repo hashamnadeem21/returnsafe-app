@@ -28,7 +28,7 @@ const isFilter = (v: unknown): v is ReceiptFilter => FILTERS.some((f) => f.key =
 /** Receipts (S13): search, filter chips with counts, and the grouped list. */
 export default function Receipts() {
   const { colors, radii, sizes, spacing, type } = useTheme();
-  const params = useLocalSearchParams<{ filter?: string }>();
+  const params = useLocalSearchParams<{ filter?: string; at?: string }>();
   const today = useToday();
   const loaded = useReceipts((s) => s.loaded);
   const error = useReceipts((s) => s.error);
@@ -38,10 +38,13 @@ export default function Receipts() {
     isFilter(params.filter) ? params.filter : 'all',
   );
 
-  // "See all" on Home opens this tab with a filter.
-  const [paramFilter, setParamFilter] = useState(params.filter);
-  if (params.filter !== paramFilter) {
-    setParamFilter(params.filter);
+  // "See all" on Home opens this tab with a filter; `at` is new on every press, so the filter is
+  // applied again even if the user changed it here since. Opening the tab from the tab bar keeps
+  // the last filter.
+  const request = `${params.filter ?? ''}|${params.at ?? ''}`;
+  const [lastRequest, setLastRequest] = useState(request);
+  if (request !== lastRequest) {
+    setLastRequest(request);
     if (isFilter(params.filter)) setFilter(params.filter);
   }
 

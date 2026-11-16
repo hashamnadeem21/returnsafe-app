@@ -98,9 +98,9 @@ describe('receipt form validation', () => {
 });
 
 describe('built-in stores', () => {
-  it('has 50 stores with unique ids and a policy link', () => {
-    expect(STORES).toHaveLength(50);
-    expect(new Set(STORES.map((s) => s.id)).size).toBe(50);
+  it('has 51 stores with unique ids and a policy link', () => {
+    expect(STORES).toHaveLength(51);
+    expect(new Set(STORES.map((s) => s.id)).size).toBe(51);
     expect(STORES.every((s) => s.policyUrl.startsWith('https://'))).toBe(true);
   });
 
@@ -120,8 +120,28 @@ describe('built-in stores', () => {
     expect(findStoreByName('Nowhere Shop')).toBeUndefined();
   });
 
-  it('summarises a policy', () => {
-    expect(policySummary(90, 'Most items. Electronics 30 days.')).toBe('Most items · 90 days');
+  it('keeps Nordstrom Rack apart from Nordstrom', () => {
+    expect(findStoreByName('Nordstrom Rack')?.returnDays).toBe(40);
+    expect(findStoreByName('Nordstrom')?.id).toBe('nordstrom');
+  });
+
+  it('finds saved stores with names in any script', () => {
+    const custom = [{ id: customStoreId('東京'), name: '東京', returnDays: 14 }];
+    expect(searchStores('東京', custom)[0]).toEqual({ kind: 'custom', store: custom[0] });
+    expect(customStoreId('東京')).toBe('東京');
+  });
+
+  it('gives long store names that start alike different ids', () => {
+    const east = customStoreId('Neighborhood Home Improvement Supplies Warehouse East');
+    const west = customStoreId('Neighborhood Home Improvement Supplies Warehouse West');
+    expect(east).not.toBe(west);
+  });
+
+  it('summarises a policy with its exceptions', () => {
+    expect(policySummary(90, 'Most items. Electronics 30 days.')).toBe(
+      '90 days · Most items. Electronics 30 days.',
+    );
+    expect(policySummary(30)).toBe('30 days');
   });
 });
 

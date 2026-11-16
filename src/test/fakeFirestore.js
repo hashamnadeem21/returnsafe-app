@@ -132,6 +132,7 @@ const fakeFirestore = {
   connectFirestoreEmulator: jest.fn(),
   terminate: jest.fn(async () => undefined),
   clearPersistence: jest.fn(async () => undefined),
+  waitForPendingWrites: jest.fn(async () => undefined),
   collection,
   doc,
   query,

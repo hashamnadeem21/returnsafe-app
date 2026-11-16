@@ -15,13 +15,18 @@ import {
   type AuthCredential,
   type User,
 } from '@react-native-firebase/auth';
-import { clearPersistence, terminate } from '@react-native-firebase/firestore';
+import {
+  clearPersistence,
+  terminate,
+  waitForPendingWrites,
+} from '@react-native-firebase/firestore';
 import { httpsCallable } from '@react-native-firebase/functions';
 import * as Localization from 'expo-localization';
 
 import { auth, db, functions } from '@/lib/firebase';
 import { INSTALL_KEY } from '@/lib/install';
 import { ONBOARDING_KEY } from '@/lib/onboarding';
+import { flushStatus } from '@/features/receipts/statusActions';
 import { useSession } from '@/stores/session';
 
 import { codeOf, mapAuthError, type FriendlyAuthError } from './errors';
@@ -275,7 +280,16 @@ async function clearLocalCaches(): Promise<void> {
   }
 }
 
+/** How long sign-out waits for unsynced changes to reach the server (they are lost offline). */
+const SYNC_WAIT_MS = 3000;
+
 export async function signOut(): Promise<void> {
+  // Save a Returned or Kept change still in its Undo window while this user can still write it.
+  flushStatus();
+  await Promise.race([
+    waitForPendingWrites(db()).catch(() => undefined),
+    new Promise((resolve) => setTimeout(resolve, SYNC_WAIT_MS)),
+  ]);
   await signOutProviders();
   await fbSignOut(auth());
   await clearLocalCaches();

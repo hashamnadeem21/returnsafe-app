@@ -141,8 +141,13 @@ export default function Home() {
                 title="Due soon"
                 action={{
                   label: 'See all',
+                  // `at` makes every press a new request, so the filter is applied again even
+                  // after it was changed on the Receipts tab.
                   onPress: () =>
-                    router.push({ pathname: '/receipts', params: { filter: 'dueSoon' } }),
+                    router.push({
+                      pathname: '/receipts',
+                      params: { filter: 'dueSoon', at: String(Date.now()) },
+                    }),
                 }}
               >
                 <Card style={styles.clip} testID="home-due-soon">

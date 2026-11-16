@@ -8,7 +8,10 @@ import type { ReceiptStatus } from './types';
 
 export const UNDO_MS = 5000;
 
-const timers = new Map<string, { timer: ReturnType<typeof setTimeout>; commit: () => void }>();
+const timers = new Map<
+  string,
+  { timer: ReturnType<typeof setTimeout>; commit: () => void; snackbarId: number }
+>();
 
 /**
  * Shows the new status at once and offers Undo for 5 seconds; the change is saved when the window
@@ -30,29 +33,34 @@ export function changeStatusWithUndo(
     setReceiptStatus(uid, id, status);
   };
   const timer = setTimeout(commit, UNDO_MS);
-  timers.set(id, { timer, commit });
-
-  useSnackbar.getState().show({
+  const snackbarId = useSnackbar.getState().show({
     message: status === 'returned' ? 'Marked as returned' : 'Marked as kept',
     actionLabel: 'Undo',
     durationMs: UNDO_MS,
     aboveTabBar: opts.aboveTabBar,
     onAction: () => undoStatus(id),
   });
+  timers.set(id, { timer, commit, snackbarId });
 }
 
+/** Cancels a change that is still waiting. A change already saved can't be undone. */
 export function undoStatus(id: string): void {
   const t = timers.get(id);
-  if (t) clearTimeout(t.timer);
+  if (!t) return;
+  clearTimeout(t.timer);
   timers.delete(id);
   useReceipts.getState().setPendingStatus(id, null);
 }
 
-/** Saves a waiting change now (another change to the same receipt, or signing out). */
+/**
+ * Saves a waiting change now (another change to the same receipt, or signing out) and hides its
+ * Undo, since a saved change can no longer be undone.
+ */
 export function flushStatus(id?: string): void {
   for (const [key, t] of [...timers]) {
     if (id && key !== id) continue;
     clearTimeout(t.timer);
     t.commit();
+    useSnackbar.getState().hide(t.snackbarId);
   }
 }

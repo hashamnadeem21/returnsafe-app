@@ -5,7 +5,7 @@
 ## What was built
 
 - **Store policies:**
-  - `seed/stores.json` holds 50 US retailers. Each has a return window, notes, the official policy URL and `verifiedAt`.
+  - `seed/stores.json` holds 51 US retailers: the planned 50, plus Nordstrom Rack as its own store (40 days) because its policy differs from Nordstrom's. Each has a return window, notes, the official policy URL and `verifiedAt`.
   - Each store was checked against the retailer's own page in November 2026. Stores whose official pages disagree are flagged `needsReview` (listed below).
   - `npm run seed:stores -- --emulator` (or `--project <id>`, admin only) loads them into the read-only `stores/` collection.
   - The app bundles the same file, so the store picker works offline.
@@ -84,7 +84,7 @@
 | TC-312 | Manual | — | — | Needs airplane mode on a real device (see below) |
 
 **Totals:**
-- **Unit:** 11 suites, 175 tests, 7 snapshots.
+- **Unit:** 11 suites, 179 tests, 7 snapshots.
 - **Rules and functions:** 2 files, 35 tests, run against the Auth, Firestore, Storage and Functions emulators.
 - **Maestro:** 16/16 flows on the iPhone 17 Pro Max simulator and 16/16 on the Medium Phone API 36.1 emulator. These are Phases 1–3 together, so earlier phases are also covered against regressions. Release builds were built with `EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1`.
 
@@ -123,6 +123,23 @@ The unit tests cover the pill appearing and clearing as the write's sync state c
 - **Limit sheet on a slow start:** if the profile loaded after the New receipt screen opened, the limit sheet didn't show. It now opens as soon as the limit is known.
 - **PRO badge alignment:** the "Add warranty" PRO badge sat at the top of its row; it is now centred.
 - **Maestro on iOS:** list rows are one accessibility element ("Walmart, $10.00"), so the flows match text inside them. The iOS number pad sometimes repeats a key under automation, so the flow types the amount again when that happens.
+
+## Fixed after code review
+
+- **Guest merge keeps the guest's data unless everything copied:**
+  - A photo is skipped only when it is confirmed missing; any other Storage error stops the merge.
+  - Every receipt and store write is checked before the guest is deleted.
+  - Only "user not found" counts as already merged; other Auth errors can be retried.
+- **Nordstrom Rack** is its own store (40 days, from nordstromrack.com) instead of an alias of Nordstrom (365 days).
+- **Store notes:** the picker shows each store's full note, and the form's Return-by card shows it too, so exceptions such as "Some electronics 30 days" are seen before saving.
+- **Store names:** names in any script (for example 東京) can be searched, and long names that start alike no longer share one saved window.
+- **See all:** "See all" on Home applies Due soon every time, even after you changed the filter on Receipts.
+- **Screen readers:** receipt rows read out their status ("Target, $48.20, 90 days").
+- **Sign-out:** a Returned or Kept change still in its Undo window is saved before signing out, and its Undo is hidden once saved.
+
+**Left for later, with reasons:**
+- **Two receipts added at the same moment can pass the free limit.** The rules read `activeCount`, which the function updates just after each write, so two writes in the same instant can both get in. Only the user's own quota is affected. A server-side "add receipt" call would close this; it belongs with the Pro work.
+- **Receipts past their deadline still count toward the free limit** until the Phase 5 expiry job marks them expired. Until then, deleting one frees a slot.
 
 ## Notes
 

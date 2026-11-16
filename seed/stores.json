@@ -83,13 +83,22 @@
   {
     "id": "nordstrom",
     "name": "Nordstrom",
-    "aliases": ["Nordstrom Rack"],
+    "aliases": [],
     "returnDays": 365,
     "notes": "No formal time limit; ReturnSafe uses 1 year.",
     "policyUrl": "https://www.nordstrom.com/browse/customer-service/return-policy",
     "verifiedAt": "2026-11-13",
     "needsReview": true,
     "reviewReason": "No fixed return window, so the 365 days is a ReturnSafe default"
+  },
+  {
+    "id": "nordstrom-rack",
+    "name": "Nordstrom Rack",
+    "aliases": ["Rack"],
+    "returnDays": 40,
+    "notes": "Store and online purchases.",
+    "policyUrl": "https://www.nordstromrack.com/customer-service/ship-return-policy",
+    "verifiedAt": "2026-11-16"
   },
   {
     "id": "tj-maxx",
