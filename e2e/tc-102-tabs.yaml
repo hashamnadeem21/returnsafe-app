@@ -38,8 +38,7 @@ name: TC-102 Tabs and Scan modal
 - assertVisible:
     id: screen-home-title
     text: 'Your returns'
-- tapOn:
-    id: tab-scan
+- runFlow: subflows/open-scanner.yaml
 - assertVisible:
     id: screen-scanner
 - assertVisible: 'Scan receipt'

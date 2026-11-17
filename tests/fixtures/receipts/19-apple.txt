@@ -1,0 +1,10 @@
+Apple Fifth Avenue
+767 Fifth Ave New York NY
+Sales Receipt
+Date: Oct 30, 2026
+iPad Air 11-inch 599.00
+Apple Pencil Pro 129.00
+Subtotal $728.00
+Tax $64.61
+Total $792.61
+Visa $792.61

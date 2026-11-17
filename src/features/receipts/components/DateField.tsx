@@ -1,5 +1,5 @@
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Icon, Sheet } from '@/components';
@@ -14,6 +14,8 @@ import { useTheme } from '@/theme';
 
 type Props = {
   label: string;
+  /** Shown beside the label, e.g. a "Detected" pill on a scanned receipt. */
+  badge?: ReactNode;
   value: IsoDate;
   maxDate: IsoDate;
   onChange: (date: IsoDate) => void;
@@ -22,7 +24,7 @@ type Props = {
 };
 
 /** Purchase date: an inline calendar in a sheet on iOS, the Material date dialog on Android. */
-export function DateField({ label, value, maxDate, onChange, error, testID }: Props) {
+export function DateField({ label, badge, value, maxDate, onChange, error, testID }: Props) {
   const { colors, radii, sizes, spacing } = useTheme();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Date>(new Date());
@@ -46,9 +48,10 @@ export function DateField({ label, value, maxDate, onChange, error, testID }: Pr
 
   return (
     <View style={{ marginBottom: spacing.md }}>
-      <AppText variant="caption" style={styles.label}>
-        {label}
-      </AppText>
+      <View style={styles.labelRow}>
+        <AppText variant="caption">{label}</AppText>
+        {badge}
+      </View>
       <Pressable
         onPress={show}
         accessibilityRole="button"
@@ -106,7 +109,7 @@ export function DateField({ label, value, maxDate, onChange, error, testID }: Pr
 }
 
 const styles = StyleSheet.create({
-  label: { marginBottom: 6 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   box: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 },
   msgRow: { marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6 },
 });

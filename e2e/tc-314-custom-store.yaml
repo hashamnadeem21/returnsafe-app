@@ -30,8 +30,7 @@ name: TC-314 Custom store window is remembered
     visible: ".*Joe's Bikes.*"
     timeout: 10000
 # Second receipt for the same store: the saved window is offered and used.
-- tapOn:
-    id: tab-scan
+- runFlow: subflows/open-scanner.yaml
 - tapOn:
     id: scanner-enter-manually
 - tapOn:

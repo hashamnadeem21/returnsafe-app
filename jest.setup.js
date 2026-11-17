@@ -61,3 +61,14 @@ jest.mock('@invertase/react-native-apple-authentication', () => {
   };
 });
 jest.mock('expo-localization', () => ({ getCalendars: () => [{ timeZone: 'America/New_York' }] }));
+
+// Scanning and photos: in-memory fakes (see src/test/fakeScan.js).
+jest.mock('@react-native-firebase/storage', () => require('./src/test/fakeScan').fakeStorage);
+jest.mock('expo-file-system', () => require('./src/test/fakeScan').fakeFileSystem);
+jest.mock('expo-image-manipulator', () => require('./src/test/fakeScan').fakeImageManipulator);
+jest.mock('./modules/receipt-text', () => require('./src/test/fakeScan').fakeTextRecognition);
+jest.mock(
+  'react-native-document-scanner-plugin',
+  () => require('./src/test/fakeScan').fakeDocumentScanner,
+);
+jest.mock('expo-image-picker', () => require('./src/test/fakeScan').fakeImagePicker);

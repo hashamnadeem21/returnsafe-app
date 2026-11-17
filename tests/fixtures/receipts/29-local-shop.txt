@@ -1,0 +1,9 @@
+Joe's Bike Shop
+44 Elm St Portland OR
+11/11/2026
+Bike lock 34.00
+Tire tube 8.00
+Subtotal 42.00
+Tax 0.00
+Total 42.00
+Card 42.00

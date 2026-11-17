@@ -15,6 +15,7 @@ import {
   updateDoc,
 } from '@react-native-firebase/firestore';
 
+import { cancelUploads } from '@/features/scan/uploadQueue';
 import { computeDeadline, DEFAULT_TIMEZONE } from '@/lib/dates';
 import { db } from '@/lib/firebase';
 
@@ -82,16 +83,24 @@ export function subscribeReceipts(
   );
 }
 
+/**
+ * Listens to users/{uid}. `missing` is called when the server confirms the document does not exist
+ * (its creation at sign-in failed), so the caller can create it again.
+ */
 export function subscribeProfile(
   uid: string,
   next: (profile: UserProfile | null) => void,
   error: (e: unknown) => void,
+  missing?: () => void,
 ): Unsubscribe {
   return onSnapshot(
     doc(db(), 'users', uid),
     (snap) => {
       const d = snap.data() as Data | undefined;
-      if (!d) return next(null);
+      if (!d) {
+        if (!snap.metadata.fromCache) missing?.();
+        return next(null);
+      }
       next({
         isPro: d.isPro === true,
         activeCount: num(d.activeCount),
@@ -139,16 +148,25 @@ function fields(input: ReceiptInput): Data {
   };
 }
 
+/** A new receipt id, made on the device (so a photo path can name it before saving). */
+export function newReceiptId(uid: string): string {
+  return doc(receiptsCol(uid)).id;
+}
+
 /** Saves a new active receipt and returns its id straight away (works offline). */
-export function createReceipt(uid: string, input: ReceiptInput): string {
-  const ref = doc(receiptsCol(uid));
+export function createReceipt(
+  uid: string,
+  input: ReceiptInput,
+  opts: { id?: string; photoPaths?: string[] } = {},
+): string {
+  const ref = opts.id ? doc(receiptsCol(uid), opts.id) : doc(receiptsCol(uid));
   background(
     setDoc(ref, {
       ...fields(input),
       warrantyMonths: null,
       warrantyEnd: null,
       status: 'active',
-      photoPaths: [],
+      photoPaths: opts.photoPaths ?? [],
       ocrText: null,
       statusChangedAt: null,
       createdAt: serverTimestamp(),
@@ -171,8 +189,13 @@ export function setReceiptStatus(uid: string, id: string, status: ReceiptStatus)
   );
 }
 
-export function deleteReceipt(uid: string, id: string): void {
-  background(deleteDoc(doc(receiptsCol(uid), id)));
+/** Deletes the receipt and its photos (files still waiting to upload are dropped too). */
+export function deleteReceipt(uid: string, id: string, photoPaths: readonly string[] = []): void {
+  // Waiting uploads are dropped and the photos queued for deletion from Storage (retried until it
+  // works). That queue is saved on the device first, so the cleanup survives a restart.
+  void cancelUploads(id, uid, photoPaths)
+    .catch(() => undefined)
+    .then(() => background(deleteDoc(doc(receiptsCol(uid), id))));
 }
 
 /** Remembers the window chosen for a store that is not in the built-in list. */

@@ -62,3 +62,7 @@ emulator-data/
 
 # test output
 coverage/
+
+# Local Expo module build output
+modules/*/android/build/
+modules/*/android/.gradle/

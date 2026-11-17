@@ -1,0 +1,30 @@
+# Picks the newest photo in the system photo picker (the test receipt the flow just added).
+appId: com.returnsafe.app
+---
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      # Grid cells read "Photo, November 16, 2:40 PM"; the newest is first. The grid's own
+      # label lists every photo, so the pattern skips anything with more than two commas.
+      - extendedWaitUntil:
+          visible: 'Photo, [^,]+, [^,]+'
+          timeout: 10000
+      - tapOn:
+          text: 'Photo, [^,]+, [^,]+'
+          index: 0
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      # The Android photo picker labels cells "Photo taken on Nov 16, 2026 2:40 PM", newest first.
+      - extendedWaitUntil:
+          visible: 'Photo taken on .*'
+          timeout: 10000
+      - tapOn:
+          text: 'Photo taken on .*'
+          index: 0
+      # Some picker versions select first and confirm with Done.
+      - tapOn:
+          text: Done
+          optional: true

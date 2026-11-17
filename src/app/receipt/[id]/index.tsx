@@ -22,6 +22,7 @@ import { deleteReceipt } from '@/features/receipts/receiptsRepo';
 import { useVisibleReceipts, useReceipts } from '@/features/receipts/receiptsStore';
 import { changeStatusWithUndo, undoStatus } from '@/features/receipts/statusActions';
 import { useTimezone, useToday } from '@/features/receipts/useToday';
+import { ReceiptPhoto } from '@/features/scan/ReceiptPhoto';
 import { useSession } from '@/stores/session';
 import { fonts, useTheme } from '@/theme';
 
@@ -69,7 +70,7 @@ export default function ReceiptDetail() {
         style: 'destructive',
         onPress: () => {
           undoStatus(receipt.id);
-          deleteReceipt(uid, receipt.id);
+          deleteReceipt(uid, receipt.id, receipt.photoPaths);
           back();
         },
       },
@@ -156,12 +157,21 @@ export default function ReceiptDetail() {
 
         <View style={[styles.row, { gap: spacing.md }]}>
           <Card style={[styles.tile, { padding: spacing.lg, gap: spacing.sm }]}>
-            <Icon name="image" size={22} color={colors.ink2} />
+            {receipt.photoPaths[0] ? (
+              <ReceiptPhoto
+                path={receipt.photoPaths[0]}
+                width={40}
+                height={52}
+                testID="receipt-photo"
+              />
+            ) : (
+              <Icon name="image" size={22} color={colors.ink2} />
+            )}
             <AppText variant="body" style={{ fontFamily: fonts.semibold }}>
               Photo
             </AppText>
             <AppText variant="caption">
-              {receipt.photoPaths.length > 0 ? `${receipt.photoPaths.length} receipt` : 'No photo'}
+              {receipt.photoPaths.length > 0 ? 'Attached' : 'No photo'}
             </AppText>
           </Card>
           <Card style={[styles.tile, { padding: spacing.lg, gap: spacing.sm }]}>

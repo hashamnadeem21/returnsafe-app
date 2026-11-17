@@ -1,8 +1,22 @@
 rules_version = '2';
 
-// Phase 0: everything is denied. Phase 4 opens receipt photo uploads.
+// Receipt photos: users/{uid}/receipts/{receiptId}/{photoId}.jpg. Owner only, images only,
+// under 10 MB. Everything else is denied.
 service firebase.storage {
   match /b/{bucket}/o {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/receipts/{receiptId}/{photoId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && receiptId.matches('^[A-Za-z0-9_-]{1,64}$')
+        && photoId.matches('^[A-Za-z0-9_-]{1,64}[.]jpg$')
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
