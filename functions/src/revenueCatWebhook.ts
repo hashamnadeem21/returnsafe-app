@@ -19,7 +19,11 @@ export function authorized(header: string | undefined, secret: string): boolean 
   return timingSafeEqual(digest(header), digest(`Bearer ${secret}`));
 }
 
-export type Outcome = 'applied' | 'duplicate' | 'ignored' | 'stale' | 'unknown-user';
+/**
+ * 'retry': a Pro grant for a user whose profile doesn't exist yet. Nothing is recorded and the
+ * webhook answers 503, so RevenueCat delivers it again once initUser has created the profile.
+ */
+export type Outcome = 'applied' | 'duplicate' | 'ignored' | 'stale' | 'unknown-user' | 'retry';
 
 /**
  * Applies one event in a transaction. billingEvents/{eventId} records every event handled, so a
@@ -34,27 +38,44 @@ export async function applyEvent(e: RcEvent, nowMs = Date.now()): Promise<Outcom
       tx.create(eventRef, { type: e.type, uid, outcome, handledAt: FieldValue.serverTimestamp() });
       return outcome;
     };
-    const at = typeof e.event_timestamp_ms === 'number' ? e.event_timestamp_ms : nowMs;
+    const at = e.event_timestamp_ms;
 
-    // A transfer moves the purchase to another account (for example Restore on a new login).
+    // A transfer moves the purchase to another account (for example Restore on a new login). The
+    // event carries no entitlement or expiry, so the accounts it leaves pass their Pro state and
+    // expiry on to the accounts it moves to, and lose it themselves. Pro that has already ended
+    // is not passed on. If none of the old accounts is known, the new ones are left as they are.
     if (e.type === 'TRANSFER') {
       const ids = (list: string[] | null | undefined) =>
-        candidateUids({ id: e.id, type: e.type, aliases: list });
-      const moves: [string, boolean][] = [
-        ...ids(e.transferred_from).map((u): [string, boolean] => [u, false]),
-        ...ids(e.transferred_to).map((u): [string, boolean] => [u, true]),
-      ];
-      const snaps = await Promise.all(moves.map(([u]) => tx.get(db.doc(`users/${u}`))));
+        candidateUids({ id: e.id, type: e.type, aliases: list, event_timestamp_ms: at });
+      const fromSnaps = await Promise.all(
+        ids(e.transferred_from).map((u) => tx.get(db.doc(`users/${u}`))),
+      );
+      const toSnaps = await Promise.all(
+        ids(e.transferred_to).map((u) => tx.get(db.doc(`users/${u}`))),
+      );
+      const known = fromSnaps.filter((snap) => snap.exists);
+      const source = known.find((snap) => {
+        const end = snap.get('proExpiresAt') as Timestamp | null | undefined;
+        return snap.get('isPro') === true && (!end || end.toMillis() > nowMs);
+      });
+      const current = (snap: (typeof known)[number]) => (snap.get('proEventAt') ?? 0) <= at;
       let applied = false;
-      snaps.forEach((snap, i) => {
-        if (!snap.exists || (snap.get('proEventAt') ?? 0) > at) return;
+      const write = (snap: (typeof known)[number], isPro: boolean, expires: unknown) => {
         tx.update(snap.ref, {
-          isPro: moves[i][1],
+          isPro,
+          proExpiresAt: expires ?? null,
           proEventAt: at,
           updatedAt: FieldValue.serverTimestamp(),
         });
         applied = true;
-      });
+      };
+      if (known.length > 0) {
+        for (const snap of toSnaps) {
+          if (snap.exists && current(snap))
+            write(snap, source !== undefined, source?.get('proExpiresAt'));
+        }
+      }
+      for (const snap of known) if (current(snap)) write(snap, false, null);
       return record(applied ? 'applied' : 'ignored');
     }
 
@@ -69,7 +90,7 @@ export async function applyEvent(e: RcEvent, nowMs = Date.now()): Promise<Outcom
         break;
       }
     }
-    if (!user) return record('unknown-user');
+    if (!user) return change.isPro ? 'retry' : record('unknown-user');
     if (user.proEventAt > at) return record('stale', user.ref.id);
 
     tx.update(user.ref, {
@@ -89,8 +110,9 @@ export async function applyEvent(e: RcEvent, nowMs = Date.now()): Promise<Outcom
 
 /**
  * RevenueCat webhook: keeps users/{uid}.isPro (what the rules and functions trust) in step with
- * the stores. Answers 401 to a wrong secret and 200 to everything it has handled, so RevenueCat
- * only retries real failures.
+ * the stores. Answers 401 to a wrong secret, 400 to a malformed event, 503 to a Pro grant for a
+ * profile that doesn't exist yet, and 200 to everything it has handled, so RevenueCat retries
+ * only what can still succeed.
  */
 export const revenueCatWebhook = onRequest(
   { secrets: [WEBHOOK_SECRET], maxInstances: 5 },
@@ -111,7 +133,7 @@ export const revenueCatWebhook = onRequest(
     try {
       const outcome = await applyEvent(event);
       logger.info('RevenueCat event', { id: event.id, type: event.type, outcome });
-      res.status(200).json({ outcome });
+      res.status(outcome === 'retry' ? 503 : 200).json({ outcome });
     } catch (e) {
       logger.error('RevenueCat event failed', { id: event.id, type: event.type, error: String(e) });
       res.status(500).send('Error');

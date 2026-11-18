@@ -11,7 +11,7 @@ import Purchases, {
   type PurchasesPackage,
 } from 'react-native-purchases';
 
-import { usePro } from '@/stores/pro';
+import { managementUrlNow, usePro } from '@/stores/pro';
 
 export const PRO_ENTITLEMENT = 'pro';
 export const YEARLY_PRODUCT = 'rs_pro_yearly';
@@ -31,40 +31,59 @@ export function billingAvailable(): boolean {
   return apiKey().length > 0;
 }
 
-let configuredFor: string | null = null;
+/** The Firebase uid RevenueCat is confirmed signed in as. */
+let activeUid: string | null = null;
+/** The uid the app wants signed in; differs from activeUid while a logIn is in flight. */
+let wantedUid: string | null = null;
 let configured = false;
 let listening = false;
 
-function applyCustomer(info: CustomerInfo) {
+/** Stores customer info, but only while `uid` is still the signed-in, confirmed user. */
+function applyCustomer(info: CustomerInfo, uid: string | null) {
+  if (uid === null || uid !== activeUid || uid !== wantedUid) return;
   usePro
     .getState()
-    .setCustomer(PRO_ENTITLEMENT in info.entitlements.active, info.managementURL ?? null);
+    .setCustomer(uid, PRO_ENTITLEMENT in info.entitlements.active, info.managementURL ?? null);
 }
 
-/** Signs RevenueCat in as this Firebase user (configures the SDK the first time). */
+/** Updates RevenueCat pushes (renewals, refunds) are for whoever is signed in right then. */
+function onCustomerInfo(info: CustomerInfo) {
+  applyCustomer(info, activeUid);
+}
+
+/**
+ * Signs RevenueCat in as this Firebase user (configures the SDK the first time). The user counts
+ * as signed in only once logIn succeeds; after a failure the next call tries again.
+ */
 export async function startPurchases(uid: string): Promise<void> {
-  if (!billingAvailable() || configuredFor === uid) return;
+  if (!billingAvailable()) return;
+  wantedUid = uid;
+  if (activeUid === uid) return;
   if (!configured) {
     Purchases.configure({ apiKey: apiKey(), appUserID: uid });
     configured = true;
-    configuredFor = uid;
+    activeUid = uid;
     if (!listening) {
-      Purchases.addCustomerInfoUpdateListener(applyCustomer);
+      Purchases.addCustomerInfoUpdateListener(onCustomerInfo);
       listening = true;
     }
-    applyCustomer(await Purchases.getCustomerInfo());
+    applyCustomer(await Purchases.getCustomerInfo(), uid);
     return;
   }
-  configuredFor = uid;
+  activeUid = null;
   const { customerInfo } = await Purchases.logIn(uid);
-  applyCustomer(customerInfo);
+  // Another account signed in (or the user signed out) while this was in flight.
+  if (wantedUid !== uid) return;
+  activeUid = uid;
+  applyCustomer(customerInfo, uid);
 }
 
 /** Signed out: forget the user's Pro on this phone. */
 export async function stopPurchases(): Promise<void> {
+  wantedUid = null;
   usePro.getState().reset();
-  if (!configured || configuredFor === null) return;
-  configuredFor = null;
+  if (!configured || activeUid === null) return;
+  activeUid = null;
   // Fails when RevenueCat already has no signed-in user; there is nothing to undo then.
   await Purchases.logOut().catch(() => undefined);
   usePro.getState().reset();
@@ -125,20 +144,24 @@ export async function loadPlans(): Promise<Plans> {
     null;
   const yearly = find(YEARLY_PRODUCT, offering?.annual);
   const monthly = find(MONTHLY_PRODUCT, offering?.monthly);
-  // Android only offers a trial to people who can still get it; iOS has to be asked.
-  let yearlyEligible = true;
-  if (yearly && Platform.OS === 'ios') {
-    const status = await Purchases.checkTrialOrIntroductoryPriceEligibility([
-      yearly.product.identifier,
-    ]).catch(() => ({}) as Record<string, { status: INTRO_ELIGIBILITY_STATUS }>);
-    yearlyEligible =
-      status[yearly.product.identifier]?.status !==
-      INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_INELIGIBLE;
+  // Android only offers a trial to people who can still get it. iOS has to be asked, and the
+  // trial is shown only when Apple says ELIGIBLE (not on UNKNOWN or an error).
+  const eligible = new Set<string>();
+  const withTrial = [yearly, monthly].filter((p): p is PurchasesPackage => !!p && !!trialDays(p));
+  if (Platform.OS !== 'ios') withTrial.forEach((p) => eligible.add(p.product.identifier));
+  else if (withTrial.length > 0) {
+    const status = await Purchases.checkTrialOrIntroductoryPriceEligibility(
+      withTrial.map((p) => p.product.identifier),
+    ).catch(() => ({}) as Record<string, { status: INTRO_ELIGIBILITY_STATUS }>);
+    for (const p of withTrial) {
+      const s = status[p.product.identifier]?.status;
+      if (s === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE)
+        eligible.add(p.product.identifier);
+    }
   }
-  return {
-    yearly: yearly ? toPlan(yearly, 'year', yearlyEligible) : null,
-    monthly: monthly ? toPlan(monthly, 'month', true) : null,
-  };
+  const plan = (pkg: PurchasesPackage | null, period: Plan['period']) =>
+    pkg ? toPlan(pkg, period, eligible.has(pkg.product.identifier)) : null;
+  return { yearly: plan(yearly, 'year'), monthly: plan(monthly, 'month') };
 }
 
 /** "SAVE 44%": the yearly plan against twelve months of the monthly one. */
@@ -156,9 +179,10 @@ function errorCode(e: unknown): string | undefined {
 
 /** Buys a plan. Cancelling the store sheet is not an error. */
 export async function buy(plan: Plan): Promise<PurchaseResult> {
+  const uid = activeUid;
   try {
     const { customerInfo } = await Purchases.purchasePackage(plan.pkg);
-    applyCustomer(customerInfo);
+    applyCustomer(customerInfo, uid);
     return PRO_ENTITLEMENT in customerInfo.entitlements.active ? 'pro' : 'failed';
   } catch (e) {
     const code = errorCode(e);
@@ -172,8 +196,9 @@ export async function buy(plan: Plan): Promise<PurchaseResult> {
 /** Restore purchases: true when Pro is active afterwards. */
 export async function restore(): Promise<boolean> {
   if (!billingAvailable() || !configured) throw new Error('billing-unavailable');
+  const uid = activeUid;
   const info = await Purchases.restorePurchases();
-  applyCustomer(info);
+  applyCustomer(info, uid);
   return PRO_ENTITLEMENT in info.entitlements.active;
 }
 
@@ -186,13 +211,14 @@ export function manageSubscriptionUrl(managementURL: string | null): string {
 }
 
 export async function openManageSubscription(): Promise<void> {
-  await Linking.openURL(manageSubscriptionUrl(usePro.getState().managementURL));
+  await Linking.openURL(manageSubscriptionUrl(managementUrlNow()));
 }
 
 /** Test seam: forget that the SDK was configured. */
 export function resetPurchasesForTests(): void {
   configured = false;
-  configuredFor = null;
+  activeUid = null;
+  wantedUid = null;
   listening = false;
   usePro.getState().reset();
 }

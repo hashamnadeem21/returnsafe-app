@@ -61,7 +61,14 @@ class Directory {
   get exists() {
     return true;
   }
+  get name() {
+    return this.uri.split('/').pop();
+  }
   create() {}
+  list() {
+    return [];
+  }
+  delete() {}
 }
 /** Text written to fake files (export tests read it back). */
 const written = new Map();
@@ -156,6 +163,7 @@ const fakeImagePicker = {
   getCameraPermissionsAsync: jest.fn(async () => ({ granted: true, canAskAgain: true })),
   requestCameraPermissionsAsync: jest.fn(async () => ({ granted: true, canAskAgain: true })),
   launchImageLibraryAsync: jest.fn(async () => ({ canceled: true, assets: null })),
+  launchCameraAsync: jest.fn(async () => ({ canceled: true, assets: null })),
 };
 
 function resetScan() {
@@ -179,6 +187,11 @@ function resetScan() {
   }));
   fakeImagePicker.launchImageLibraryAsync.mockReset();
   fakeImagePicker.launchImageLibraryAsync.mockImplementation(async () => ({
+    canceled: true,
+    assets: null,
+  }));
+  fakeImagePicker.launchCameraAsync.mockReset();
+  fakeImagePicker.launchCameraAsync.mockImplementation(async () => ({
     canceled: true,
     assets: null,
   }));

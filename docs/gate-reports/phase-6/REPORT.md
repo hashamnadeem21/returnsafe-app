@@ -14,16 +14,18 @@
   - Rules and functions trust only `users/{uid}.isPro`, which only the webhook writes.
 - **revenueCatWebhook (HTTPS function):**
   - Checks `Authorization: Bearer <secret>` against the `REVENUECAT_WEBHOOK_SECRET` secret with a timing-safe compare. A wrong or missing secret gets 401 and changes nothing.
-  - INITIAL_PURCHASE, RENEWAL, UNCANCELLATION, PRODUCT_CHANGE: Pro until the new expiry. CANCELLATION: Pro until the paid period ends. BILLING_ISSUE: Pro until the grace period ends. EXPIRATION: Pro ends. TRANSFER: Pro moves to the account that restored the purchase.
+  - INITIAL_PURCHASE, RENEWAL, UNCANCELLATION, PRODUCT_CHANGE: Pro until the new expiry. CANCELLATION: Pro until the paid period ends. BILLING_ISSUE: Pro until the grace period ends. EXPIRATION: Pro ends. TRANSFER: the old account's Pro and expiry move to the account that restored the purchase (Pro that has already ended is not passed on).
   - Every event is recorded in `billingEvents/{eventId}` inside the same transaction, so a repeat delivery changes nothing. `users/{uid}.proEventAt` keeps the time of the last event applied, so an older event that arrives late is ignored.
   - Anonymous RevenueCat ids are skipped; the user is found through the event's aliases.
+  - Only events that name the **pro** entitlement count. An event without a valid `event_timestamp_ms` gets 400. A Pro grant for a profile that doesn't exist yet gets 503 and is not recorded, so RevenueCat delivers it again. A CANCELLATION for a billing error changes nothing (the grace period from BILLING_ISSUE stands).
 - **Paywall (S15):** close, Restore, the Pro feature list, Yearly (selected, with its trial and "SAVE N%") and Monthly plan cards, "Start 7-day free trial" or "Subscribe", the store's renewal and cancel text, Terms of Use and Privacy Policy.
   - Cancelling the store sheet stays Free with no message. Pending and failed purchases show a banner.
   - After a purchase or restore the paywall waits up to 8 seconds for the server's `isPro`, shows "Welcome to ReturnSafe Pro" (or "Pro restored") and closes.
 - **Pro gating:**
   - The 6th active receipt opens the limit sheet; **See Pro** opens the paywall and the form stays open after upgrading.
   - Warranties tab, warranty months on the receipt form, reminders 7 and 3 days before, more than one photo per receipt, and export.
-  - Rules: warranties and more than one photo need `isPro` too. After Pro ends, a saved warranty can be kept or removed but not changed, and photos can be removed but not added.
+  - Rules: warranties and more than one photo need `isPro` too. After Pro ends, a saved warranty can be kept or removed but not changed (its end date follows a corrected purchase date), and photos can be removed but not added or swapped. A warranty's length and end date are always set together.
+  - If the store already says Pro but the server doesn't yet, a save that needs Pro keeps the form open and says Pro is still being activated.
 - **Warranties tab (S14):**
   - Free: a locked card "Track warranties with Pro" over a faded sample list; tapping it opens the paywall.
   - Pro: "N products covered", warranties sorted by end date with time left, a banner when coverage ends within 4 months, Add warranty, empty, loading and error states.
@@ -40,12 +42,12 @@
 | ------- | ---- | --- | ------- | ----- |
 | TC-604 | Functions (emulator) | Pass | Pass | EXPIRATION sets `isPro` false. With the user's own sign-in, reading receipts still works (200) and creating a 6th active receipt is refused (403) |
 | TC-605 | Functions (emulator) | Pass | Pass | Wrong secret, a secret without "Bearer" and no header each get 401; no event is recorded and the user is unchanged |
-| TC-609 | Functions (emulator) | Pass | Pass | BILLING_ISSUE with a grace period in the future keeps Pro; a later EXPIRATION ends it; the repeat is a duplicate |
-| G6-1 | Functions (emulator) | Pass | Pass | One test per event type, each delivered twice (the second is a duplicate and changes nothing): INITIAL_PURCHASE, RENEWAL, UNCANCELLATION, PRODUCT_CHANGE, CANCELLATION, EXPIRATION, BILLING_ISSUE, TRANSFER. Also: 400 and 405, a late older event is ignored, lookup by alias, other entitlements, unknown users and TEST events are ignored |
-| G6-2 | Rules (emulator) | Pass | Pass | A user can't write `isPro`, `proExpiresAt` or `proEventAt`; the 5-active limit holds without the app's check, including after Pro expires; warranties and more than one photo need Pro; a saved warranty can be kept or removed after Pro ends but not changed |
+| TC-609 | Functions (emulator) | Pass | Pass | BILLING_ISSUE with a grace period in the future keeps Pro; a CANCELLATION for the billing error doesn't end it; a later EXPIRATION does; the repeat is a duplicate |
+| G6-1 | Functions (emulator) | Pass | Pass | One test per event type, each delivered twice (the second is a duplicate and changes nothing): INITIAL_PURCHASE, RENEWAL, UNCANCELLATION, PRODUCT_CHANGE, CANCELLATION, EXPIRATION, BILLING_ISSUE, TRANSFER. Also: 400 and 405, 400 without a valid timestamp, a late older event is ignored, lookup by alias, other entitlements and TEST events are ignored, a Pro grant for a missing profile gets 503 and applies once the profile exists, TRANSFER passes on only Pro that hasn't ended |
+| G6-2 | Rules (emulator) | Pass | Pass | A user can't write `isPro`, `proExpiresAt` or `proEventAt`; the 5-active limit holds without the app's check, including after Pro expires; warranties and more than one photo need Pro; a saved warranty can be kept or removed after Pro ends but not changed, and its end date moves only with the purchase date; warranty length and end date go together; photos can't be swapped |
 | TC-607 | E2E (Maestro) | Pass | Pass | Free user opens Warranties, sees the locked card, taps it and the paywall opens with Restore, Terms of Use and Privacy Policy; back returns to the locked card ([iOS](ios-tc607-locked.png), [Android](android-tc607-locked.png)) |
 | G6-3 | Unit | Pass | Pass | CSV: column order, one row per receipt, BOM and CRLF; commas, quotes and line breaks quoted and quotes doubled; formula text defused; items joined with semicolons, cents as dollars |
-| G6-4 | Unit | Pass | Pass | App against a fake store: paywall content (TC-606 path), cancel stays Free (TC-602 path), purchase unlocks Pro and closes once the server agrees (TC-601 path), pending, failed, restore, no key; Warranties locked and Pro list; Settings for Free and Pro, CSV export, restore and manage; warranty save; Free extra photo and 6th receipt open the paywall |
+| G6-4 | Unit | Pass | Pass | App against a fake store: paywall content (TC-606 path), cancel stays Free (TC-602 path), purchase unlocks Pro and closes once the server agrees (TC-601 path), pending, failed, restore, no key; Warranties locked and Pro list; Settings for Free and Pro, CSV export, restore and manage; warranty save; Free extra photo, Add warranty and 6th receipt open the paywall; a warranty isn't saved while Pro is still activating on the server; RevenueCat listener updates reach the UI and another account's stored entitlement never counts |
 | G6-5 | Static | Pass | Pass | ESLint, TypeScript strict (app and functions), Prettier, colour check, expo-doctor 20/20 |
 | TC-601 | Manual | — | — | Buy Yearly in the sandbox (see below) |
 | TC-602 | Manual | — | — | Cancel the store sheet (see below) |
@@ -54,8 +56,8 @@
 | TC-608 | Manual | — | — | Export 20 receipts as PDF (see below) |
 
 **Totals:**
-- **Unit:** 16 suites, 284 tests, 7 snapshots.
-- **Rules and functions:** 6 files, 90 tests, run against the Auth, Firestore, Storage and Functions emulators.
+- **Unit:** 16 suites, 287 tests, 7 snapshots.
+- **Rules and functions:** 6 files, 97 tests, run against the Auth, Firestore, Storage and Functions emulators.
 - **Maestro:** 20/20 flows on the iPhone 17 Pro Max simulator and 20/20 on the Medium Phone API 36.1 emulator. Earlier phases' flows are included as regression checks. Release builds were built with `EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1` and no RevenueCat key, so the paywall shows "Plans can't load right now" ([iOS](ios-paywall-no-key.png), [Android](android-paywall-no-key.png)). Settings for a Free user: [iOS](ios-settings-free.png), [Android](android-settings-free.png).
 
 ## Manual checks for you
@@ -65,10 +67,10 @@
 1. Follow [docs/subscriptions-setup.md](../../subscriptions-setup.md) sections 1 to 3: create the subscription group and both products in App Store Connect and Google Play, then the entitlement, products and offering in RevenueCat.
 2. Set the webhook secret and deploy the functions and rules to the dev project:
    ```bash
-   npx firebase functions:secrets:set REVENUECAT_WEBHOOK_SECRET
+   npx firebase functions:secrets:set REVENUECAT_WEBHOOK_SECRET --project dev
    ```
    ```bash
-   npx firebase deploy --only functions,firestore:rules
+   npx firebase deploy --only functions,firestore:rules --project dev
    ```
    In RevenueCat → Integrations → Webhooks, set the URL to the `revenueCatWebhook` function's URL and the Authorization header to `Bearer <the same secret>`.
 3. Put the RevenueCat public keys in `.env` (`EXPO_PUBLIC_REVENUECAT_IOS_KEY`, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`) and install a build connected to the dev project on a real iPhone and a real Android phone. On Android it must be installed from the internal testing track, or signed with the same key.
@@ -116,9 +118,9 @@
 
 ## Deviations
 
-- **TRANSFER and `proEventAt`.** The spec lists the purchase events; the webhook also handles TRANSFER (Restore on a different account moves Pro there) and keeps `proEventAt` so late, older events can't undo newer ones. `proEventAt` is a new server-only user field.
+- **TRANSFER and `proEventAt`.** The spec lists the purchase events; the webhook also handles TRANSFER (Restore on a different account moves Pro there) and keeps `proEventAt` so late, older events can't undo newer ones. `proEventAt` is a new server-only user field. A TRANSFER from an account the server doesn't know leaves the new account as it is until its next billing event.
 - **Pro features are also enforced in the rules**, not only the 5-receipt limit: warranties and more than one photo need `isPro`. After Pro ends, a user keeps what they saved but can't add more.
-- **The paywall waits up to 8 seconds for the server** after a purchase, so the 6th receipt isn't refused by the rules right after buying. If the webhook is slower, the app is already unlocked and the server catches up.
+- **The paywall waits up to 8 seconds for the server** after a purchase, so the 6th receipt isn't refused by the rules right after buying. If the webhook is slower, the paywall says the purchase is complete and Pro is still being activated; the app is already unlocked, and saves that need Pro ask the user to try again until the server catches up.
 - **Add warranty on the Warranties tab opens a new receipt**, since a warranty belongs to a receipt.
 - **Export "Include" uses two chips** (All, Active only) instead of a dropdown, which needs fewer taps for two choices.
 - **The Free Warranties preview is faded, not blurred.** A blur needs a native library; fading gives the same look without one.
@@ -130,6 +132,8 @@
 - **E2E builds have no RevenueCat key**, so the Maestro flow checks the paywall's layout and links, not prices. Real prices are checked in TC-606.
 
 ## Fixed during testing
+
+- **Code review (CodeRabbit):** webhook timestamp validation, TRANSFER passing on only active Pro, retrying Pro grants for profiles not created yet, billing-error cancellations, the entitlement check, paired warranty fields and photo swaps in the rules, RevenueCat updates bound to the signed-in account, trial eligibility only on an explicit ELIGIBLE, warranty fields sent only when they change, photos appended with `arrayUnion` after the upload is queued, one folder per export, and the setup guide's Firebase project. Both Maestro suites were run again after these changes.
 
 - **TC-607 on iOS:** the locked card is one button, so iOS reads its text as the button's label and Maestro couldn't find the text on its own. The flow now finds the card by id and checks its text. The full iOS suite was run again after the fix.
 - **Android emulator froze** ("System UI isn't responding") during the first run, so every flow failed at the first screen. A cold boot fixed it; no app code changed.

@@ -128,6 +128,11 @@ function resetPurchases() {
   listeners.clear();
 }
 
+/** Pushes customer info to the SDK's listeners, as RevenueCat does after a renewal or refund. */
+function emitCustomerInfo(info = customer()) {
+  for (const l of [...listeners]) l(info);
+}
+
 const fakePurchases = {
   __esModule: true,
   default: Purchases,
@@ -135,4 +140,11 @@ const fakePurchases = {
   INTRO_ELIGIBILITY_STATUS,
 };
 
-module.exports = { fakePurchases, purchasesControl: state, resetPurchases, YEARLY, MONTHLY };
+module.exports = {
+  fakePurchases,
+  purchasesControl: state,
+  resetPurchases,
+  emitCustomerInfo,
+  YEARLY,
+  MONTHLY,
+};

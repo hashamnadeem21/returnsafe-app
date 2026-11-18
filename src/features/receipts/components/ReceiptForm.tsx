@@ -7,7 +7,8 @@ import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { AppText, Button, Card, Icon, LetterAvatar, Pill, ProLock, TextField } from '@/components';
 import { ReceiptPhoto } from '@/features/scan/ReceiptPhoto';
 import { addCalendarMonths, computeDeadline, formatLongDate, isIsoDate } from '@/lib/dates';
-import { useIsPro } from '@/stores/pro';
+import { PRO_ACTIVATING_MESSAGE, serverProNow, useIsPro } from '@/stores/pro';
+import { useSnackbar } from '@/components/Snackbar';
 import { fonts, useTheme } from '@/theme';
 
 import { useReceipts } from '../receiptsStore';
@@ -375,7 +376,19 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, scan }: Props) {
 
         <Button
           label={submitLabel}
-          onPress={handleSubmit((v) => onSubmit(toReceiptInput(v, isPro)))}
+          onPress={handleSubmit((v) => {
+            // Send the warranty only when it changed, or when a corrected purchase date moves its
+            // end date; otherwise the stored warranty is left exactly as it is.
+            const warrantyChanged = isPro && v.warranty !== initial.warranty;
+            const dateMoved = v.purchaseDate !== initial.purchaseDate && initial.warranty !== '';
+            if (warrantyChanged && !serverProNow()) {
+              // Bought Pro a moment ago: the rules would refuse this until the server agrees.
+              useSnackbar.getState().show({ message: PRO_ACTIVATING_MESSAGE });
+              return;
+            }
+            const values = warrantyChanged ? v : { ...v, warranty: initial.warranty };
+            return onSubmit(toReceiptInput(values, warrantyChanged || dateMoved));
+          })}
           loading={formState.isSubmitting}
           testID="receipt-save"
         />

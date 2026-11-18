@@ -15,9 +15,12 @@ export type RcEvent = {
   transferred_from?: string[] | null;
   transferred_to?: string[] | null;
   entitlement_ids?: string[] | null;
+  /** Older payloads name a single entitlement here instead of entitlement_ids. */
+  entitlement_id?: string | null;
+  cancel_reason?: string | null;
   expiration_at_ms?: number | null;
   grace_period_expiration_at_ms?: number | null;
-  event_timestamp_ms?: number | null;
+  event_timestamp_ms: number;
 };
 
 /** The change to write: isPro, and proExpiresAt in ms ('keep' leaves the stored value). */
@@ -40,12 +43,16 @@ export function parseEvent(body: unknown): RcEvent | null {
   const e = event as Record<string, unknown>;
   if (typeof e.id !== 'string' || e.id.length === 0 || e.id.length > 200) return null;
   if (typeof e.type !== 'string') return null;
+  // Needed to put events in order; every RevenueCat event has it.
+  if (!Number.isSafeInteger(e.event_timestamp_ms) || (e.event_timestamp_ms as number) <= 0)
+    return null;
   return e as unknown as RcEvent;
 }
 
-/** False when the event names entitlements and "pro" is not one of them. */
+/** True only when the event names the "pro" entitlement. */
 export function touchesPro(e: RcEvent): boolean {
-  return !Array.isArray(e.entitlement_ids) || e.entitlement_ids.includes(PRO_ENTITLEMENT);
+  if (Array.isArray(e.entitlement_ids)) return e.entitlement_ids.includes(PRO_ENTITLEMENT);
+  return e.entitlement_id === PRO_ENTITLEMENT;
 }
 
 /** The Firebase uids an event may belong to, most likely first (the app logs in with the uid). */
@@ -59,7 +66,9 @@ export function candidateUids(e: RcEvent): string[] {
 /**
  * The change an event makes, or null when it changes nothing:
  * - INITIAL_PURCHASE, RENEWAL, UNCANCELLATION, PRODUCT_CHANGE: Pro until the new expiry.
- * - CANCELLATION: auto-renew is off, but Pro stays until the paid period ends.
+ * - CANCELLATION: auto-renew is off, but Pro stays until the paid period ends. A cancellation
+ *   because of a billing error changes nothing: BILLING_ISSUE sets the grace period and
+ *   EXPIRATION ends Pro.
  * - BILLING_ISSUE: Pro stays through the store's grace period (or until expiry without one).
  * - EXPIRATION: Pro ends.
  */
@@ -69,7 +78,7 @@ export function proChange(e: RcEvent, nowMs: number): ProChange | null {
   if (GRANTS.has(e.type)) return { isPro: true, expiresAtMs: expiry };
   if (e.type === 'EXPIRATION') return { isPro: false, expiresAtMs: expiry ?? 'keep' };
   if (e.type === 'CANCELLATION') {
-    if (expiry === null) return null;
+    if (expiry === null || e.cancel_reason === 'BILLING_ERROR') return null;
     return { isPro: expiry > nowMs, expiresAtMs: expiry };
   }
   if (e.type === 'BILLING_ISSUE') {

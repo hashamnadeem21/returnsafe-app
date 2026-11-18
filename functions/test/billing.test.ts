@@ -7,12 +7,15 @@ import { describe, expect, it } from 'vitest';
 import { proChange, type RcEvent } from '../src/billing/events';
 import { db, PROJECT_ID, receipt, signUp, waitForActiveCount } from './helpers';
 
-/** The secret the emulator loaded from functions/.secret.local. */
-const SECRET = readFileSync(resolve(__dirname, '../.secret.local'), 'utf8')
-  .split('\n')
-  .find((l) => l.startsWith('REVENUECAT_WEBHOOK_SECRET='))!
-  .split('=')[1]
-  .trim();
+/** The secret the emulator loaded from functions/.secret.local (dotenv style: KEY=value). */
+const SECRET = (() => {
+  const line = readFileSync(resolve(__dirname, '../.secret.local'), 'utf8')
+    .split(/\r?\n/)
+    .find((l) => l.trim().startsWith('REVENUECAT_WEBHOOK_SECRET='));
+  const value = line?.slice(line.indexOf('=') + 1).trim() ?? '';
+  if (!value) throw new Error('Set REVENUECAT_WEBHOOK_SECRET in functions/.secret.local');
+  return value;
+})();
 const WEBHOOK = `http://127.0.0.1:5001/${PROJECT_ID}/us-central1/revenueCatWebhook`;
 
 const DAY = 86_400_000;
@@ -223,20 +226,45 @@ describe('revenueCatWebhook: one test per event type, each delivered twice', () 
     expect((await pro(uid)).isPro).toBe(false);
   });
 
-  it('TRANSFER: the purchase moves to the account that restored it; repeat is a duplicate', async () => {
-    const from = await newUser({ isPro: true });
+  it('TRANSFER: Pro and its expiry move to the account that restored it; repeat is a duplicate', async () => {
+    const end = Date.now() + 30 * DAY;
+    const from = await newUser({ isPro: true, proExpiresAt: Timestamp.fromMillis(end) });
     const to = await newUser();
     const e = rcEvent('TRANSFER', to, {
       app_user_id: null,
       original_app_user_id: null,
       aliases: null,
+      entitlement_ids: null,
+      expiration_at_ms: null,
       transferred_from: [from],
       transferred_to: [to],
     });
     expect((await deliver(e)).outcome).toBe('applied');
-    expect((await pro(from)).isPro).toBe(false);
-    expect((await pro(to)).isPro).toBe(true);
+    expect(await pro(from)).toEqual({ isPro: false, expiresAt: null });
+    expect(await pro(to)).toEqual({ isPro: true, expiresAt: end });
     expect((await deliver(e)).outcome).toBe('duplicate');
+  });
+
+  it('TRANSFER: a purchase that has already expired grants nothing', async () => {
+    const from = await newUser({
+      isPro: true,
+      proExpiresAt: Timestamp.fromMillis(Date.now() - DAY),
+    });
+    const to = await newUser();
+    const e = rcEvent('TRANSFER', to, { transferred_from: [from], transferred_to: [to] });
+    expect((await deliver(e)).outcome).toBe('applied');
+    expect((await pro(from)).isPro).toBe(false);
+    expect((await pro(to)).isPro).toBe(false);
+  });
+
+  it('TRANSFER: from an unknown account leaves the new account as it is', async () => {
+    const to = await newUser({ isPro: true });
+    const e = rcEvent('TRANSFER', to, {
+      transferred_from: ['$RCAnonymousID:old'],
+      transferred_to: [to],
+    });
+    expect((await deliver(e)).outcome).toBe('ignored');
+    expect((await pro(to)).isPro).toBe(true);
   });
 });
 
@@ -267,10 +295,44 @@ describe('revenueCatWebhook: order, users and entitlements', () => {
     expect(
       (await deliver(rcEvent('INITIAL_PURCHASE', uid, { entitlement_ids: ['other'] }))).outcome,
     ).toBe('ignored');
-    expect((await deliver(rcEvent('INITIAL_PURCHASE', 'no-such-user'))).outcome).toBe(
-      'unknown-user',
-    );
+    expect((await deliver(rcEvent('EXPIRATION', 'no-such-user'))).outcome).toBe('unknown-user');
     expect((await deliver(rcEvent('TEST', uid))).outcome).toBe('ignored');
+    expect((await pro(uid)).isPro).toBe(false);
+  });
+
+  it('a Pro grant for a profile not created yet is retried, then applied once', async () => {
+    users += 1;
+    const uid = `billing-late-${Date.now()}-${users}`;
+    const e = rcEvent('INITIAL_PURCHASE', uid);
+    expect(await deliver(e)).toEqual({ status: 503, outcome: 'retry' });
+    expect((await db.doc(`billingEvents/${e.id}`).get()).exists).toBe(false);
+    await db.doc(`users/${uid}`).set({ isPro: false, proExpiresAt: null });
+    expect(await deliver(e)).toEqual({ status: 200, outcome: 'applied' });
+    expect((await pro(uid)).isPro).toBe(true);
+    expect((await deliver(e)).outcome).toBe('duplicate');
+  });
+
+  it('a cancellation for a billing error does not end the grace period', async () => {
+    const uid = await newUser();
+    const grace = Date.now() + 3 * DAY;
+    const issue = rcEvent('BILLING_ISSUE', uid, {
+      expiration_at_ms: Date.now() - 1000,
+      grace_period_expiration_at_ms: grace,
+    });
+    expect((await deliver(issue)).outcome).toBe('applied');
+    const cancel = rcEvent('CANCELLATION', uid, {
+      expiration_at_ms: Date.now() - 1000,
+      cancel_reason: 'BILLING_ERROR',
+    });
+    expect((await deliver(cancel)).outcome).toBe('ignored');
+    expect(await pro(uid)).toEqual({ isPro: true, expiresAt: grace });
+  });
+
+  it('answers 400 to an event without a valid timestamp', async () => {
+    const uid = await newUser();
+    const { event_timestamp_ms: _drop, ...noTime } = rcEvent('RENEWAL', uid);
+    expect((await deliver(noTime)).status).toBe(400);
+    expect((await deliver({ ...noTime, event_timestamp_ms: 'soon' })).status).toBe(400);
     expect((await pro(uid)).isPro).toBe(false);
   });
 });
@@ -297,7 +359,16 @@ describe('proChange', () => {
     expect(proChange(e('BILLING_ISSUE', { expiration_at_ms: now - 1 }), now)?.isPro).toBe(false);
     expect(proChange(e('SUBSCRIPTION_PAUSED'), now)).toBeNull();
     expect(proChange(e('RENEWAL', { entitlement_ids: [] }), now)).toBeNull();
-    // No entitlement list at all (older payloads) still counts.
-    expect(proChange(e('RENEWAL', { entitlement_ids: null }), now)?.isPro).toBe(true);
+    // Pro only when the event names it; older payloads name it in entitlement_id.
+    expect(proChange(e('RENEWAL', { entitlement_ids: null }), now)).toBeNull();
+    expect(
+      proChange(e('RENEWAL', { entitlement_ids: null, entitlement_id: 'pro' }), now)?.isPro,
+    ).toBe(true);
+    expect(
+      proChange(
+        e('CANCELLATION', { expiration_at_ms: now - 1, cancel_reason: 'BILLING_ERROR' }),
+        now,
+      ),
+    ).toBeNull();
   });
 });

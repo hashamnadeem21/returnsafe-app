@@ -31,7 +31,7 @@ import {
 } from '@/lib/dates';
 import { INSTALL_KEY } from '@/lib/install';
 import { ONBOARDING_KEY } from '@/lib/onboarding';
-import { usePro } from '@/stores/pro';
+import { isProNow, managementUrlNow, usePro } from '@/stores/pro';
 import { useSession } from '@/stores/session';
 import { firestoreDocs, reset, resetFirestore, seedDoc, signInAnonymously } from '@/test/firebase';
 
@@ -47,6 +47,7 @@ const rc = require('@/test/fakePurchases') as {
     appUserID: string | null;
   };
   resetPurchases: () => void;
+  emitCustomerInfo: (info?: unknown) => void;
   MONTHLY: unknown;
 };
 
@@ -370,6 +371,19 @@ describe('paywall (S15)', () => {
     await waitFor(() => expect(usePro.getState().storePro).toBe(true));
   });
 
+  it("RevenueCat updates from the listener reach the UI; another account's do not", async () => {
+    await start('/home');
+    await settle(() => undefined);
+    expect(isProNow()).toBe(false);
+    rc.purchasesControl.pro = true;
+    await settle(() => rc.emitCustomerInfo());
+    expect(isProNow()).toBe(true);
+    // A snapshot stored for a different uid never counts for the signed-in user.
+    await settle(() => usePro.getState().setCustomer('someone-else', true, 'https://x.test'));
+    expect(isProNow()).toBe(false);
+    expect(managementUrlNow()).toBeNull();
+  });
+
   it('without a RevenueCat key the plans cannot load and Retry is offered', async () => {
     process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY = '';
     await start('/paywall');
@@ -457,10 +471,31 @@ describe('Pro gating in the receipt screens', () => {
     );
   });
 
-  it('a Free user is sent to the paywall from Add warranty and from a second photo', async () => {
+  it('a Free user is sent to the paywall from a second photo', async () => {
     await start('/receipt/a', {}, { a: { photoPaths: [`users/x/receipts/a/p1.jpg`] } });
     await fireEvent.press(await screen.findByTestId('receipt-add-photo'));
     expect(await screen.findByTestId('screen-paywall')).toBeTruthy();
+  });
+
+  it('a Free user is sent to the paywall from Add warranty', async () => {
+    await start('/receipt/a/edit', {}, { a: {} });
+    expect(await screen.findByLabelText('Add warranty, Pro feature')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('receipt-add-warranty'));
+    expect(await screen.findByTestId('screen-paywall')).toBeTruthy();
+  });
+
+  it('a warranty is not saved while Pro is still activating on the server', async () => {
+    await start('/receipt/a/edit', {}, { a: { purchaseDate: '2026-11-01' } });
+    // The store says Pro (just bought), the server not yet.
+    await settle(() => usePro.getState().setCustomer(uid, true, null));
+    await fireEvent.press(await screen.findByTestId('receipt-add-warranty'));
+    await fireEvent.changeText(screen.getByTestId('receipt-warranty-months'), '12');
+    await fireEvent.press(screen.getByTestId('receipt-save'));
+    await waitFor(() =>
+      expect(useSnackbar.getState().current?.message).toMatch(/still being activated/),
+    );
+    expect(screen.getByTestId('receipt-warranty-months')).toBeTruthy();
+    expect(firestoreDocs.get(`${userPath()}/receipts/a`)?.warrantyMonths ?? null).toBeNull();
   });
 
   it('upgrading from the limit sheet keeps the new receipt form open', async () => {

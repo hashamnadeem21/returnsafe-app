@@ -15,9 +15,32 @@ import { receiptsHtml } from './pdf';
 
 export type ExportFormat = 'pdf' | 'csv';
 
+/** Exports stay this long, so an app the file was shared to can still read it. */
+const KEEP_EXPORTS_MS = 24 * 60 * 60 * 1000;
+
 function exportDir(): Directory {
   const dir = new Directory(Paths.cache, 'export');
   if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
+  return dir;
+}
+
+/** Removes export folders older than a day (each export has its own, named by its time). */
+function pruneOldExports(now: number): void {
+  try {
+    for (const entry of exportDir().list()) {
+      const made = Number(entry.name);
+      if (entry instanceof Directory && Number.isFinite(made) && now - made > KEEP_EXPORTS_MS)
+        entry.delete();
+    }
+  } catch {
+    // Only tidying up; the system clears the cache folder too.
+  }
+}
+
+/** A new folder for one export, so a second export never replaces a file still being shared. */
+function newExportDir(now: number): Directory {
+  const dir = new Directory(exportDir(), String(now));
+  dir.create({ intermediates: true, idempotent: true });
   return dir;
 }
 
@@ -67,8 +90,9 @@ export async function exportReceipts(
   format: ExportFormat,
   today: IsoDate,
 ): Promise<void> {
-  const target = new File(exportDir(), fileName(today, format));
-  if (target.exists) target.delete();
+  const now = Date.now();
+  pruneOldExports(now);
+  const target = new File(newExportDir(now), fileName(today, format));
   if (format === 'csv') {
     target.create();
     await target.write(receiptsCsv(receipts, today));

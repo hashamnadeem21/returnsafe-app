@@ -56,12 +56,14 @@ service cloud.firestore {
     }
 
     // An edit by a Free user (for example after Pro expired) may keep a warranty and photos added
-    // while Pro, or remove them, but not add or change them.
+    // while Pro, or remove them, but not add or change them. The warranty's end date may move
+    // only with a corrected purchase date, since it is the purchase date plus warrantyMonths.
     function keepsProFeatures(d, before) {
       return (optional(d, 'warrantyMonths') == null
           || (optional(d, 'warrantyMonths') == optional(before, 'warrantyMonths')
-            && optional(d, 'warrantyEnd') == optional(before, 'warrantyEnd')))
-        && (d.photoPaths.size() <= 1 || d.photoPaths.size() <= before.photoPaths.size());
+            && (optional(d, 'warrantyEnd') == optional(before, 'warrantyEnd')
+              || d.purchaseDate != before.purchaseDate)))
+        && (d.photoPaths.size() <= 1 || d.photoPaths.hasOnly(before.photoPaths));
     }
 
     function validReceipt(d) {
@@ -82,6 +84,8 @@ service cloud.firestore {
         && (optional(d, 'warrantyMonths') == null
           || (d.warrantyMonths is int && d.warrantyMonths >= 1 && d.warrantyMonths <= 120))
         && (optional(d, 'warrantyEnd') == null || isDate(d.warrantyEnd))
+        // A warranty is its length and end date together, or neither.
+        && ((optional(d, 'warrantyMonths') == null) == (optional(d, 'warrantyEnd') == null))
         && (optional(d, 'ocrText') == null || (d.ocrText is string && d.ocrText.size() <= 20000))
         && (optional(d, 'statusChangedAt') == null || d.statusChangedAt is timestamp)
         && d.createdAt is timestamp

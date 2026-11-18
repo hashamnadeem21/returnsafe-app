@@ -4,6 +4,7 @@
  * happens offline. Failures are reported through `onWriteError`.
  */
 import {
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -218,7 +219,15 @@ export function saveCustomStore(uid: string, name: string, returnDays: number): 
   );
 }
 
-/** Saves a receipt's photo list (an added photo's file joins the upload queue separately). */
-export function setReceiptPhotos(uid: string, id: string, photoPaths: string[]): void {
-  background(updateDoc(doc(receiptsCol(uid), id), { photoPaths, updatedAt: serverTimestamp() }));
+/**
+ * Adds one photo path to a receipt. arrayUnion appends on the server, so two photos added at the
+ * same time (or one added on another phone) are both kept; the rules still cap the count.
+ */
+export function addReceiptPhoto(uid: string, id: string, path: string): void {
+  background(
+    updateDoc(doc(receiptsCol(uid), id), {
+      photoPaths: arrayUnion(path),
+      updatedAt: serverTimestamp(),
+    }),
+  );
 }

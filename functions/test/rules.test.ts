@@ -310,6 +310,8 @@ describe('Pro gating rules (Phase 6)', () => {
         updatedAt: serverTimestamp(),
       }),
     );
+    // Removing only one of the two fields is not allowed: they go together.
+    await assertFails(updateDoc(mine('w'), { warrantyEnd: null, updatedAt: serverTimestamp() }));
     await assertSucceeds(
       updateDoc(mine('w'), {
         warrantyMonths: null,
@@ -317,6 +319,27 @@ describe('Pro gating rules (Phase 6)', () => {
         updatedAt: serverTimestamp(),
       }),
     );
+  });
+
+  it('after Pro ends, the warranty end follows a corrected purchase date only', async () => {
+    await seedReceipt('alice', 'wd', warranty);
+    await assertFails(
+      updateDoc(mine('wd'), { warrantyEnd: '2028-11-12', updatedAt: serverTimestamp() }),
+    );
+    await assertSucceeds(
+      updateDoc(mine('wd'), {
+        purchaseDate: '2026-11-01',
+        warrantyEnd: '2027-11-01',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  it('warranty length and end date are both set or both empty', async () => {
+    await setUser('alice', { isPro: true });
+    await assertFails(setDoc(mine('h1'), receipt({ warrantyEnd: '2027-11-12' })));
+    await assertFails(setDoc(mine('h2'), receipt({ warrantyMonths: 12 })));
+    await assertSucceeds(setDoc(mine('h3'), receipt(warranty)));
   });
 
   it('extra photos are Pro: Free users keep one photo per receipt', async () => {
@@ -330,6 +353,9 @@ describe('Pro gating rules (Phase 6)', () => {
     await assertSucceeds(
       updateDoc(mine('p3'), { photoPaths: photos(3), updatedAt: serverTimestamp() }),
     );
+    // ...but not swapped for new ones while keeping the count.
+    const swapped = [...photos(3).slice(0, 2), 'users/alice/receipts/p/new.jpg'];
+    await assertFails(updateDoc(mine('p3'), { photoPaths: swapped, updatedAt: serverTimestamp() }));
     await setUser('alice', { isPro: true });
     await assertSucceeds(
       updateDoc(mine('p1'), { photoPaths: photos(5), updatedAt: serverTimestamp() }),

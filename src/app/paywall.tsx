@@ -48,21 +48,28 @@ const platform = Platform.OS === 'ios' ? 'ios' : 'android';
 /** After a purchase, how long to wait for the server to mark the account Pro before closing. */
 const SERVER_PRO_WAIT_MS = 8_000;
 
-/** Resolves once users/{uid}.isPro is true (the rules check it on save), or after a timeout. */
-function waitForServerPro(): Promise<void> {
-  if (useReceipts.getState().profile?.isPro) return Promise.resolve();
+/**
+ * Resolves true once users/{uid}.isPro is true (the rules check it on save), or false after a
+ * timeout.
+ */
+function waitForServerPro(): Promise<boolean> {
+  if (useReceipts.getState().profile?.isPro) return Promise.resolve(true);
   return new Promise((resolve) => {
-    const done = () => {
+    const done = (confirmed: boolean) => {
       clearTimeout(timer);
       unsub();
-      resolve();
+      resolve(confirmed);
     };
-    const timer = setTimeout(done, SERVER_PRO_WAIT_MS);
+    const timer = setTimeout(() => done(false), SERVER_PRO_WAIT_MS);
     const unsub = useReceipts.subscribe((s) => {
-      if (s.profile?.isPro) done();
+      if (s.profile?.isPro) done(true);
     });
   });
 }
+
+/** Shown when the purchase went through but the account isn't Pro on the server yet. */
+const ACTIVATING_MESSAGE =
+  'Purchase complete. Pro is still being activated on your account; this can take a minute.';
 
 type Load = { state: 'loading' } | { state: 'error' } | { state: 'ready'; plans: Plans };
 type Notice = { kind: BannerKind; message: string } | null;
@@ -174,9 +181,12 @@ export default function Paywall() {
 
   const unlocked = async (message: string) => {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-    await waitForServerPro();
+    const confirmed = await waitForServerPro();
     if (!alive.current) return;
-    useSnackbar.getState().show({ message, durationMs: 3000 });
+    useSnackbar.getState().show({
+      message: confirmed ? message : ACTIVATING_MESSAGE,
+      durationMs: confirmed ? 3000 : 5000,
+    });
     close();
   };
 

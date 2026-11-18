@@ -7,7 +7,7 @@ ReturnSafe Pro is one entitlement (`pro`) sold as two auto-renewing subscription
 | `rs_pro_yearly`  | $19.99     | 1 year | 7 days free         |
 | `rs_pro_monthly` | $2.99      | 1 month| none                |
 
-The app never hard-codes these prices; it shows whatever the store returns. Set everything up in the order below. Work in the **returnsafe-dev** Firebase project first, then repeat the webhook part for **returnsafe-prod**.
+The app never hard-codes these prices; it shows whatever the store returns. Set everything up in the order below. Work in the dev Firebase project (`returnsafe-app`, alias `dev` in `.firebaserc`) first, then repeat the webhook part for **returnsafe-prod**.
 
 ## 1. App Store Connect (iOS)
 
@@ -64,10 +64,10 @@ The first subscription must be submitted together with an app version. Until the
    - Add the same two to EAS for cloud builds: `eas env:create --name EXPO_PUBLIC_REVENUECAT_IOS_KEY --value appl_… --environment production` (repeat for the Android key, and for `preview`).
 8. **Webhook (one per Firebase project):**
    1. Make a long random secret: `openssl rand -hex 32`.
-   2. Store it in Firebase: `firebase functions:secrets:set REVENUECAT_WEBHOOK_SECRET --project returnsafe-dev`, and paste the secret when asked.
-   3. Deploy the function, rules and indexes: `firebase deploy --only functions,firestore --project returnsafe-dev`.
+   2. Store it in Firebase: `firebase functions:secrets:set REVENUECAT_WEBHOOK_SECRET --project dev`, and paste the secret when asked.
+   3. Deploy the function, rules and indexes: `firebase deploy --only functions,firestore --project dev`.
    4. In RevenueCat, **Integrations › Webhooks › Add**:
-      - URL: `https://us-central1-returnsafe-dev.cloudfunctions.net/revenueCatWebhook`
+      - URL: `https://us-central1-returnsafe-app.cloudfunctions.net/revenueCatWebhook`
       - Authorization header value: `Bearer <the secret>`. Include the word `Bearer` and the space; anything else gets a 401.
       - Environment: **Sandbox** for dev (both for prod).
       - Events: all.

@@ -15,7 +15,7 @@ import { useToday } from '@/features/receipts/useToday';
 import { forgetLocalPhoto } from '@/features/scan/photos';
 import { useScanDraft, type ScanDraft } from '@/features/scan/scanDraft';
 import { centsToInput } from '@/lib/money';
-import { isProNow, useIsPro } from '@/stores/pro';
+import { isProNow, PRO_ACTIVATING_MESSAGE, serverProNow, useIsPro } from '@/stores/pro';
 import { useSession } from '@/stores/session';
 
 const close = () => (router.canGoBack() ? router.back() : router.replace('/home'));
@@ -127,8 +127,15 @@ export default function NewReceipt() {
             return;
           }
           const st = useReceipts.getState();
-          if (!canAddActive(st.profile, st.receipts, isProNow())) {
-            setLimitOpen(true);
+          // The rules go by the server's isPro, so check against that. Right after buying, the
+          // store already says Pro but the server may not yet: keep the draft and say so.
+          const serverPro = serverProNow();
+          const needsPro =
+            !canAddActive(st.profile, st.receipts, serverPro) ||
+            (input.warrantyMonths != null && !serverPro);
+          if (needsPro) {
+            if (isProNow()) useSnackbar.getState().show({ message: PRO_ACTIVATING_MESSAGE });
+            else setLimitOpen(true);
             return;
           }
           saved.current = true;

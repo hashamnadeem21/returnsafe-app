@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Card, Icon, ProLock, Sheet, useSnackbar } from '@/components';
-import { setReceiptPhotos } from '@/features/receipts/receiptsRepo';
+import { addReceiptPhoto } from '@/features/receipts/receiptsRepo';
 import type { Receipt } from '@/features/receipts/types';
 import { fonts, useTheme } from '@/theme';
 
@@ -47,8 +47,9 @@ export function ExtraPhotos({ uid, receipt, isPro }: Props) {
       const photoId = newPhotoId();
       const localUri = await preparePhoto(uri, photoId);
       const path = photoPath(uid, receipt.id, photoId);
-      setReceiptPhotos(uid, receipt.id, [...receipt.photoPaths, path]);
-      void enqueueUpload({ uid, receiptId: receipt.id, photoId, path, localUri });
+      // Queue the upload first, so the receipt never lists a photo that nothing will upload.
+      await enqueueUpload({ uid, receiptId: receipt.id, photoId, path, localUri });
+      addReceiptPhoto(uid, receipt.id, path);
     } catch {
       useSnackbar.getState().show({ message: "That photo couldn't be added. Please try again." });
     } finally {
