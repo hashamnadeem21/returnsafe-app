@@ -226,6 +226,7 @@ describe('users/{uid}/receipts rules', () => {
   });
 
   it('at most 50 items and 5 photo paths', async () => {
+    await setUser('alice', { isPro: true });
     const items = (n: number) => Array.from({ length: n }, (_, i) => `Item ${i}`);
     const photos = (n: number) =>
       Array.from({ length: n }, (_, i) => `users/alice/receipts/p/${i}.jpg`);
@@ -261,6 +262,78 @@ describe('users/{uid}/receipts rules', () => {
     await assertFails(setDoc(mine('f2'), noStore));
     await seedReceipt('alice', 'f3');
     await assertFails(updateDoc(mine('f3'), { createdAt: serverTimestamp() }));
+  });
+});
+
+describe('Pro gating rules (Phase 6)', () => {
+  const mine = (id = 'r1') => doc(as('alice'), `users/alice/receipts/${id}`);
+  const photos = (n: number) =>
+    Array.from({ length: n }, (_, i) => `users/alice/receipts/p/${i}.jpg`);
+  const warranty = { warrantyMonths: 12, warrantyEnd: '2027-11-12' };
+
+  it('client cannot make itself Pro or move its Pro dates', async () => {
+    const ref = doc(as('alice'), 'users/alice');
+    await assertFails(updateDoc(ref, { isPro: true }));
+    await assertFails(updateDoc(ref, { isPro: true, displayName: 'Al' }));
+    await assertFails(updateDoc(ref, { proExpiresAt: new Date('2030-01-01') }));
+    await assertFails(updateDoc(ref, { proEventAt: Date.now() }));
+    await assertFails(setDoc(ref, { ...USER, isPro: true }));
+  });
+
+  it('the free limit holds even when the app skips its own check', async () => {
+    await setUser('alice', { activeCount: 5 });
+    await assertFails(setDoc(mine('sixth'), receipt()));
+    // Making a kept receipt active again is a 6th active receipt too.
+    await seedReceipt('alice', 'kept', { status: 'kept' });
+    await assertFails(updateDoc(mine('kept'), { status: 'active', updatedAt: serverTimestamp() }));
+    // After Pro expires (isPro false) the limit is back.
+    await setUser('alice', { activeCount: 9, isPro: false, proExpiresAt: new Date('2026-01-01') });
+    await assertFails(setDoc(mine('tenth'), receipt()));
+  });
+
+  it('warranties are Pro: Free users cannot add or change one', async () => {
+    await assertFails(setDoc(mine('w1'), receipt(warranty)));
+    await seedReceipt('alice', 'w2');
+    await assertFails(updateDoc(mine('w2'), { ...warranty, updatedAt: serverTimestamp() }));
+    await setUser('alice', { isPro: true });
+    await assertSucceeds(setDoc(mine('w3'), receipt(warranty)));
+    await assertSucceeds(updateDoc(mine('w2'), { ...warranty, updatedAt: serverTimestamp() }));
+  });
+
+  it('after Pro ends, a saved warranty can be kept or removed but not changed', async () => {
+    await seedReceipt('alice', 'w', warranty);
+    await assertSucceeds(updateDoc(mine('w'), { amountCents: 100, updatedAt: serverTimestamp() }));
+    await assertFails(
+      updateDoc(mine('w'), {
+        warrantyMonths: 24,
+        warrantyEnd: '2028-11-12',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(mine('w'), {
+        warrantyMonths: null,
+        warrantyEnd: null,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  it('extra photos are Pro: Free users keep one photo per receipt', async () => {
+    await assertSucceeds(setDoc(mine('p1'), receipt({ photoPaths: photos(1) })));
+    await assertFails(setDoc(mine('p2'), receipt({ photoPaths: photos(2) })));
+    await assertFails(
+      updateDoc(mine('p1'), { photoPaths: photos(2), updatedAt: serverTimestamp() }),
+    );
+    // Photos added while Pro stay, and can be removed, after Pro ends.
+    await seedReceipt('alice', 'p3', { photoPaths: photos(4) });
+    await assertSucceeds(
+      updateDoc(mine('p3'), { photoPaths: photos(3), updatedAt: serverTimestamp() }),
+    );
+    await setUser('alice', { isPro: true });
+    await assertSucceeds(
+      updateDoc(mine('p1'), { photoPaths: photos(5), updatedAt: serverTimestamp() }),
+    );
   });
 });
 

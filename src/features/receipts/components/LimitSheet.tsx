@@ -1,13 +1,19 @@
-import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Icon, Sheet } from '@/components';
 import { useTheme } from '@/theme';
 
-type Props = { visible: boolean; used: number; limit: number; onClose: () => void };
+type Props = {
+  visible: boolean;
+  used: number;
+  limit: number;
+  onClose: () => void;
+  /** Opens the paywall; the form stays open so the receipt can be saved after upgrading. */
+  onSeePro: () => void;
+};
 
 /** Shown instead of the form when a free user already has the maximum active receipts. */
-export function LimitSheet({ visible, used, limit, onClose }: Props) {
+export function LimitSheet({ visible, used, limit, onClose, onSeePro }: Props) {
   const { colors, radii, spacing } = useTheme();
   const fraction = Math.min(used / Math.max(limit, 1), 1);
   return (
@@ -44,14 +50,7 @@ export function LimitSheet({ visible, used, limit, onClose }: Props) {
         <AppText variant="caption">{`${used} of ${limit} active`}</AppText>
       </View>
       <View style={{ gap: spacing.sm, marginTop: spacing.lg }}>
-        <Button
-          label="See Pro plans"
-          onPress={() => {
-            onClose();
-            router.push('/paywall');
-          }}
-          testID="limit-see-pro"
-        />
+        <Button label="See Pro plans" onPress={onSeePro} testID="limit-see-pro" />
         <Button label="Not now" variant="text" onPress={onClose} testID="limit-not-now" />
       </View>
     </Sheet>

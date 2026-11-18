@@ -13,6 +13,7 @@ iOS and Android app that scans receipts and reminds you before store return wind
 | [docs/design/ReturnSafe-Design.pdf](docs/design/ReturnSafe-Design.pdf) | Brand, components, navigation map and every screen for iOS and Android |
 | [docs/brand](docs/brand)                                               | Logo and app icon source files                                         |
 | [docs/BUILD_PROMPT.md](docs/BUILD_PROMPT.md)                           | Build plan in 9 phases, each with a test gate                          |
+| [docs/subscriptions-setup.md](docs/subscriptions-setup.md)             | App Store Connect, Google Play, RevenueCat and webhook setup for Pro   |
 
 ## Local setup
 
@@ -23,6 +24,7 @@ Requirements: Node 22, Xcode 26.4 or newer (Expo SDK 58 minimum), Android Studio
 3. CocoaPods needs a UTF-8 shell: `export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`
 4. `npm run prebuild`, then `npm run ios` or `npm run android`
 5. `npm run check` runs lint, type check, formatting and tests.
+6. For Pro purchases, add the RevenueCat keys to `.env` (see [docs/subscriptions-setup.md](docs/subscriptions-setup.md)). Without them the paywall says plans can't load.
 
 ## End-to-end tests
 
@@ -50,7 +52,7 @@ The scan flow (TC-402) picks a receipt photo from the device's library, since si
 
 `e2e/scripts/make-receipt-image.py` re-creates the image if needed.
 
-Firestore and Storage rules and Cloud Functions tests start their own emulators: `npm run test:functions`.
+Firestore and Storage rules and Cloud Functions tests start their own emulators: `npm run test:functions`. The RevenueCat webhook reads its secret from `functions/.secret.local` (git-ignored), which `npm run emulators` and `npm run test:functions` create with a local-only value when it is missing.
 
 The 51 built-in store return policies live in `seed/stores.json`. Load them into a running emulator with `npm run seed:stores -- --emulator`, or into a real project with `npm run seed:stores -- --project <id>` (needs admin credentials).
 
@@ -66,6 +68,6 @@ Unit tests, lint, the hex-colour check, type check and formatting all run with `
 | 3     | Receipts core                | Passed ([report](docs/gate-reports/phase-3/REPORT.md)) |
 | 4     | Scanning and photos          | Passed ([report](docs/gate-reports/phase-4/REPORT.md)) |
 | 5     | Reminders                    | Passed ([report](docs/gate-reports/phase-5/REPORT.md)) |
-| 6     | Subscriptions and Pro        | Not started                                            |
+| 6     | Subscriptions and Pro        | Passed ([report](docs/gate-reports/phase-6/REPORT.md)) |
 | 7     | Polish and release prep      | Not started                                            |
 | 8     | Launch                       | Not started                                            |

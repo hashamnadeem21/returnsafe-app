@@ -20,6 +20,7 @@ import {
   REMINDER_DAY_CHOICES,
   saveReminderSettings,
 } from '@/features/reminders/reminderSettings';
+import { useIsPro } from '@/stores/pro';
 import { useSession } from '@/stores/session';
 import { fonts, useTheme } from '@/theme';
 
@@ -109,7 +110,7 @@ export default function ReminderSettings() {
 
   const enabled = profile?.remindersEnabled ?? true;
   const hour = profile?.reminderHour ?? 9;
-  const isPro = profile?.isPro ?? false;
+  const isPro = useIsPro();
   const days = isPro ? (profile?.reminderDays ?? [7, 3, 1]) : [1];
 
   const save = (patch: Parameters<typeof saveReminderSettings>[1]) => {

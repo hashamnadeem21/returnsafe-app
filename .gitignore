@@ -66,3 +66,6 @@ coverage/
 # Local Expo module build output
 modules/*/android/build/
 modules/*/android/.gradle/
+
+# Functions secrets for the local emulators
+functions/.secret.local

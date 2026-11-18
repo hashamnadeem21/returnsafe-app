@@ -63,6 +63,8 @@ class Directory {
   }
   create() {}
 }
+/** Text written to fake files (export tests read it back). */
+const written = new Map();
 class File {
   constructor(...parts) {
     this.uri = join(...parts);
@@ -72,6 +74,16 @@ class File {
   }
   delete() {
     files.delete(this.uri);
+  }
+  create() {
+    files.add(this.uri);
+  }
+  async write(content) {
+    files.add(this.uri);
+    written.set(this.uri, content);
+  }
+  async base64() {
+    return 'QUJD';
   }
   // Like the native module, move finishes later (it returns a promise).
   async move(target) {
@@ -173,6 +185,7 @@ function resetScan() {
 }
 
 module.exports = {
+  writtenFiles: written,
   fakeStorage,
   storageState,
   uploads,

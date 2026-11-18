@@ -86,6 +86,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       { android: { notificationIcon: 'notification_icon', notificationColor: BRAND_TEAL } },
     ],
     '@react-native-community/datetimepicker',
+    // Export (S20) hands the PDF or CSV to the system share sheet.
+    'expo-sharing',
     // Receipt scanning: VisionKit (iOS) / ML Kit Document Scanner (Android), plus the photo library.
     ['react-native-document-scanner-plugin', { cameraPermission: CAMERA_USAGE }],
     [

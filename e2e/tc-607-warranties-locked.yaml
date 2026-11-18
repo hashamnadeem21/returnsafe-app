@@ -1,0 +1,34 @@
+# TC-607: a Free user opens Warranties -> locked card; tapping it opens the paywall.
+# E2E builds have no RevenueCat key, so the paywall shows its "can't load" state with Retry,
+# Restore and the legal links; real prices are checked by hand (TC-606).
+appId: com.returnsafe.app
+name: TC-607 Warranties locked for Free
+---
+- runFlow: subflows/guest-home.yaml
+- tapOn:
+    id: tab-warranties
+- assertVisible:
+    id: screen-warranties-title
+    text: 'Warranties'
+- assertVisible: 'Know when coverage ends'
+# The card is one button, so screen readers (and Maestro on iOS) read its words as its label.
+- assertVisible:
+    id: warranties-locked
+    text: '.*Track warranties with Pro.*'
+- takeScreenshot: tc607-locked
+- tapOn:
+    id: warranties-locked
+- extendedWaitUntil:
+    visible:
+      id: screen-paywall
+    timeout: 10000
+- assertVisible: 'ReturnSafe Pro'
+- assertVisible:
+    id: paywall-restore
+- assertVisible: 'Terms of Use'
+- assertVisible: 'Privacy Policy'
+- takeScreenshot: tc607-paywall
+- tapOn:
+    id: header-back
+- assertVisible:
+    id: warranties-locked

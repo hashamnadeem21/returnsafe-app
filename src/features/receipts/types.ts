@@ -32,6 +32,8 @@ export type ReceiptInput = {
   amountCents: number;
   items: string[];
   returnDays: number;
+  /** Warranty length (Pro). Left out, the stored warranty is not touched. */
+  warrantyMonths?: number | null;
 };
 
 /** The parts of users/{uid} the receipt screens use. */

@@ -129,3 +129,31 @@ export function daysLeftLabel(days: number): string {
   if (days === 0) return 'Today';
   return days === 1 ? '1 day' : `${days} days`;
 }
+
+/** The same day `months` later; a day the month lacks becomes its last day (Jan 31 → Feb 28). */
+export function addCalendarMonths(date: IsoDate, months: number): IsoDate {
+  const [y, m, d] = parts(date);
+  const first = new Date(Date.UTC(y, m - 1 + months, 1));
+  const lastDay = new Date(
+    Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  return fromUtcMs(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), Math.min(d, lastDay)));
+}
+
+/** Whole months from `from` to `to` (0 when less than a month, negative when `to` is earlier). */
+export function calendarMonthsBetween(from: IsoDate, to: IsoDate): number {
+  const [fy, fm] = parts(from);
+  const [ty, tm] = parts(to);
+  let months = (ty - fy) * 12 + (tm - fm);
+  if (months > 0 && addCalendarMonths(from, months) > to) months -= 1;
+  if (months < 0 && addCalendarMonths(from, months) < to) months += 1;
+  return months;
+}
+
+/** "4 mo", "1 yr", "1 yr 10 mo" */
+export function monthsLabel(months: number): string {
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  if (y === 0) return `${m} mo`;
+  return m === 0 ? `${y} yr` : `${y} yr ${m} mo`;
+}
