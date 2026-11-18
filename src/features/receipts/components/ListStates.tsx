@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 
-import { AppText, Button, Card, Skeleton } from '@/components';
+import { AppText, Button, Card, EmptyState, Skeleton } from '@/components';
 import { useTheme } from '@/theme';
 
 import { useReceipts } from '../receiptsStore';
@@ -45,5 +45,23 @@ export function ListError() {
         style={{ alignSelf: 'stretch', marginTop: spacing.sm }}
       />
     </Card>
+  );
+}
+
+/**
+ * Shown by a screen whose receipt isn't in the list: a skeleton while the receipts are still
+ * loading, the error with Retry if they couldn't load, and "not found" only once they have.
+ */
+export function ReceiptFallback() {
+  const { spacing } = useTheme();
+  const loaded = useReceipts((s) => s.loaded);
+  const error = useReceipts((s) => s.error);
+  if (!loaded || error) {
+    return (
+      <View style={{ padding: spacing.screen }}>{error ? <ListError /> : <ListSkeleton />}</View>
+    );
+  }
+  return (
+    <EmptyState icon="receipt" title="Receipt not found" message="It may have been deleted." />
   );
 }

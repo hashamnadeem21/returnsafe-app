@@ -17,13 +17,13 @@ export function toneForDaysLeft(days: number): PillTone {
 function toneColors(tone: PillTone, c: Palette, scheme: 'light' | 'dark') {
   switch (tone) {
     case 'red':
-      return { bg: c.dangerSoft, fg: c.danger, border: undefined };
+      return { bg: c.dangerSoft, fg: c.dangerText, border: undefined };
     case 'amber':
       return { bg: c.warningSoft, fg: c.warningText, border: undefined };
     case 'gray':
       return { bg: c.bg, fg: c.ink2, border: c.border };
     case 'green':
-      return { bg: c.successSoft, fg: c.success, border: undefined };
+      return { bg: c.successSoft, fg: c.successText, border: undefined };
     case 'teal':
       return {
         bg: c.primarySoft,

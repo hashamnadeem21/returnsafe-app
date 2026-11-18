@@ -4,6 +4,7 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import { adminAuth, bucket, db } from './admin.js';
 import { deleteUserEverything } from './deleteAccount.js';
+import { callableOptions } from './appCheck.js';
 
 type MergeData = { guestIdToken?: unknown };
 
@@ -80,7 +81,7 @@ export async function moveGuestData(from: string, to: string): Promise<number> {
  * into it, then delete the guest account. The guest's ID token (captured before the switch) proves
  * the caller owned the guest account.
  */
-export const mergeGuestAccount = onCall<MergeData>(async (req) => {
+export const mergeGuestAccount = onCall<MergeData>(callableOptions, async (req) => {
   const uid = req.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
   const token = req.data?.guestIdToken;

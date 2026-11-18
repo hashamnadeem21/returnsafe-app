@@ -1,5 +1,4 @@
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -11,6 +10,7 @@ import { fonts, useTheme } from '@/theme';
 import { newPhotoId, photoPath, preparePhoto } from './photos';
 import { ReceiptPhoto } from './ReceiptPhoto';
 import { enqueueUpload } from './uploadQueue';
+import { openPaywall } from '@/features/subscription/openPaywall';
 
 /** Photos per receipt: one on Free, up to five with Pro (the rules enforce the same). */
 export const FREE_PHOTOS = 1;
@@ -82,7 +82,7 @@ export function ExtraPhotos({ uid, receipt, isPro }: Props) {
       ) : null}
       <Pressable
         onPress={() =>
-          locked ? router.push('/paywall') : !full && !busy ? setSource(true) : undefined
+          locked ? openPaywall('photos') : !full && !busy ? setSource(true) : undefined
         }
         disabled={full || busy}
         accessibilityRole="button"

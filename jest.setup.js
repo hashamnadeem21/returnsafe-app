@@ -52,7 +52,17 @@ jest.mock('@invertase/react-native-apple-authentication', () => {
     // Mirrors the real runtime shape: Style/Type hang off AppleButton (no AppleButtonStyle export).
     AppleButton: Object.assign(
       (props) =>
-        createElement(Text, { testID: props.testID, onPress: props.onPress }, 'Sign in with Apple'),
+        createElement(
+          Text,
+          {
+            testID: props.testID,
+            onPress: props.onPress,
+            // The native button is announced as a button; the mock keeps that contract.
+            accessibilityRole: 'button',
+            accessibilityLabel: 'Sign in with Apple',
+          },
+          'Sign in with Apple',
+        ),
       {
         Style: { BLACK: 'Black', WHITE: 'White' },
         Type: { SIGN_IN: 'SignIn', CONTINUE: 'Continue' },
@@ -91,4 +101,33 @@ jest.mock('expo-print', () => ({
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(async () => true),
   shareAsync: jest.fn(async () => undefined),
+}));
+
+// Crash reports and analytics: recorded in memory so tests can check what would be sent.
+jest.mock('@react-native-firebase/analytics', () => {
+  const events = [];
+  return {
+    __events: events,
+    getAnalytics: () => ({}),
+    logEvent: jest.fn(async (_a, name, params) => {
+      events.push({ name, ...params });
+    }),
+    setAnalyticsCollectionEnabled: jest.fn(async () => undefined),
+  };
+});
+jest.mock('@react-native-firebase/crashlytics', () => ({
+  getCrashlytics: () => ({}),
+  recordError: jest.fn(),
+  setCrashlyticsCollectionEnabled: jest.fn(async () => undefined),
+}));
+// Network status: tests switch it with `require('@/test/fakeNetInfo').setConnection(...)`.
+jest.mock('@react-native-community/netinfo', () => require('./src/test/fakeNetInfo').fakeNetInfo);
+jest.mock('expo-updates', () => ({
+  isEnabled: false,
+  checkForUpdateAsync: jest.fn(),
+  fetchUpdateAsync: jest.fn(),
+}));
+jest.mock('expo-application', () => ({
+  nativeApplicationVersion: '1.0.0',
+  nativeBuildVersion: '7',
 }));

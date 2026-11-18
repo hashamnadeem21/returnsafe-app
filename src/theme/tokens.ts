@@ -17,12 +17,18 @@ export type Palette = {
   warningSoft: string;
   danger: string;
   dangerSoft: string;
+  /** Red text on dangerSoft (AA contrast; `danger` alone is too light for small text there). */
+  dangerText: string;
   onDanger: string;
   success: string;
   successSoft: string;
+  /** Green text on successSoft (AA contrast). */
+  successText: string;
   ink: string;
   ink2: string;
   muted: string;
+  /** Placeholder text in inputs (AA contrast on surface; `muted` is for icons and dividers). */
+  placeholder: string;
   border: string;
   bg: string;
   surface: string;
@@ -53,12 +59,15 @@ const light: Palette = {
   warningSoft: '#FEF3C7',
   danger: '#DC2626',
   dangerSoft: '#FEE2E2',
+  dangerText: '#B91C1C',
   onDanger: '#FFFFFF',
   success: '#16A34A',
   successSoft: '#DCFCE7',
+  successText: '#15803D',
   ink: '#0F172A',
   ink2: '#475569',
   muted: '#94A3B8',
+  placeholder: '#64748B',
   border: '#E2E8F0',
   bg: '#F8FAFC',
   surface: '#FFFFFF',
@@ -87,12 +96,15 @@ const dark: Palette = {
   warningSoft: '#422006',
   danger: '#F87171',
   dangerSoft: '#450A0A',
+  dangerText: '#F87171',
   onDanger: '#450A0A',
   success: '#4ADE80',
   successSoft: '#052E16',
+  successText: '#4ADE80',
   ink: '#F1F5F9',
   ink2: '#94A3B8',
   muted: '#64748B',
+  placeholder: '#7D8BA0',
   border: '#1F2937',
   bg: '#0B1220',
   surface: '#111827',

@@ -9,11 +9,19 @@ type Props = {
   daysLeft: number;
   totalDays: number;
   size?: number;
+  /** What screen readers say, for example "2 days left to return Target receipt". */
+  accessibilityLabel?: string;
   testID?: string;
 };
 
 /** Ring that empties as the return window closes. Colour follows the pill rule (red/amber/gray→teal). */
-export function CountdownRing({ daysLeft, totalDays, size = 120, testID }: Props) {
+export function CountdownRing({
+  daysLeft,
+  totalDays,
+  size = 120,
+  accessibilityLabel,
+  testID,
+}: Props) {
   const { colors } = useTheme();
   const stroke = Math.round(size / 12);
   const r = (size - stroke) / 2;
@@ -28,7 +36,7 @@ export function CountdownRing({ daysLeft, totalDays, size = 120, testID }: Props
     <View
       testID={testID}
       accessibilityRole="progressbar"
-      accessibilityLabel={`${left} ${label}`}
+      accessibilityLabel={accessibilityLabel ?? `${left} ${label}`}
       accessibilityValue={{ min: 0, max: safeTotal, now: left }}
       style={{ width: size, height: size }}
     >

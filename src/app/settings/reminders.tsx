@@ -23,6 +23,7 @@ import {
 import { useIsPro } from '@/stores/pro';
 import { useSession } from '@/stores/session';
 import { fonts, useTheme } from '@/theme';
+import { openPaywall } from '@/features/subscription/openPaywall';
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 
@@ -122,7 +123,7 @@ export default function ReminderSettings() {
 
   const toggleDay = (day: number) => {
     if (!isPro) {
-      router.push('/paywall');
+      openPaywall('reminders');
       return;
     }
     const next = days.includes(day) ? days.filter((d) => d !== day) : [...days, day];
@@ -200,7 +201,7 @@ export default function ReminderSettings() {
           <Row
             title="Warranty reminders"
             subtitle="30 days before coverage ends"
-            onPress={isPro ? undefined : () => router.push('/paywall')}
+            onPress={isPro ? undefined : () => openPaywall('reminders')}
             accessibilityLabel="Warranty reminders, 30 days before coverage ends, Pro feature"
             testID="reminders-warranty"
             right={isPro ? <Icon name="check" size={20} color={colors.success} /> : <ProLock />}

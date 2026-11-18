@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppText, Button, Card, Icon, Screen } from '@/components';
+import { AppText, Button, Card, Icon, OfflineBanner, Screen } from '@/components';
 import { formatUsd } from '@/lib/money';
 import { ListError, ListSkeleton } from '@/features/receipts/components/ListStates';
 import { ReceiptRow } from '@/features/receipts/components/ReceiptRow';
@@ -53,6 +53,7 @@ export default function Home() {
           </AppText>
         </View>
 
+        <OfflineBanner inset={false} />
         <RemindersOffBanner />
 
         {!loaded ? (

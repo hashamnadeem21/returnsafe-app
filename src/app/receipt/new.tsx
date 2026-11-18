@@ -17,6 +17,7 @@ import { useScanDraft, type ScanDraft } from '@/features/scan/scanDraft';
 import { centsToInput } from '@/lib/money';
 import { isProNow, PRO_ACTIVATING_MESSAGE, serverProNow, useIsPro } from '@/stores/pro';
 import { useSession } from '@/stores/session';
+import { openPaywall } from '@/features/subscription/openPaywall';
 
 const close = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
@@ -164,7 +165,7 @@ export default function NewReceipt() {
         onSeePro={() => {
           setAtPaywall(true);
           setLimitOpen(false);
-          setTimeout(() => router.push('/paywall'), SHEET_SWAP_MS);
+          setTimeout(() => openPaywall('limit'), SHEET_SWAP_MS);
         }}
       />
     </Screen>

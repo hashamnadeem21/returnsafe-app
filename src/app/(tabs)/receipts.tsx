@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
-import { AppText, Chip, EmptyState, Icon, Screen, ScreenHeader } from '@/components';
+import { AppText, Chip, EmptyState, Icon, OfflineBanner, Screen, ScreenHeader } from '@/components';
 import { ListError, ListSkeleton } from '@/features/receipts/components/ListStates';
 import { ReceiptRow } from '@/features/receipts/components/ReceiptRow';
 import {
@@ -70,6 +70,7 @@ export default function Receipts() {
   return (
     <Screen testID="screen-receipts" bottom={false}>
       <ScreenHeader title="Receipts" testID="screen-receipts-title" />
+      <OfflineBanner />
       <View style={{ paddingHorizontal: spacing.screen, paddingTop: spacing.md }}>
         <View
           style={[
@@ -88,7 +89,7 @@ export default function Receipts() {
             value={query}
             onChangeText={setQuery}
             placeholder="Search store or item"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.placeholder}
             autoCorrect={false}
             clearButtonMode="while-editing"
             returnKeyType="search"

@@ -9,6 +9,8 @@ import { connectFunctionsEmulator, getFunctions } from '@react-native-firebase/f
 import { connectStorageEmulator, getStorage } from '@react-native-firebase/storage';
 import { Platform } from 'react-native';
 
+import { startTelemetry } from './telemetry';
+
 /** Build-time switch for E2E/dev: talk to the local Firebase Emulator Suite instead of the cloud. */
 export const USE_EMULATORS = process.env.EXPO_PUBLIC_USE_FIREBASE_EMULATORS === '1';
 
@@ -24,6 +26,8 @@ export async function configureFirebase(): Promise<void> {
   if (configured) return;
   configured = true;
   const app = getApp();
+  // Crash reports and usage events only from real builds, never from development or E2E builds.
+  void startTelemetry(!USE_EMULATORS && !__DEV__);
 
   if (USE_EMULATORS) {
     connectAuthEmulator(getAuth(app), `http://${EMULATOR_HOST}:9099`);

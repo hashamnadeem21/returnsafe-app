@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -24,6 +23,7 @@ import { useToday } from '../useToday';
 import { DateField } from './DateField';
 import { ReturnWindowSheet } from './ReturnWindowSheet';
 import { StorePickerSheet, type PickedStore } from './StorePickerSheet';
+import { openPaywall } from '@/features/subscription/openPaywall';
 
 /** A scanned receipt under review: its photo and which fields the parser filled in. */
 export type ScanReview = {
@@ -350,7 +350,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, scan }: Props) {
         ) : (
           <Card style={{ marginBottom: spacing.xl }}>
             <Pressable
-              onPress={() => (isPro ? setWarrantyOpen(true) : router.push('/paywall'))}
+              onPress={() => (isPro ? setWarrantyOpen(true) : openPaywall('warranty'))}
               accessibilityRole="button"
               accessibilityLabel={isPro ? 'Add warranty' : 'Add warranty, Pro feature'}
               style={[styles.warranty, { minHeight: sizes.tapTarget + 8, gap: spacing.md }]}

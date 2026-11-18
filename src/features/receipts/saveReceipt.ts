@@ -5,6 +5,7 @@ import { enqueueUpload } from '@/features/scan/uploadQueue';
 
 import { createReceipt, newReceiptId, saveCustomStore, updateReceipt } from './receiptsRepo';
 import type { ReceiptInput } from './types';
+import { track } from '@/lib/telemetry';
 
 function rememberWindow(uid: string, input: ReceiptInput) {
   // Stores that are not in the built-in list keep the window the user chose for next time.
@@ -23,6 +24,7 @@ export type NewPhoto = { photoId: string; localUri: string };
  */
 export function addReceipt(uid: string, input: ReceiptInput, photo?: NewPhoto): string {
   rememberWindow(uid, input);
+  track({ name: 'receipt_added', source: photo ? 'scan' : 'manual' });
   if (!photo) {
     const id = createReceipt(uid, input);
     success();

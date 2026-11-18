@@ -13,6 +13,7 @@ import {
   Pill,
   Screen,
   ScreenHeader,
+  OfflineBanner,
 } from '@/components';
 import { ListError, ListSkeleton } from '@/features/receipts/components/ListStates';
 import { useReceipts, useVisibleReceipts } from '@/features/receipts/receiptsStore';
@@ -26,6 +27,7 @@ import {
 import { addCalendarMonths, formatMediumDate, monthsLabel } from '@/lib/dates';
 import { useIsPro } from '@/stores/pro';
 import { shadows, useTheme } from '@/theme';
+import { openPaywall } from '@/features/subscription/openPaywall';
 
 const addWarranty = () => router.push('/receipt/new');
 
@@ -59,7 +61,7 @@ function Locked() {
         </Card>
       </View>
       <Pressable
-        onPress={() => router.push('/paywall')}
+        onPress={() => openPaywall('warranties')}
         accessibilityRole="button"
         accessibilityLabel="Track warranties with Pro. See Pro plans"
         testID="warranties-locked"
@@ -85,7 +87,7 @@ function Locked() {
         </AppText>
         <Button
           label="See Pro plans"
-          onPress={() => router.push('/paywall')}
+          onPress={() => openPaywall('warranties')}
           testID="warranties-see-pro"
           style={styles.fullWidth}
         />
@@ -112,6 +114,7 @@ export default function Warranties() {
         testID="screen-warranties-title"
         right={isPro ? <Pill label="Pro" tone="teal" icon="spark" testID="warranties-pro" /> : null}
       />
+      <OfflineBanner />
       <AppText
         variant="body"
         tone="ink2"

@@ -3,6 +3,7 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import { adminAuth, db } from './admin.js';
 import { cleanName, USER_DEFAULTS, validTimezone } from './userDefaults.js';
+import { callableOptions } from './appCheck.js';
 
 type InitUserData = { timezone?: unknown; displayName?: unknown };
 
@@ -11,7 +12,7 @@ type InitUserData = { timezone?: unknown; displayName?: unknown };
  * (isPro is only ever written here and by the billing webhook). Later calls only fill in a missing
  * name and keep the email in step after a guest saves their account.
  */
-export const initUser = onCall<InitUserData>(async (req) => {
+export const initUser = onCall<InitUserData>(callableOptions, async (req) => {
   const uid = req.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
 
