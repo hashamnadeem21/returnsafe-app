@@ -344,6 +344,7 @@ describe('proChange', () => {
     type,
     entitlement_ids: ['pro'],
     ...f,
+    event_timestamp_ms: f.event_timestamp_ms ?? now,
   });
 
   it('maps each event type', () => {
