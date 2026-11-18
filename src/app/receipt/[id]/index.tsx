@@ -23,7 +23,9 @@ import { deleteReceipt } from '@/features/receipts/receiptsRepo';
 import { useVisibleReceipts, useReceipts } from '@/features/receipts/receiptsStore';
 import { changeStatusWithUndo, undoStatus } from '@/features/receipts/statusActions';
 import { useTimezone, useToday } from '@/features/receipts/useToday';
+import { ExtraPhotos } from '@/features/scan/ExtraPhotos';
 import { ReceiptPhoto } from '@/features/scan/ReceiptPhoto';
+import { useIsPro } from '@/stores/pro';
 import { useSession } from '@/stores/session';
 import { fonts, useTheme } from '@/theme';
 
@@ -38,6 +40,7 @@ export default function ReceiptDetail() {
   const tz = useTimezone();
   const receipt = useVisibleReceipts().find((r) => r.id === id);
   const profile = useReceipts((s) => s.profile);
+  const isPro = useIsPro();
   const [menu, setMenu] = useState(false);
   const [openedAt] = useState(() => Date.now());
 
@@ -172,7 +175,11 @@ export default function ReceiptDetail() {
               Photo
             </AppText>
             <AppText variant="caption">
-              {receipt.photoPaths.length > 0 ? 'Attached' : 'No photo'}
+              {receipt.photoPaths.length > 1
+                ? `${receipt.photoPaths.length} photos`
+                : receipt.photoPaths.length === 1
+                  ? 'Attached'
+                  : 'No photo'}
             </AppText>
           </Card>
           <Card style={[styles.tile, { padding: spacing.lg, gap: spacing.sm }]}>
@@ -185,6 +192,8 @@ export default function ReceiptDetail() {
             </AppText>
           </Card>
         </View>
+
+        <ExtraPhotos uid={uid} receipt={receipt} isPro={isPro} />
 
         {status === 'active' ? (
           <View style={[styles.row, { gap: spacing.md }]}>

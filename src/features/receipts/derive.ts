@@ -111,10 +111,17 @@ export function groupReceipts(receipts: readonly Receipt[], today: IsoDate): Rec
   return groups.filter((g) => g.receipts.length > 0);
 }
 
-/** Free users may hold `freeLimit` active receipts; counts the server's number and the local one. */
-export function canAddActive(profile: UserProfile | null, receipts: readonly Receipt[]): boolean {
+/**
+ * Free users may hold `freeLimit` active receipts; counts the server's number and the local one.
+ * `isPro` is the app's view (RevenueCat or the server); the rules check the server's on save.
+ */
+export function canAddActive(
+  profile: UserProfile | null,
+  receipts: readonly Receipt[],
+  isPro: boolean = profile?.isPro ?? false,
+): boolean {
+  if (isPro) return true;
   if (!profile) return true;
-  if (profile.isPro) return true;
   const local = receipts.filter((r) => r.status === 'active').length;
   return Math.max(profile.activeCount, local) < profile.freeLimit;
 }

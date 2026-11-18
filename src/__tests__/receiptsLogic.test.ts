@@ -69,6 +69,7 @@ describe('receipt form validation', () => {
     amount: '48.20',
     items: '',
     returnDays: 90,
+    warranty: '',
   };
 
   it('accepts a complete receipt', () => {

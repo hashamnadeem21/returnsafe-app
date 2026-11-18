@@ -17,6 +17,7 @@ import { SessionProvider } from '@/features/auth/SessionProvider';
 import { OnboardingProvider, useOnboarding } from '@/features/onboarding/OnboardingProvider';
 import { ReceiptsProvider } from '@/features/receipts/ReceiptsProvider';
 import { ReminderPush } from '@/features/reminders/ReminderPush';
+import { PurchasesProvider } from '@/features/subscription/PurchasesProvider';
 import { useSession } from '@/stores/session';
 import { ThemeProvider, useTheme } from '@/theme';
 
@@ -80,9 +81,11 @@ export default function RootLayout() {
       <ThemeProvider>
         <OnboardingProvider>
           <SessionProvider>
-            <ReceiptsProvider>
-              <RootStack />
-            </ReceiptsProvider>
+            <PurchasesProvider>
+              <ReceiptsProvider>
+                <RootStack />
+              </ReceiptsProvider>
+            </PurchasesProvider>
           </SessionProvider>
         </OnboardingProvider>
       </ThemeProvider>

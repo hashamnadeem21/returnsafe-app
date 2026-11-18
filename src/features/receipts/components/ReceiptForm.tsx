@@ -6,11 +6,18 @@ import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
 import { AppText, Button, Card, Icon, LetterAvatar, Pill, ProLock, TextField } from '@/components';
 import { ReceiptPhoto } from '@/features/scan/ReceiptPhoto';
-import { computeDeadline, formatLongDate, isIsoDate } from '@/lib/dates';
+import { addCalendarMonths, computeDeadline, formatLongDate, isIsoDate } from '@/lib/dates';
+import { PRO_ACTIVATING_MESSAGE, serverProNow, useIsPro } from '@/stores/pro';
+import { useSnackbar } from '@/components/Snackbar';
 import { fonts, useTheme } from '@/theme';
 
 import { useReceipts } from '../receiptsStore';
-import { receiptFormSchema, toReceiptInput, type ReceiptFormValues } from '../schema';
+import {
+  parseWarrantyMonths,
+  receiptFormSchema,
+  toReceiptInput,
+  type ReceiptFormValues,
+} from '../schema';
 import { DEFAULT_CUSTOM_WINDOW, findStoreByName, storeById } from '../stores';
 import type { ReceiptInput } from '../types';
 import { useToday } from '../useToday';
@@ -56,11 +63,18 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, scan }: Props) {
   });
   const [picker, setPicker] = useState(false);
   const [windowSheet, setWindowSheet] = useState(false);
+  const isPro = useIsPro();
+  const [warrantyOpen, setWarrantyOpen] = useState(initial.warranty !== '');
 
-  const [storeName, storeId, purchaseDate, returnDays, amount] = useWatch({
+  const [storeName, storeId, purchaseDate, returnDays, amount, warranty] = useWatch({
     control,
-    name: ['storeName', 'storeId', 'purchaseDate', 'returnDays', 'amount'],
+    name: ['storeName', 'storeId', 'purchaseDate', 'returnDays', 'amount', 'warranty'],
   });
+  const warrantyMonths = parseWarrantyMonths(warranty);
+  const warrantyEnd =
+    warrantyMonths && isIsoDate(purchaseDate)
+      ? addCalendarMonths(purchaseDate, warrantyMonths)
+      : null;
   // A "Detected" badge stays only while the field still holds what the scan found.
   const detected = {
     store: !!scan?.detected.store && storeName === initial.storeName,
@@ -299,28 +313,82 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, scan }: Props) {
           ) : null}
         </View>
 
-        <Card style={{ marginBottom: spacing.xl }}>
-          <Pressable
-            onPress={() => router.push('/paywall')}
-            accessibilityRole="button"
-            accessibilityLabel="Add warranty, Pro feature"
-            style={[styles.warranty, { minHeight: sizes.tapTarget + 8, gap: spacing.md }]}
-            testID="receipt-add-warranty"
-          >
-            <Icon name="shield" size={22} color={colors.ink2} />
-            <AppText variant="body" style={{ flex: 1, fontFamily: fonts.medium }}>
-              Add warranty
-            </AppText>
-            {/* ProLock aligns itself to the top; centre it in this row. */}
-            <View style={styles.lockWrap}>
-              <ProLock />
-            </View>
-          </Pressable>
-        </Card>
+        {isPro && warrantyOpen ? (
+          <Card style={{ marginBottom: spacing.xl, padding: spacing.lg }} testID="receipt-warranty">
+            <Controller
+              control={control}
+              name="warranty"
+              render={({ field, fieldState }) => (
+                <TextField
+                  label="Warranty (months)"
+                  value={field.value}
+                  onChangeText={field.onChange}
+                  onBlur={field.onBlur}
+                  placeholder="12"
+                  keyboardType="number-pad"
+                  maxLength={3}
+                  helper={
+                    warrantyEnd
+                      ? `Coverage ends ${formatLongDate(warrantyEnd)}`
+                      : 'How long the warranty lasts'
+                  }
+                  error={fieldState.error?.message}
+                  testID="receipt-warranty-months"
+                />
+              )}
+            />
+            <Button
+              label="Remove warranty"
+              variant="text"
+              onPress={() => {
+                setValue('warranty', '', { shouldDirty: true, shouldValidate: false });
+                setWarrantyOpen(false);
+              }}
+              testID="receipt-warranty-remove"
+            />
+          </Card>
+        ) : (
+          <Card style={{ marginBottom: spacing.xl }}>
+            <Pressable
+              onPress={() => (isPro ? setWarrantyOpen(true) : router.push('/paywall'))}
+              accessibilityRole="button"
+              accessibilityLabel={isPro ? 'Add warranty' : 'Add warranty, Pro feature'}
+              style={[styles.warranty, { minHeight: sizes.tapTarget + 8, gap: spacing.md }]}
+              testID="receipt-add-warranty"
+            >
+              <Icon name="shield" size={22} color={colors.ink2} />
+              <AppText variant="body" style={{ flex: 1, fontFamily: fonts.medium }}>
+                {!isPro && initial.warranty
+                  ? `Warranty · ${initial.warranty} months`
+                  : 'Add warranty'}
+              </AppText>
+              {isPro ? (
+                <Icon name="plus" size={20} color={colors.primary} />
+              ) : (
+                /* ProLock aligns itself to the top; centre it in this row. */
+                <View style={styles.lockWrap}>
+                  <ProLock />
+                </View>
+              )}
+            </Pressable>
+          </Card>
+        )}
 
         <Button
           label={submitLabel}
-          onPress={handleSubmit((v) => onSubmit(toReceiptInput(v)))}
+          onPress={handleSubmit((v) => {
+            // Send the warranty only when it changed, or when a corrected purchase date moves its
+            // end date; otherwise the stored warranty is left exactly as it is.
+            const warrantyChanged = isPro && v.warranty !== initial.warranty;
+            const dateMoved = v.purchaseDate !== initial.purchaseDate && initial.warranty !== '';
+            if (warrantyChanged && !serverProNow()) {
+              // Bought Pro a moment ago: the rules would refuse this until the server agrees.
+              useSnackbar.getState().show({ message: PRO_ACTIVATING_MESSAGE });
+              return;
+            }
+            const values = warrantyChanged ? v : { ...v, warranty: initial.warranty };
+            return onSubmit(toReceiptInput(values, warrantyChanged || dateMoved));
+          })}
           loading={formState.isSubmitting}
           testID="receipt-save"
         />

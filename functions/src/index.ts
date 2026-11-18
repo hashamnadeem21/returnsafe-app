@@ -9,3 +9,4 @@ export { mergeGuestAccount } from './mergeGuestAccount.js';
 export { onReceiptWrite } from './onReceiptWrite.js';
 export { onUserWrite } from './onUserWrite.js';
 export { sendDueReminders } from './sendDueReminders.js';
+export { revenueCatWebhook } from './revenueCatWebhook.js';

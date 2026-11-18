@@ -4,6 +4,7 @@
  * happens offline. Failures are reported through `onWriteError`.
  */
 import {
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -16,7 +17,7 @@ import {
 } from '@react-native-firebase/firestore';
 
 import { cancelUploads } from '@/features/scan/uploadQueue';
-import { computeDeadline, DEFAULT_TIMEZONE } from '@/lib/dates';
+import { addCalendarMonths, computeDeadline, DEFAULT_TIMEZONE } from '@/lib/dates';
 import { db } from '@/lib/firebase';
 
 import { customStoreId } from './stores';
@@ -145,6 +146,14 @@ function fields(input: ReceiptInput): Data {
     items: input.items,
     returnDays: input.returnDays,
     returnDeadline: computeDeadline(input.purchaseDate, input.returnDays),
+    ...(input.warrantyMonths === undefined
+      ? {}
+      : {
+          warrantyMonths: input.warrantyMonths,
+          warrantyEnd: input.warrantyMonths
+            ? addCalendarMonths(input.purchaseDate, input.warrantyMonths)
+            : null,
+        }),
     updatedAt: serverTimestamp(),
   };
 }
@@ -163,9 +172,9 @@ export function createReceipt(
   const ref = opts.id ? doc(receiptsCol(uid), opts.id) : doc(receiptsCol(uid));
   background(
     setDoc(ref, {
-      ...fields(input),
       warrantyMonths: null,
       warrantyEnd: null,
+      ...fields(input),
       status: 'active',
       photoPaths: opts.photoPaths ?? [],
       ocrText: null,
@@ -205,6 +214,19 @@ export function saveCustomStore(uid: string, name: string, returnDays: number): 
     setDoc(doc(db(), 'users', uid, 'customStores', customStoreId(name)), {
       name: name.trim(),
       returnDays,
+      updatedAt: serverTimestamp(),
+    }),
+  );
+}
+
+/**
+ * Adds one photo path to a receipt. arrayUnion appends on the server, so two photos added at the
+ * same time (or one added on another phone) are both kept; the rules still cap the count.
+ */
+export function addReceiptPhoto(uid: string, id: string, path: string): void {
+  background(
+    updateDoc(doc(receiptsCol(uid), id), {
+      photoPaths: arrayUnion(path),
       updatedAt: serverTimestamp(),
     }),
   );

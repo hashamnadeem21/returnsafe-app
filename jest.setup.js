@@ -82,3 +82,13 @@ jest.mock(
   './modules/reminder-notifications',
   () => require('./src/test/fakeMessaging').fakeReminderNotifications,
 );
+
+// Subscriptions: in-memory RevenueCat (see src/test/fakePurchases.js); print and share are stubs.
+jest.mock('react-native-purchases', () => require('./src/test/fakePurchases').fakePurchases);
+jest.mock('expo-print', () => ({
+  printToFileAsync: jest.fn(async () => ({ uri: 'file:///cache/print.pdf', numberOfPages: 1 })),
+}));
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: jest.fn(async () => true),
+  shareAsync: jest.fn(async () => undefined),
+}));

@@ -27,6 +27,7 @@ export default function EditReceipt() {
             amount: centsToInput(receipt.amountCents),
             items: receipt.items.join(', '),
             returnDays: receipt.returnDays,
+            warranty: receipt.warrantyMonths ? String(receipt.warrantyMonths) : '',
           }}
           submitLabel="Save changes"
           onSubmit={(input) => {

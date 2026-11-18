@@ -7,8 +7,8 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
 
-    // Fields the app may change. isPro, proExpiresAt, activeCount, freeLimit, email and createdAt
-    // are written only by Cloud Functions (Admin SDK bypasses these rules).
+    // Fields the app may change. isPro, proExpiresAt, proEventAt, activeCount, freeLimit, email and
+    // createdAt are written only by Cloud Functions (Admin SDK bypasses these rules).
     function onlyEditableFields() {
       return request.resource.data.diff(resource.data).affectedKeys()
         .hasOnly(['displayName', 'remindersEnabled', 'reminderHour', 'reminderDays', 'timezone',
@@ -35,9 +35,35 @@ service cloud.firestore {
       return d.get(key, null);
     }
 
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    // isPro is written only by the billing webhook, so these checks hold even if the app's own
+    // checks are skipped.
+    function isPro(uid) {
+      return userDoc(uid).isPro == true;
+    }
+
     function underFreeLimit(uid) {
-      let user = get(/databases/$(database)/documents/users/$(uid)).data;
+      let user = userDoc(uid);
       return user.isPro == true || user.activeCount < user.freeLimit;
+    }
+
+    // Pro features on a receipt: a warranty, and more than one photo.
+    function freeFeaturesOnly(d) {
+      return optional(d, 'warrantyMonths') == null && d.photoPaths.size() <= 1;
+    }
+
+    // An edit by a Free user (for example after Pro expired) may keep a warranty and photos added
+    // while Pro, or remove them, but not add or change them. The warranty's end date may move
+    // only with a corrected purchase date, since it is the purchase date plus warrantyMonths.
+    function keepsProFeatures(d, before) {
+      return (optional(d, 'warrantyMonths') == null
+          || (optional(d, 'warrantyMonths') == optional(before, 'warrantyMonths')
+            && (optional(d, 'warrantyEnd') == optional(before, 'warrantyEnd')
+              || d.purchaseDate != before.purchaseDate)))
+        && (d.photoPaths.size() <= 1 || d.photoPaths.hasOnly(before.photoPaths));
     }
 
     function validReceipt(d) {
@@ -58,6 +84,8 @@ service cloud.firestore {
         && (optional(d, 'warrantyMonths') == null
           || (d.warrantyMonths is int && d.warrantyMonths >= 1 && d.warrantyMonths <= 120))
         && (optional(d, 'warrantyEnd') == null || isDate(d.warrantyEnd))
+        // A warranty is its length and end date together, or neither.
+        && ((optional(d, 'warrantyMonths') == null) == (optional(d, 'warrantyEnd') == null))
         && (optional(d, 'ocrText') == null || (d.ocrText is string && d.ocrText.size() <= 20000))
         && (optional(d, 'statusChangedAt') == null || d.statusChangedAt is timestamp)
         && d.createdAt is timestamp
@@ -83,7 +111,8 @@ service cloud.firestore {
         allow create: if isOwner(uid)
           && validReceipt(request.resource.data)
           && request.resource.data.status in ['active', 'returned', 'kept']
-          && (request.resource.data.status != 'active' || underFreeLimit(uid));
+          && (request.resource.data.status != 'active' || underFreeLimit(uid))
+          && (freeFeaturesOnly(request.resource.data) || isPro(uid));
         allow update: if isOwner(uid)
           && validReceipt(request.resource.data)
           && request.resource.data.createdAt == resource.data.createdAt
@@ -93,7 +122,8 @@ service cloud.firestore {
           // Moving a receipt back to active counts against the free limit like a new one.
           && (request.resource.data.status != 'active'
             || resource.data.status == 'active'
-            || underFreeLimit(uid));
+            || underFreeLimit(uid))
+          && (keepsProFeatures(request.resource.data, resource.data) || isPro(uid));
         allow delete: if isOwner(uid);
       }
 

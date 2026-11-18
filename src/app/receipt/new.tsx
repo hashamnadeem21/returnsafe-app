@@ -1,5 +1,6 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 
 import { Screen, ScreenHeader, useSnackbar } from '@/components';
 import { ensureUserDoc } from '@/features/auth/authService';
@@ -14,11 +15,14 @@ import { useToday } from '@/features/receipts/useToday';
 import { forgetLocalPhoto } from '@/features/scan/photos';
 import { useScanDraft, type ScanDraft } from '@/features/scan/scanDraft';
 import { centsToInput } from '@/lib/money';
+import { isProNow, PRO_ACTIVATING_MESSAGE, serverProNow, useIsPro } from '@/stores/pro';
 import { useSession } from '@/stores/session';
 
 const close = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
 const PROFILE_WAIT_MS = 8_000;
+/** iOS cannot present the paywall while the limit sheet is still sliding away. */
+const SHEET_SWAP_MS = Platform.OS === 'ios' ? 400 : 0;
 
 /**
  * Right after sign-in the profile (users/{uid}) may not exist yet: the server creates it, and the
@@ -51,6 +55,7 @@ function initialValues(draft: ScanDraft | null, today: string): ReceiptFormValue
     amount: p?.amountCents ? centsToInput(p.amountCents) : '',
     items: p?.items.join(', ') ?? '',
     returnDays: store?.returnDays ?? DEFAULT_CUSTOM_WINDOW,
+    warranty: '',
   };
 }
 
@@ -65,7 +70,11 @@ export default function NewReceipt() {
   const params = useLocalSearchParams<{ from?: string }>();
   const profile = useReceipts((s) => s.profile);
   const receipts = useReceipts((s) => s.receipts);
-  const allowed = canAddActive(profile, receipts);
+  const isPro = useIsPro();
+  const allowed = canAddActive(profile, receipts, isPro);
+  // The sheet hides while the paywall is open; coming back without Pro shows it again.
+  const [atPaywall, setAtPaywall] = useState(false);
+  useFocusEffect(useCallback(() => setAtPaywall(false), []));
   // Read once: the draft belongs to this screen until it is saved or left.
   const [draft] = useState(() => (params.from === 'scan' ? useScanDraft.getState().draft : null));
   const [initial] = useState(() => initialValues(draft, today));
@@ -118,8 +127,15 @@ export default function NewReceipt() {
             return;
           }
           const st = useReceipts.getState();
-          if (!canAddActive(st.profile, st.receipts)) {
-            setLimitOpen(true);
+          // The rules go by the server's isPro, so check against that. Right after buying, the
+          // store already says Pro but the server may not yet: keep the draft and say so.
+          const serverPro = serverProNow();
+          const needsPro =
+            !canAddActive(st.profile, st.receipts, serverPro) ||
+            (input.warrantyMonths != null && !serverPro);
+          if (needsPro) {
+            if (isProNow()) useSnackbar.getState().show({ message: PRO_ACTIVATING_MESSAGE });
+            else setLimitOpen(true);
             return;
           }
           saved.current = true;
@@ -135,7 +151,7 @@ export default function NewReceipt() {
         }}
       />
       <LimitSheet
-        visible={limitOpen || (!allowed && !dismissed)}
+        visible={!atPaywall && (limitOpen || (!allowed && !dismissed))}
         used={activeUsed(profile, receipts)}
         limit={profile?.freeLimit ?? 5}
         onClose={() => {
@@ -143,7 +159,12 @@ export default function NewReceipt() {
           setDismissed(true);
           // Nothing can be saved while the limit is reached, so leave the form.
           const st = useReceipts.getState();
-          if (!canAddActive(st.profile, st.receipts)) close();
+          if (!canAddActive(st.profile, st.receipts, isProNow())) close();
+        }}
+        onSeePro={() => {
+          setAtPaywall(true);
+          setLimitOpen(false);
+          setTimeout(() => router.push('/paywall'), SHEET_SWAP_MS);
         }}
       />
     </Screen>

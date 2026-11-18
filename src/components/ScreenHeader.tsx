@@ -61,7 +61,10 @@ export function ScreenHeader({
       >
         {title}
       </AppText>
-      <View style={[styles.iconBtn, btn]}>{right}</View>
+      {/* At least a tap target wide; a text action such as "Restore" may need more. */}
+      <View style={[styles.iconBtn, { minWidth: sizes.tapTarget, height: sizes.tapTarget }]}>
+        {right}
+      </View>
     </View>
   );
 }

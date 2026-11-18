@@ -118,6 +118,25 @@ const ICONS = {
   ),
   edit: <Path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4" />,
   trash: <Path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />,
+  export: <Path d="M12 15V3M7 8l5-5 5 5M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" />,
+  doc: (
+    <>
+      <Path d="M6 3h9l4 4v14H6z" />
+      <Path d="M14 3v5h5M9 13h6M9 17h6" />
+    </>
+  ),
+  restore: (
+    <>
+      <Path d="M20 12a8 8 0 1 1-2.3-5.7" />
+      <Path d="M20 4v4h-4" />
+    </>
+  ),
+  card: (
+    <>
+      <Rect x="3" y="5" width="18" height="14" rx="2" />
+      <Path d="M3 10h18" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof ICONS;

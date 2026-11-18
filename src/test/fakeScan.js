@@ -61,8 +61,17 @@ class Directory {
   get exists() {
     return true;
   }
+  get name() {
+    return this.uri.split('/').pop();
+  }
   create() {}
+  list() {
+    return [];
+  }
+  delete() {}
 }
+/** Text written to fake files (export tests read it back). */
+const written = new Map();
 class File {
   constructor(...parts) {
     this.uri = join(...parts);
@@ -72,6 +81,16 @@ class File {
   }
   delete() {
     files.delete(this.uri);
+  }
+  create() {
+    files.add(this.uri);
+  }
+  async write(content) {
+    files.add(this.uri);
+    written.set(this.uri, content);
+  }
+  async base64() {
+    return 'QUJD';
   }
   // Like the native module, move finishes later (it returns a promise).
   async move(target) {
@@ -144,6 +163,7 @@ const fakeImagePicker = {
   getCameraPermissionsAsync: jest.fn(async () => ({ granted: true, canAskAgain: true })),
   requestCameraPermissionsAsync: jest.fn(async () => ({ granted: true, canAskAgain: true })),
   launchImageLibraryAsync: jest.fn(async () => ({ canceled: true, assets: null })),
+  launchCameraAsync: jest.fn(async () => ({ canceled: true, assets: null })),
 };
 
 function resetScan() {
@@ -170,9 +190,15 @@ function resetScan() {
     canceled: true,
     assets: null,
   }));
+  fakeImagePicker.launchCameraAsync.mockReset();
+  fakeImagePicker.launchCameraAsync.mockImplementation(async () => ({
+    canceled: true,
+    assets: null,
+  }));
 }
 
 module.exports = {
+  writtenFiles: written,
   fakeStorage,
   storageState,
   uploads,
