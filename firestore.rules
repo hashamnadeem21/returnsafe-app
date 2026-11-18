@@ -11,7 +11,8 @@ service cloud.firestore {
     // are written only by Cloud Functions (Admin SDK bypasses these rules).
     function onlyEditableFields() {
       return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['displayName', 'reminderHour', 'reminderDays', 'timezone', 'updatedAt']);
+        .hasOnly(['displayName', 'remindersEnabled', 'reminderHour', 'reminderDays', 'timezone',
+          'fcmTokens', 'updatedAt']);
     }
 
     function validValues() {
@@ -19,7 +20,11 @@ service cloud.firestore {
       return (d.displayName == null || (d.displayName is string && d.displayName.size() <= 80))
         && d.reminderHour is int && d.reminderHour >= 0 && d.reminderHour <= 23
         && d.reminderDays is list && d.reminderDays.size() <= 3
-        && d.timezone is string && d.timezone.size() <= 64;
+        && d.timezone is string && d.timezone.size() <= 64
+        && (optional(d, 'remindersEnabled') == null || d.remindersEnabled is bool)
+        // Push tokens of the user's devices (one per phone; dead ones are removed by the server).
+        && (optional(d, 'fcmTokens') == null
+          || (d.fcmTokens is list && d.fcmTokens.size() <= 10));
     }
 
     function isDate(v) {

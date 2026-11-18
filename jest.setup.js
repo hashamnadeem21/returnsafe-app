@@ -72,3 +72,13 @@ jest.mock(
   () => require('./src/test/fakeScan').fakeDocumentScanner,
 );
 jest.mock('expo-image-picker', () => require('./src/test/fakeScan').fakeImagePicker);
+
+// Push reminders: in-memory fakes (see src/test/fakeMessaging.js).
+jest.mock(
+  '@react-native-firebase/messaging',
+  () => require('./src/test/fakeMessaging').fakeMessaging,
+);
+jest.mock(
+  './modules/reminder-notifications',
+  () => require('./src/test/fakeMessaging').fakeReminderNotifications,
+);

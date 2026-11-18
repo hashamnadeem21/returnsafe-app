@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
     "firebase-admin": "^14.5.1",
     "firebase-functions": "^7.4.0"
   },

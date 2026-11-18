@@ -3,16 +3,29 @@ import { Pressable, StyleSheet } from 'react-native';
 import { fonts, useTheme } from '@/theme';
 
 import { AppText } from './AppText';
+import { Icon, type IconName } from './Icon';
 
 type Props = {
   label: string;
   selected?: boolean;
   count?: number;
+  /** Small icon before the label, e.g. a check when selected or a lock for Pro-only choices. */
+  icon?: IconName;
   onPress: () => void;
+  /** Overrides the screen-reader label (defaults to the label and count). */
+  accessibilityLabel?: string;
   testID?: string;
 };
 
-export function Chip({ label, selected = false, count, onPress, testID }: Props) {
+export function Chip({
+  label,
+  selected = false,
+  count,
+  icon,
+  onPress,
+  accessibilityLabel,
+  testID,
+}: Props) {
   const { colors, radii, sizes } = useTheme();
   const fg = selected ? colors.onPrimary : colors.ink;
   return (
@@ -20,7 +33,9 @@ export function Chip({ label, selected = false, count, onPress, testID }: Props)
       testID={testID}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={count === undefined ? label : `${label}, ${count}`}
+      accessibilityLabel={
+        accessibilityLabel ?? (count === undefined ? label : `${label}, ${count}`)
+      }
       accessibilityState={{ selected }}
       hitSlop={{ top: 7, bottom: 7 }}
       style={[
@@ -34,6 +49,7 @@ export function Chip({ label, selected = false, count, onPress, testID }: Props)
         },
       ]}
     >
+      {icon ? <Icon name={icon} size={14} color={selected ? fg : colors.ink2} /> : null}
       <AppText variant="caption" style={[styles.text, { color: fg }]}>
         {label}
       </AppText>

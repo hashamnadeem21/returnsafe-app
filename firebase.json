@@ -33,5 +33,9 @@
       "port": 4000
     },
     "singleProjectMode": true
+  },
+  "react-native": {
+    "messaging_android_notification_channel_id": "return-reminders",
+    "messaging_ios_foreground_presentation_options": []
   }
 }

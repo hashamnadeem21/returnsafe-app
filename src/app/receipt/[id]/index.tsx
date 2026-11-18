@@ -14,6 +14,7 @@ import {
   ScreenHeader,
   Sheet,
 } from '@/components';
+import { effectiveReminderDays } from '@/features/reminders/reminderSettings';
 import { formatMediumDate, formatShortDate, reminderInstants } from '@/lib/dates';
 import { formatUsd } from '@/lib/money';
 import { StatusPill } from '@/features/receipts/components/ReceiptRow';
@@ -55,7 +56,7 @@ export default function ReceiptDetail() {
     status === 'active'
       ? reminderInstants(
           receipt.returnDeadline,
-          profile?.reminderDays ?? [7, 3, 1],
+          effectiveReminderDays(profile ?? null),
           profile?.reminderHour ?? 9,
           tz,
         ).find((d) => d.getTime() > openedAt)

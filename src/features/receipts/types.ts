@@ -39,6 +39,8 @@ export type UserProfile = {
   isPro: boolean;
   activeCount: number;
   freeLimit: number;
+  /** Return reminders switch on S17 (warranty reminders are separate). */
+  remindersEnabled: boolean;
   reminderHour: number;
   reminderDays: number[];
   timezone: string;

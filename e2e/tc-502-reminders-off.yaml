@@ -1,0 +1,32 @@
+# TC-502 (simulator version): primer -> Turn on reminders -> system prompt -> Don't allow.
+# Home shows "Reminders are off" with Turn on, and Reminder settings says notifications are off.
+appId: com.returnsafe.app
+name: TC-502 Primer, Don't allow (simulator)
+---
+- runFlow:
+    file: subflows/sign-up-to-primer.yaml
+    env:
+      PREFIX: tc502
+- assertVisible: 'Never miss a deadline'
+- tapOn:
+    id: primer-enable
+# iOS: "Don’t Allow"; Android 13+: "Don’t allow".
+- tapOn:
+    text: 'Don.t [Aa]llow'
+- extendedWaitUntil:
+    visible:
+      id: home-reminders-off
+    timeout: 10000
+- assertVisible:
+    id: home-reminders-off
+    text: '.*Reminders are off.*Turn on.*'
+- takeScreenshot: tc502-home
+- tapOn:
+    id: tab-settings
+- tapOn:
+    id: settings-reminders
+- assertVisible:
+    id: reminders-permission
+    text: '.*Notifications are off.*'
+- assertVisible: 'Pro adds reminders 7 and 3 days before.'
+- takeScreenshot: tc502-settings

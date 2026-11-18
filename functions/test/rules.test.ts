@@ -89,6 +89,26 @@ describe('users/{uid} rules', () => {
     await assertFails(updateDoc(ref, { displayName: 'x'.repeat(81) }));
   });
 
+  it('owner can save push tokens and turn return reminders off', async () => {
+    const ref = doc(as('alice'), 'users/alice');
+    await assertSucceeds(updateDoc(ref, { fcmTokens: ['token-1', 'token-2'] }));
+    await assertSucceeds(updateDoc(ref, { remindersEnabled: false }));
+    await assertFails(updateDoc(ref, { remindersEnabled: 'no' }));
+    await assertFails(updateDoc(ref, { fcmTokens: 'token-1' }));
+    await assertFails(
+      updateDoc(ref, { fcmTokens: Array.from({ length: 11 }, (_, i) => `token-${i}`) }),
+    );
+  });
+
+  it('reminder rows are server only', async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore(), 'reminders/r1'), { uid: 'alice', receiptId: 'x', sent: false }),
+    );
+    await assertFails(getDoc(doc(as('alice'), 'reminders/r1')));
+    await assertFails(setDoc(doc(as('alice'), 'reminders/r2'), { uid: 'alice', sent: false }));
+    await assertFails(deleteDoc(doc(as('alice'), 'reminders/r1')));
+  });
+
   it('everything else is still denied', async () => {
     await assertFails(getDoc(doc(as('alice'), 'other/thing')));
     await assertFails(setDoc(doc(as('alice'), 'other/thing'), { a: 1 }));

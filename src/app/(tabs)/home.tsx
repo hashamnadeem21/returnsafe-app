@@ -8,6 +8,7 @@ import { ListError, ListSkeleton } from '@/features/receipts/components/ListStat
 import { ReceiptRow } from '@/features/receipts/components/ReceiptRow';
 import { daysLeftFor, displayStatus, isDueSoon, totals } from '@/features/receipts/derive';
 import { useReceipts, useVisibleReceipts } from '@/features/receipts/receiptsStore';
+import { RemindersOffBanner } from '@/features/reminders/RemindersOffBanner';
 import { useToday } from '@/features/receipts/useToday';
 import { useSession } from '@/stores/session';
 import { fonts, useTheme } from '@/theme';
@@ -52,7 +53,7 @@ export default function Home() {
           </AppText>
         </View>
 
-        {/* Reminders-off banner: shown from Phase 5, when reminder permission is wired up. */}
+        <RemindersOffBanner />
 
         {!loaded ? (
           <ListSkeleton />

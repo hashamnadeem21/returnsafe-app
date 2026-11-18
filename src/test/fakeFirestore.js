@@ -104,11 +104,33 @@ async function setDoc(ref, value) {
   notify();
 }
 
+function arrayUnion(...values) {
+  return { __arrayOp: 'union', values };
+}
+
+function arrayRemove(...values) {
+  return { __arrayOp: 'remove', values };
+}
+
+/** Applies arrayUnion / arrayRemove against the current value of each field. */
+function applyArrayOps(current, value) {
+  const out = { ...value };
+  for (const [k, v] of Object.entries(value)) {
+    if (!v || !v.__arrayOp) continue;
+    const list = Array.isArray(current[k]) ? current[k] : [];
+    out[k] =
+      v.__arrayOp === 'union'
+        ? [...list, ...v.values.filter((x) => !list.includes(x))]
+        : list.filter((x) => !v.values.includes(x));
+  }
+  return out;
+}
+
 async function updateDoc(ref, value) {
   writes.push({ op: 'update', path: ref.path, value });
   const current = docs.get(ref.path);
   if (!current) throw Object.assign(new Error('not-found'), { code: 'firestore/not-found' });
-  docs.set(ref.path, { ...current, ...stamp(value) });
+  docs.set(ref.path, { ...current, ...stamp(applyArrayOps(current, value)) });
   notify();
 }
 
@@ -148,6 +170,8 @@ const fakeFirestore = {
   updateDoc,
   deleteDoc,
   serverTimestamp: () => SERVER_TIME,
+  arrayUnion,
+  arrayRemove,
 };
 
 /** Marks a document as waiting to sync (or synced) and notifies listeners. */
