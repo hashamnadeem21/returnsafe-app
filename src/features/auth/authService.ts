@@ -27,6 +27,7 @@ import { auth, db, functions } from '@/lib/firebase';
 import { INSTALL_KEY } from '@/lib/install';
 import { ONBOARDING_KEY } from '@/lib/onboarding';
 import { flushStatus } from '@/features/receipts/statusActions';
+import { unregisterPushToken } from '@/features/reminders/pushTokens';
 import { useSession } from '@/stores/session';
 
 import { codeOf, mapAuthError, type FriendlyAuthError } from './errors';
@@ -286,6 +287,8 @@ const SYNC_WAIT_MS = 3000;
 export async function signOut(): Promise<void> {
   // Save a Returned or Kept change still in its Undo window while this user can still write it.
   flushStatus();
+  // Stop this device getting the signed-out user's reminders (synced by the wait below).
+  unregisterPushToken();
   await Promise.race([
     waitForPendingWrites(db()).catch(() => undefined),
     new Promise((resolve) => setTimeout(resolve, SYNC_WAIT_MS)),

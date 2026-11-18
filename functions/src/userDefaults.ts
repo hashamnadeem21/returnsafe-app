@@ -1,8 +1,10 @@
 /** Defaults for a new users/{uid} document. Only the server creates this document. */
 export const USER_DEFAULTS = {
+  remindersEnabled: true,
   reminderHour: 9,
-  // Free users still only get the 1-day reminder; the reminder scheduler enforces that (Phase 5).
+  // Free users still only get the 1-day reminder; the reminder scheduler enforces that.
   reminderDays: [7, 3, 1],
+  fcmTokens: [],
   activeCount: 0,
   isPro: false,
   proExpiresAt: null,

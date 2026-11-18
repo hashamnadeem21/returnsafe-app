@@ -53,6 +53,7 @@ const profile = (over: Partial<UserProfile> = {}): UserProfile => ({
   isPro: false,
   activeCount: 0,
   freeLimit: 5,
+  remindersEnabled: true,
   reminderHour: 9,
   reminderDays: [7, 3, 1],
   timezone: 'America/New_York',

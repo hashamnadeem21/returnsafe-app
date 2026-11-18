@@ -1,0 +1,50 @@
+# TC-501 (simulator version): primer -> Turn on reminders -> system prompt -> Allow. Home shows no
+# "Reminders are off" banner and Reminder settings says notifications are allowed. On Android the
+# FCM token is then saved on users/{uid}.fcmTokens. (iOS simulators get a push token only with an
+# APNs key in Firebase, so that part is a manual check on a real iPhone.)
+appId: com.returnsafe.app
+name: TC-501 Primer, Allow (simulator)
+---
+- runFlow:
+    file: subflows/sign-up-to-primer.yaml
+    env:
+      PREFIX: tc501
+- tapOn:
+    id: primer-enable
+- tapOn:
+    text: 'Allow'
+- extendedWaitUntil:
+    visible:
+      id: screen-home-title
+    timeout: 10000
+- assertNotVisible:
+    id: home-reminders-off
+- tapOn:
+    id: tab-settings
+- tapOn:
+    id: settings-reminders
+- assertVisible:
+    id: reminders-permission
+    text: '.*Notifications allowed.*'
+- takeScreenshot: tc501-settings
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+      - runFlow: subflows/open-account.yaml
+      - copyTextFrom:
+          id: account-uid
+      - runScript: scripts/push-tokens.js
+      - repeat:
+          times: 10
+          while:
+            true: ${output.tokenCount != 1}
+          commands:
+            - extendedWaitUntil:
+                visible:
+                  id: never-shown
+                timeout: 2000
+                optional: true
+            - runScript: scripts/push-tokens.js
+      - assertTrue: ${output.tokenCount == 1}

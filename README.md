@@ -44,6 +44,8 @@ EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo run:android --variant release
 npm run e2e:android
 ```
 
+The Android project must also be generated with the variable set (`EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo prebuild --platform android`); otherwise the release build blocks plain HTTP to the emulators and sign-up fails.
+
 The scan flow (TC-402) picks a receipt photo from the device's library, since simulators have no camera. The flow adds `e2e/assets/walmart-receipt.png` to the device's photos itself (Maestro `addMedia`), so it is always the newest photo.
 
 `e2e/scripts/make-receipt-image.py` re-creates the image if needed.
@@ -63,7 +65,7 @@ Unit tests, lint, the hex-colour check, type check and formatting all run with `
 | 2     | Login and signup             | Passed ([report](docs/gate-reports/phase-2/REPORT.md)) |
 | 3     | Receipts core                | Passed ([report](docs/gate-reports/phase-3/REPORT.md)) |
 | 4     | Scanning and photos          | Passed ([report](docs/gate-reports/phase-4/REPORT.md)) |
-| 5     | Reminders                    | Not started                                            |
+| 5     | Reminders                    | Passed ([report](docs/gate-reports/phase-5/REPORT.md)) |
 | 6     | Subscriptions and Pro        | Not started                                            |
 | 7     | Polish and release prep      | Not started                                            |
 | 8     | Launch                       | Not started                                            |

@@ -1,0 +1,40 @@
+# Fresh install with the notification permission never asked, then sign up with a new email and
+# stop on the notification primer. Leaves output.email set.
+appId: com.returnsafe.app
+---
+- launchApp:
+    clearState: true
+    # Maestro allows every permission by default; reset it so the primer's system prompt shows.
+    permissions:
+      notifications: unset
+- extendedWaitUntil:
+    visible:
+      id: onboarding-skip
+    timeout: 20000
+- tapOn:
+    id: onboarding-skip
+- extendedWaitUntil:
+    visible:
+      id: screen-welcome
+    timeout: 10000
+- runScript:
+    file: ../scripts/new-email.js
+    env:
+      PREFIX: ${PREFIX}
+- tapOn:
+    id: welcome-email
+- tapOn:
+    id: signup-email
+- inputText: ${output.email}
+- tapOn:
+    id: signup-password
+- inputText: 'Test1234'
+# Tap the title to close the keyboard (hideKeyboard can tap a button on iOS).
+- tapOn:
+    id: screen-sign-up-title
+- tapOn:
+    id: signup-submit
+- extendedWaitUntil:
+    visible:
+      id: screen-notification-primer
+    timeout: 20000

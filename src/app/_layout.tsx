@@ -16,6 +16,7 @@ import { SnackbarHost } from '@/components';
 import { SessionProvider } from '@/features/auth/SessionProvider';
 import { OnboardingProvider, useOnboarding } from '@/features/onboarding/OnboardingProvider';
 import { ReceiptsProvider } from '@/features/receipts/ReceiptsProvider';
+import { ReminderPush } from '@/features/reminders/ReminderPush';
 import { useSession } from '@/stores/session';
 import { ThemeProvider, useTheme } from '@/theme';
 
@@ -63,6 +64,7 @@ function RootStack() {
           <Stack.Screen name="settings/delete-account" />
         </Stack.Protected>
       </Stack>
+      {signedIn ? <ReminderPush /> : null}
       <SnackbarHost />
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </>

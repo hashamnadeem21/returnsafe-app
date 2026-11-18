@@ -2,13 +2,18 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 
 import { adminAuth, bucket, db } from './admin.js';
+import { deleteUserReminders } from './reminders/rebuild.js';
 
 /** A sign-in older than this must re-authenticate before deleting (same window Firebase uses). */
 export const RECENT_LOGIN_SECONDS = 5 * 60;
 
-/** Removes every trace of a user: Firestore (doc + subcollections), Storage photos, then the auth user. */
+/**
+ * Removes every trace of a user: Firestore (doc + subcollections, and their reminder rows), Storage
+ * photos, then the auth user.
+ */
 export async function deleteUserEverything(uid: string): Promise<void> {
   await db.recursiveDelete(db.doc(`users/${uid}`));
+  await deleteUserReminders(uid);
   await bucket().deleteFiles({ prefix: `users/${uid}/` });
   await adminAuth.deleteUser(uid);
 }

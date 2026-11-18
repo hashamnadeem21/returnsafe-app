@@ -45,9 +45,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: false,
     googleServicesFile: `${FIREBASE_DIR}/GoogleService-Info.plist`,
     // Sign in with Apple capability (set directly; usesAppleSignIn needs expo-apple-authentication).
-    entitlements: { 'com.apple.developer.applesignin': ['Default'] },
+    entitlements: {
+      'com.apple.developer.applesignin': ['Default'],
+      // Push notifications for reminders (APNs). Store builds use the production environment.
+      'aps-environment': IS_PROD ? 'production' : 'development',
+    },
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      UIBackgroundModes: ['remote-notification'],
     },
   },
   android: {
@@ -59,6 +64,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: false,
+    // Android 13+ asks for this at run time, after the notification primer.
+    permissions: ['android.permission.POST_NOTIFICATIONS'],
   },
   plugins: [
     'expo-router',
@@ -73,6 +80,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     '@react-native-firebase/app',
     '@react-native-firebase/auth',
     '@react-native-firebase/app-check',
+    // Reminder pushes. The white icon and its teal colour ship in modules/reminder-notifications.
+    [
+      '@react-native-firebase/messaging',
+      { android: { notificationIcon: 'notification_icon', notificationColor: BRAND_TEAL } },
+    ],
     '@react-native-community/datetimepicker',
     // Receipt scanning: VisionKit (iOS) / ML Kit Document Scanner (Android), plus the photo library.
     ['react-native-document-scanner-plugin', { cameraPermission: CAMERA_USAGE }],

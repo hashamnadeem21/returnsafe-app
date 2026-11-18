@@ -2,6 +2,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 
 import { db } from './admin.js';
+import { rebuildReceiptReminders, scheduleKey, settingsFrom } from './reminders/rebuild.js';
 
 /** Sets users/{uid}.activeCount from a count of the user's active receipts (safe to repeat). */
 export async function recountActive(uid: string): Promise<void> {
@@ -21,18 +22,24 @@ export async function recountActive(uid: string): Promise<void> {
 }
 
 /**
- * Keeps the free-limit counter in step with the receipts. Recounting instead of adding or
- * subtracting one means a retried or out-of-order event can never leave the counter wrong.
- * Reminder rows are added here in Phase 5.
+ * Keeps the free-limit counter in step with the receipts and rebuilds the receipt's reminder rows.
+ * Recounting instead of adding or subtracting one means a retried or out-of-order event can never
+ * leave the counter wrong; rebuilding the rows is just as safe to repeat.
  */
 export const onReceiptWrite = onDocumentWritten(
   'users/{uid}/receipts/{receiptId}',
   async (event) => {
+    const { uid, receiptId } = event.params;
     const before = event.data?.before;
     const after = event.data?.after;
     const wasActive = before?.exists === true && before.get('status') === 'active';
     const isActive = after?.exists === true && after.get('status') === 'active';
-    if (wasActive === isActive) return;
-    await recountActive(event.params.uid);
+    if (wasActive !== isActive) await recountActive(uid);
+
+    const was = before?.exists ? before.data() : undefined;
+    const now = after?.exists ? after.data() : undefined;
+    if (before?.exists && after?.exists && scheduleKey(was) === scheduleKey(now)) return;
+    const user = now ? await db.doc(`users/${uid}`).get() : undefined;
+    await rebuildReceiptReminders(uid, receiptId, now, settingsFrom(user?.data()));
   },
 );

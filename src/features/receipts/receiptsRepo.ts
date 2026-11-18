@@ -105,6 +105,7 @@ export function subscribeProfile(
         isPro: d.isPro === true,
         activeCount: num(d.activeCount),
         freeLimit: num(d.freeLimit, 5),
+        remindersEnabled: d.remindersEnabled !== false,
         reminderHour: num(d.reminderHour, 9),
         reminderDays: Array.isArray(d.reminderDays)
           ? d.reminderDays.filter((x): x is number => typeof x === 'number')
