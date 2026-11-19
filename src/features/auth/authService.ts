@@ -38,6 +38,7 @@ import {
   signOutProviders,
   type ProviderResult,
 } from './providers';
+import { track } from '@/lib/telemetry';
 
 export type AuthMethod = 'google' | 'apple' | 'password';
 
@@ -158,6 +159,7 @@ export async function signUpWithEmail(
       }
       throw e;
     }
+    track({ name: 'sign_up', method: 'email' });
     if (name) await updateProfile(user, { displayName: name });
     await sendEmailVerification(user).catch(() => undefined);
     await ensureUserDoc(name);
@@ -201,7 +203,9 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
 export async function continueAsGuest(): Promise<void> {
   await wrap(async () => {
-    await signInAnonymously(auth());
+    const result = await signInAnonymously(auth());
+    // A retry after ensureUserDoc failed returns the same guest: count only the first sign-in.
+    if (result.additionalUserInfo?.isNewUser) track({ name: 'sign_up', method: 'guest' });
     await ensureUserDoc();
   });
 }
@@ -209,7 +213,10 @@ export async function continueAsGuest(): Promise<void> {
 async function withProvider(method: 'google' | 'apple', get: () => Promise<ProviderResult>) {
   await wrap(async () => {
     const { credential, displayName } = await get();
+    const linking = currentGuest() !== null;
     const result = await linkOrSignIn(credential);
+    // A new account, or a guest saving their account with Apple or Google.
+    if (linking || result.additionalUserInfo?.isNewUser) track({ name: 'sign_up', method });
     if (displayName && !result.user.displayName) {
       await updateProfile(result.user, { displayName });
     }

@@ -1,6 +1,7 @@
+import * as Application from 'expo-application';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
@@ -19,6 +20,15 @@ import { openManageSubscription, restore } from '@/features/subscription/purchas
 import { useIsPro } from '@/stores/pro';
 import { useSession } from '@/stores/session';
 import { fonts, useTheme } from '@/theme';
+import { openPaywall } from '@/features/subscription/openPaywall';
+import { PRIVACY_URL, SUPPORT_URL } from '@/lib/links';
+
+/** "1.0.0 (12)": the store version and build number, for support requests. */
+function versionLabel(): string {
+  const version = Application.nativeApplicationVersion ?? '1.0.0';
+  const build = Application.nativeBuildVersion;
+  return build ? `Version ${version} (${build})` : `Version ${version}`;
+}
 
 /** Settings (S16): account card with the plan, upgrade banner for Free users, then the rows. */
 export default function Settings() {
@@ -48,6 +58,9 @@ export default function Settings() {
       setRestoring(false);
     }
   };
+
+  const openSite = (url: string) =>
+    void Linking.openURL(url).catch(() => toast("Couldn't open the page. Try again."));
 
   const onManage = () =>
     void openManageSubscription().catch(() => toast("Couldn't open the store's subscriptions"));
@@ -85,7 +98,7 @@ export default function Settings() {
 
         {isPro ? null : (
           <Pressable
-            onPress={() => router.push('/paywall')}
+            onPress={() => openPaywall('settings')}
             accessibilityRole="button"
             accessibilityLabel="Upgrade to Pro. Unlimited receipts and warranties"
             testID="settings-upgrade"
@@ -137,7 +150,7 @@ export default function Settings() {
             }
             divider
             accessibilityLabel={isPro ? 'Export receipts' : 'Export receipts, Pro feature'}
-            onPress={() => (isPro ? setExportOpen(true) : router.push('/paywall'))}
+            onPress={() => (isPro ? setExportOpen(true) : openPaywall('export'))}
             testID="settings-export"
           />
           <ListRow
@@ -169,7 +182,36 @@ export default function Settings() {
             onPress={() => router.push('/settings/account')}
             testID="settings-account"
           />
+          <ListRow
+            title="Help and support"
+            subtitle="Questions, contact us"
+            letter="H"
+            right={chevron}
+            divider
+            accessibilityRole="link"
+            onPress={() => openSite(SUPPORT_URL)}
+            testID="settings-help"
+          />
+          <ListRow
+            title="Privacy and terms"
+            subtitle="Privacy policy, terms of use"
+            letter="T"
+            right={chevron}
+            divider
+            accessibilityRole="link"
+            onPress={() => openSite(PRIVACY_URL)}
+            testID="settings-privacy"
+          />
         </Card>
+        <AppText
+          variant="caption"
+          tone="ink2"
+          align="center"
+          style={{ marginBottom: spacing.lg }}
+          testID="settings-version"
+        >
+          {versionLabel()}
+        </AppText>
       </ScrollView>
       <ExportSheet visible={exportOpen} onClose={() => setExportOpen(false)} />
     </Screen>

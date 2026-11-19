@@ -3,6 +3,7 @@ import { logger } from 'firebase-functions/v2';
 
 import { adminAuth, bucket, db } from './admin.js';
 import { deleteUserReminders } from './reminders/rebuild.js';
+import { callableOptions } from './appCheck.js';
 
 /** A sign-in older than this must re-authenticate before deleting (same window Firebase uses). */
 export const RECENT_LOGIN_SECONDS = 5 * 60;
@@ -18,7 +19,7 @@ export async function deleteUserEverything(uid: string): Promise<void> {
   await adminAuth.deleteUser(uid);
 }
 
-export const deleteAccount = onCall(async (req) => {
+export const deleteAccount = onCall(callableOptions, async (req) => {
   const uid = req.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
 

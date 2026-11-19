@@ -5,6 +5,7 @@ import { useSnackbar } from '@/components/Snackbar';
 import { setReceiptStatus } from './receiptsRepo';
 import { useReceipts } from './receiptsStore';
 import type { ReceiptStatus } from './types';
+import { track } from '@/lib/telemetry';
 
 export const UNDO_MS = 5000;
 
@@ -31,6 +32,7 @@ export function changeStatusWithUndo(
   const commit = () => {
     timers.delete(id);
     setReceiptStatus(uid, id, status);
+    if (status === 'returned') track({ name: 'receipt_returned' });
   };
   const timer = setTimeout(commit, UNDO_MS);
   const snackbarId = useSnackbar.getState().show({

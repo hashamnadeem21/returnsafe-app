@@ -1,5 +1,6 @@
 export { AppText } from './AppText';
 export { Banner, type BannerKind } from './Banner';
+export { OfflineBanner } from './OfflineBanner';
 export { Button, type ButtonVariant } from './Button';
 export { Card } from './Card';
 export { Chip } from './Chip';

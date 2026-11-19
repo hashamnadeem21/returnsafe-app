@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -42,6 +42,7 @@ import { useIsPro } from '@/stores/pro';
 import { fonts, useTheme } from '@/theme';
 
 import logo from '../../assets/images/logo-mark.png';
+import { paywallSource, track } from '@/lib/telemetry';
 
 const close = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 const platform = Platform.OS === 'ios' ? 'ios' : 'android';
@@ -152,6 +153,12 @@ export default function Paywall() {
   const [busy, setBusy] = useState<'buy' | 'restore' | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
   const alive = useRef(true);
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  // Once per opening of the paywall, with where it was opened from.
+  useEffect(() => {
+    track({ name: 'paywall_view', source: paywallSource(from) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(
     () => () => {
       alive.current = false;
@@ -194,7 +201,10 @@ export default function Paywall() {
     if (!plan || busy) return;
     setNotice(null);
     setBusy('buy');
+    track({ name: 'purchase_start', plan: plan.period });
     const result = await buy(plan);
+    // Record the purchase even if the paywall was closed while the store sheet was open.
+    if (result === 'pro') track({ name: 'purchase_success', plan: plan.period });
     if (!alive.current) return;
     if (result === 'pro') return unlocked('Welcome to ReturnSafe Pro');
     setBusy(null);

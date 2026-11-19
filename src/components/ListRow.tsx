@@ -18,6 +18,8 @@ type Props = {
   onPress?: () => void;
   /** Draws the divider above this row (every row after the first in a card). */
   divider?: boolean;
+  /** "link" for rows that open a web page. */
+  accessibilityRole?: 'button' | 'link';
   testID?: string;
 };
 
@@ -51,6 +53,7 @@ export function ListRow({
   right,
   onPress,
   divider = false,
+  accessibilityRole = 'button',
   testID,
 }: Props) {
   const { colors, sizes } = useTheme();
@@ -86,7 +89,7 @@ export function ListRow({
     <Pressable
       testID={testID}
       onPress={onPress}
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel ?? (subtitle ? `${title}, ${subtitle}` : title)}
       style={({ pressed }) => [rowStyle, pressed && { backgroundColor: colors.bg }]}
     >

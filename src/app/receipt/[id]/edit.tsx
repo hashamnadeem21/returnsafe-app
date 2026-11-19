@@ -1,11 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 
-import { EmptyState, Screen, ScreenHeader } from '@/components';
+import { Screen, ScreenHeader } from '@/components';
 import { centsToInput } from '@/lib/money';
 import { ReceiptForm } from '@/features/receipts/components/ReceiptForm';
 import { useReceipts } from '@/features/receipts/receiptsStore';
 import { editReceipt } from '@/features/receipts/saveReceipt';
 import { useSession } from '@/stores/session';
+import { ReceiptFallback } from '@/features/receipts/components/ListStates';
 
 const back = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
@@ -37,7 +38,7 @@ export default function EditReceipt() {
           }}
         />
       ) : (
-        <EmptyState icon="receipt" title="Receipt not found" message="It may have been deleted." />
+        <ReceiptFallback />
       )}
     </Screen>
   );

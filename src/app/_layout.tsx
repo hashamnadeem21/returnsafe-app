@@ -6,10 +6,17 @@ import {
   Inter_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/inter';
-import { Stack } from 'expo-router';
+import {
+  DarkTheme,
+  DefaultTheme,
+  ErrorBoundary as RouterErrorBoundary,
+  Stack,
+  ThemeProvider as NavigationThemeProvider,
+  type ErrorBoundaryProps,
+} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { SnackbarHost } from '@/components';
@@ -20,6 +27,8 @@ import { ReminderPush } from '@/features/reminders/ReminderPush';
 import { PurchasesProvider } from '@/features/subscription/PurchasesProvider';
 import { useSession } from '@/stores/session';
 import { ThemeProvider, useTheme } from '@/theme';
+import { watchNetwork } from '@/lib/network';
+import { reportError } from '@/lib/telemetry';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -36,16 +45,35 @@ function RootStack() {
     Inter_800ExtraBold,
   });
   const appReady = ready && sessionReady && (fontsLoaded || fontError !== null);
+  // React Navigation's own theme (headers, cards, modal backdrops) follows the app palette.
+  const navTheme = useMemo(() => {
+    const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: colors.primary,
+        background: colors.bg,
+        card: colors.surface,
+        text: colors.ink,
+        border: colors.border,
+        notification: colors.danger,
+      },
+    };
+  }, [scheme, colors]);
 
   useEffect(() => {
     if (appReady) void SplashScreen.hideAsync();
   }, [appReady]);
 
+  // Drives the "You're offline" banner.
+  useEffect(() => watchNetwork(), []);
+
   // Hold the native splash until fonts, the onboarding flag and the saved login are loaded.
   if (!appReady) return null;
 
   return (
-    <>
+    <NavigationThemeProvider value={navTheme}>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="index" />
         <Stack.Protected guard={!signedIn}>
@@ -68,12 +96,18 @@ function RootStack() {
       {signedIn ? <ReminderPush /> : null}
       <SnackbarHost />
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-    </>
+    </NavigationThemeProvider>
   );
 }
 
-// Render errors show Expo Router's retry screen instead of crashing the app.
-export { ErrorBoundary } from 'expo-router';
+/**
+ * Render errors show Expo Router's retry screen instead of crashing the app, and are reported to
+ * Crashlytics (real builds only).
+ */
+export function ErrorBoundary(props: ErrorBoundaryProps) {
+  useEffect(() => reportError(props.error, 'render'), [props.error]);
+  return <RouterErrorBoundary {...props} />;
+}
 
 export default function RootLayout() {
   return (

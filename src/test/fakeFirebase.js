@@ -56,10 +56,14 @@ const fakeAuth = {
     state.listeners.add(cb);
     return () => state.listeners.delete(cb);
   },
+  // Like Firebase Auth: a repeat call while a guest is signed in returns that same guest.
   signInAnonymously: jest.fn(async () => {
+    if (state.currentUser?.isAnonymous) {
+      return { user: state.currentUser, additionalUserInfo: { isNewUser: false } };
+    }
     const user = makeUser({ isAnonymous: true });
     setCurrent(user);
-    return { user };
+    return { user, additionalUserInfo: { isNewUser: true } };
   }),
   createUserWithEmailAndPassword: jest.fn(async (_a, email, password) => {
     if (state.accounts.has(email)) throw authError('auth/email-already-in-use');

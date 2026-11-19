@@ -61,7 +61,7 @@ export function TextField({
           accessibilityHint={error ?? helper}
           allowFontScaling
           maxFontSizeMultiplier={maxFontSizeMultiplier}
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.placeholder}
           selectionColor={colors.primary}
           secureTextEntry={secure && hidden}
           onFocus={(e) => {

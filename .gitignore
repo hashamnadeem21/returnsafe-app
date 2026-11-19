@@ -45,6 +45,8 @@ example
 # env and secrets
 .env
 .env.*
+# Non-secret per-project Functions params (ENFORCE_APP_CHECK) are committed.
+!functions/.env.returnsafe-prod
 !.env.example
 *.keystore
 !debug.keystore

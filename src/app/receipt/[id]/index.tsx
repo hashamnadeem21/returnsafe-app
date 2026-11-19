@@ -8,16 +8,16 @@ import {
   Button,
   Card,
   CountdownRing,
-  EmptyState,
   Icon,
   Screen,
   ScreenHeader,
   Sheet,
+  OfflineBanner,
 } from '@/components';
 import { effectiveReminderDays } from '@/features/reminders/reminderSettings';
 import { formatMediumDate, formatShortDate, reminderInstants } from '@/lib/dates';
 import { formatUsd } from '@/lib/money';
-import { StatusPill } from '@/features/receipts/components/ReceiptRow';
+import { spokenStatus, StatusPill } from '@/features/receipts/components/ReceiptRow';
 import { daysLeftFor, displayStatus } from '@/features/receipts/derive';
 import { deleteReceipt } from '@/features/receipts/receiptsRepo';
 import { useVisibleReceipts, useReceipts } from '@/features/receipts/receiptsStore';
@@ -28,6 +28,7 @@ import { ReceiptPhoto } from '@/features/scan/ReceiptPhoto';
 import { useIsPro } from '@/stores/pro';
 import { useSession } from '@/stores/session';
 import { fonts, useTheme } from '@/theme';
+import { ReceiptFallback } from '@/features/receipts/components/ListStates';
 
 const back = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
@@ -48,7 +49,7 @@ export default function ReceiptDetail() {
     return (
       <Screen testID="screen-receipt-detail">
         <ScreenHeader mode="nav" title="Receipt" onBack={back} />
-        <EmptyState icon="receipt" title="Receipt not found" message="It may have been deleted." />
+        <ReceiptFallback />
       </Screen>
     );
   }
@@ -100,6 +101,7 @@ export default function ReceiptDetail() {
           </Pressable>
         }
       />
+      <OfflineBanner />
       <ScrollView contentContainerStyle={{ padding: spacing.screen, gap: spacing.lg }}>
         <View style={[styles.center, { gap: spacing.md }]}>
           {status === 'active' ? (
@@ -107,6 +109,7 @@ export default function ReceiptDetail() {
               daysLeft={days}
               totalDays={receipt.returnDays}
               size={168}
+              accessibilityLabel={spokenStatus({ ...receipt, pending: false }, today)}
               testID="receipt-ring"
             />
           ) : null}

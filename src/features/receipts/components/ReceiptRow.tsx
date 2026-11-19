@@ -22,6 +22,20 @@ export function statusText(receipt: Receipt, today: IsoDate): string {
   }
 }
 
+/**
+ * What VoiceOver and TalkBack say for a receipt's status: "2 days left to return Target receipt",
+ * "Last day to return Target receipt", or "Target receipt, returned".
+ */
+export function spokenStatus(receipt: Receipt, today: IsoDate): string {
+  const name = `${receipt.storeName} receipt`;
+  if (receipt.pending) return `${name}, waiting to sync`;
+  const status = displayStatus(receipt, today);
+  if (status !== 'active') return `${name}, ${statusText(receipt, today).toLowerCase()}`;
+  const days = daysLeftFor(receipt, today);
+  if (days <= 0) return `Last day to return ${name}`;
+  return `${days} ${days === 1 ? 'day' : 'days'} left to return ${name}`;
+}
+
 /** The pill on the right of a receipt row. */
 export function StatusPill({ receipt, today }: { receipt: Receipt; today: IsoDate }) {
   const testID = `receipt-pill-${receipt.id}`;
@@ -50,7 +64,7 @@ export function ReceiptRow({ receipt, today, divider }: Props) {
     <ListRow
       title={receipt.storeName}
       subtitle={subtitle}
-      accessibilityLabel={`${receipt.storeName}, ${subtitle}, ${statusText(receipt, today)}`}
+      accessibilityLabel={`${spokenStatus(receipt, today)}. ${subtitle}`}
       right={<StatusPill receipt={receipt} today={today} />}
       divider={divider}
       onPress={() => router.push({ pathname: '/receipt/[id]', params: { id: receipt.id } })}

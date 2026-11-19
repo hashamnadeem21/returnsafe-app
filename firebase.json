@@ -36,6 +36,17 @@
   },
   "react-native": {
     "messaging_android_notification_channel_id": "return-reminders",
-    "messaging_ios_foreground_presentation_options": []
+    "messaging_ios_foreground_presentation_options": [],
+    "analytics_auto_collection_enabled": false,
+    "google_analytics_adid_collection_enabled": false,
+    "google_analytics_ssaid_collection_enabled": false,
+    "analytics_idfv_collection_enabled": false,
+    "analytics_default_allow_ad_storage": false,
+    "analytics_default_allow_ad_user_data": false,
+    "analytics_default_allow_ad_personalization_signals": false,
+    "google_analytics_automatic_screen_reporting_enabled": false,
+    "crashlytics_auto_collection_enabled": false,
+    "crashlytics_debug_enabled": false,
+    "crashlytics_javascript_exception_handler_chaining_enabled": true
   }
 }

@@ -8,9 +8,12 @@
     "@invertase/react-native-apple-authentication": "^2.5.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "9.2.1",
+    "@react-native-community/netinfo": "12.0.1",
+    "@react-native-firebase/analytics": "^27.1.1",
     "@react-native-firebase/app": "^27.1.1",
     "@react-native-firebase/app-check": "^27.1.1",
     "@react-native-firebase/auth": "^27.1.1",
+    "@react-native-firebase/crashlytics": "^27.1.1",
     "@react-native-firebase/firestore": "^27.1.1",
     "@react-native-firebase/functions": "^27.1.1",
     "@react-native-firebase/messaging": "^27.1.1",
@@ -20,6 +23,7 @@
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "expo": "~58.0.26",
+    "expo-application": "~58.1.2",
     "expo-build-properties": "~58.0.12",
     "expo-constants": "~58.0.16",
     "expo-dev-client": "~58.0.21",
@@ -36,6 +40,7 @@
     "expo-splash-screen": "~58.0.14",
     "expo-status-bar": "~58.0.5",
     "expo-system-ui": "~58.0.7",
+    "expo-updates": "~58.0.22",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-hook-form": "^7.92.0",
@@ -81,8 +86,20 @@
     "typegen": "bash scripts/gen-route-types.sh",
     "e2e:ios": "maestro test --platform ios e2e",
     "e2e:android": "maestro test --platform android e2e",
+    "coverage": "jest --ci --coverage --collectCoverageFrom='src/lib/**/*.ts' --coverageThreshold='{\"global\":{\"statements\":80,\"branches\":80,\"functions\":80,\"lines\":80}}'",
+    "coverage:functions": "node scripts/ensure-local-secrets.mjs && npm --prefix functions run coverage",
     "test:functions": "node scripts/ensure-local-secrets.mjs && npm --prefix functions run build && firebase emulators:exec --project returnsafe-app --only auth,firestore,storage,functions \"npm --prefix functions test\"",
-    "seed:stores": "node scripts/seed-stores.mjs"
+    "seed:stores": "node scripts/seed-stores.mjs",
+    "check:privacy": "node scripts/check-privacy-manifest.mjs"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "autolinking": {
+      "ios": {
+        "buildFromSource": [
+          "expo-image-manipulator"
+        ]
+      }
+    }
+  }
 }

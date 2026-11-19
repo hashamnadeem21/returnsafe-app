@@ -13,6 +13,7 @@ import {
 import { AppText, Button, Icon, Screen, type IconName } from '@/components';
 import { useOnboarding } from '@/features/onboarding/OnboardingProvider';
 import { fonts, useTheme } from '@/theme';
+import { track } from '@/lib/telemetry';
 
 type Card = { key: string; icon: IconName; title: string; text: string };
 
@@ -46,6 +47,7 @@ export default function Onboarding() {
   const last = index === CARDS.length - 1;
 
   const finish = async () => {
+    track({ name: 'onboarding_complete' });
     try {
       await complete();
     } catch {

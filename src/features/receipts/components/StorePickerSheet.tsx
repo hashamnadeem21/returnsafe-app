@@ -94,7 +94,7 @@ export function StorePickerSheet({ visible, customStores, onPick, onClose }: Pro
           value={query}
           onChangeText={setQuery}
           placeholder="Search stores"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.placeholder}
           autoFocus
           autoCorrect={false}
           returnKeyType="done"
