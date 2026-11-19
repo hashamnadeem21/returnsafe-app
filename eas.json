@@ -23,7 +23,8 @@
       "env": {
         "APP_ENV": "development"
       },
-      "channel": "preview"
+      "channel": "preview",
+      "environment": "preview"
     },
     "runtime-test": {
       "extends": "preview",

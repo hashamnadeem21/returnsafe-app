@@ -132,7 +132,7 @@ These couldn't run here: the EAS CLI isn't logged in, the **returnsafe-prod** Fi
 
 Use the dedicated **runtime-test** channel (the `runtime-test` profile in `eas.json`). Only the build made for this test listens to it, so the test bundles never reach production or preview users.
 
-1. Build version **1.0.0** with `eas build --profile runtime-test --platform ios` (or `android`) and install it on a device. Open it once while online.
+1. Make sure the dev Firebase files are uploaded to the EAS **preview** environment (`docs/releasing.md` §1.2); the `runtime-test` profile loads that environment. Then build version **1.0.0** with `eas build --profile runtime-test --platform ios` (or `android`), install it on a device and open it once while online.
 2. **Control (required):** change a visible string (for example the Home title to "TC-706 control") with `version` still 1.0.0, then:
    ```bash
    eas update --channel runtime-test --message "TC-706 control 1.0.0"

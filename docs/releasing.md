@@ -27,6 +27,11 @@ eas init            # creates the EAS project and prints its id
    eas env:create --name GOOGLE_SERVICES_PLIST --type file --value firebase/prod/GoogleService-Info.plist --environment production
    eas env:create --name GOOGLE_SERVICES_JSON --type file --value firebase/prod/google-services.json --environment production
    ```
+   Cloud builds of the `preview` and `runtime-test` profiles use `APP_ENV=development` and load the EAS **preview** environment. Upload the dev project's files there under the same names:
+   ```bash
+   eas env:create --name GOOGLE_SERVICES_PLIST --type file --value firebase/dev/GoogleService-Info.plist --environment preview
+   eas env:create --name GOOGLE_SERVICES_JSON --type file --value firebase/dev/google-services.json --environment preview
+   ```
 3. Enable Authentication providers: Email/Password, Apple, Google and Anonymous.
 4. Deploy everything from the repo:
    ```bash
