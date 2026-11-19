@@ -57,7 +57,7 @@ receipt,returns,refund,warranty,scanner,deadline,reminder,purchase,tracker,organ
 > • Extra reminders 7 and 3 days before a deadline
 > • Export your receipts
 >
-> ReturnSafe Pro is available as a monthly or yearly auto-renewing subscription. The yearly plan includes a 7-day free trial. Payment is charged to your Apple ID account at confirmation of purchase. The subscription renews automatically unless it is cancelled at least 24 hours before the end of the current period. Your account is charged for renewal within 24 hours before the end of the current period. You can manage and cancel your subscription in your App Store account settings. Any unused part of a free trial is forfeited when you buy a subscription.
+> ReturnSafe Pro is available as a monthly or yearly auto-renewing subscription. The yearly plan includes a 7-day free trial for eligible new subscribers. Payment is charged to your Apple ID account at confirmation of purchase. The subscription renews automatically unless it is cancelled at least 24 hours before the end of the current period. Your account is charged for renewal within 24 hours before the end of the current period. You can manage and cancel your subscription in your App Store account settings. Any unused part of a free trial is forfeited when you buy a subscription.
 >
 > **PRIVACY FIRST**
 > No ads and no tracking. Delete your account and data at any time from the app.
@@ -104,7 +104,7 @@ Use the same screen order for the 6.5" set if App Store Connect asks for it; it 
 
 **Full description** [4000]: use the App Store description, replacing the subscription paragraph with:
 
-> ReturnSafe Pro is available as a monthly or yearly auto-renewing subscription. The yearly plan includes a 7-day free trial. Payment is charged to your Google Play account. The subscription renews automatically until you cancel it in Google Play › Payments & subscriptions › Subscriptions. Cancel at least 24 hours before renewal to avoid being charged for the next period.
+> ReturnSafe Pro is available as a monthly or yearly auto-renewing subscription. The yearly plan includes a 7-day free trial for eligible new subscribers. Payment is charged to your Google Play account. The subscription renews automatically until you cancel it in Google Play › Payments & subscriptions › Subscriptions. Cancel at least 24 hours before renewal to avoid being charged for the next period.
 
 Also replace "VoiceOver" with "TalkBack".
 

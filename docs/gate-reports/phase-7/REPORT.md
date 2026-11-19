@@ -130,16 +130,18 @@ These couldn't run here: the EAS CLI isn't logged in, the **returnsafe-prod** Fi
 
 ### TC-706: an update for another runtime version is ignored
 
-1. Install a production (or preview) build of version **1.0.0** on a device.
+Use the **preview** channel only. An update published to `production` reaches every user on a matching build and can't be unpublished by reverting files.
+
+1. Install a **preview** build of version **1.0.0** on a device (`eas build --profile preview`).
 2. Publish an update made with a different `version`:
    - In `app.config.ts`, set `version: '1.0.1'`, change a visible string (for example the Home title), and run:
      ```bash
-     eas update --channel production --message "TC-706 runtime 1.0.1"
+     eas update --channel preview --message "TC-706 runtime 1.0.1"
      ```
    - Revert both changes; don't commit them.
 3. Fully close and reopen the installed app twice.
 4. **Pass if** the old title still shows: the 1.0.0 build ignored the 1.0.1 update. Expo dashboard › Updates shows the update's runtime version as 1.0.1.
-5. Optional: publish the same change with `version` still 1.0.0. After two launches, the build shows it, which proves updates do reach a matching runtime.
+5. Optional: publish the same change to `preview` with `version` still 1.0.0. After two launches, the build shows it, which proves updates do reach a matching runtime. Then run `eas update:rollback --channel preview` so the preview channel is clean.
 
 ## Launch checklist
 
@@ -169,7 +171,7 @@ Status of every item in the spec's launch checklist. **Done** means it is in the
 | Privacy Policy, Terms, Support pages live | Not done | Drafts in `docs/legal/`: lawyer review, then publish |
 | App Store privacy labels and Play Data safety | Not done | Answers in `docs/store/privacy-answers.md`, ready to enter |
 | iOS privacy manifest includes every SDK's required reasons | Done | `npm run check:privacy` passes on the Release build (SDWebImage fixed) |
-| Account deletion in the app and on the web | Done (app) / Not done (web) | In-app since Phase 2; web page text in `docs/legal/delete-account.md` |
+| Account deletion in the app and on the web | Done (app) / Not done (web) | In-app since Phase 2; web page text in `docs/legal/delete-account.md`. Before using it as the Play "Delete account URL", decide how guests request deletion outside the app (the page lists the options) |
 | Not for children; 4+ / Everyone; Terms 13+ | Done (Terms) / Not done (ratings) | Terms draft says 13+; set ratings in each store |
 | US state privacy laws (CCPA and others) | Done (draft) | Privacy Policy §5: no sale or sharing; how to request deletion |
 | Export compliance (`ITSAppUsesNonExemptEncryption = false`) | Done | `app.config.ts` |

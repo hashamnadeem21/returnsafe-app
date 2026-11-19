@@ -203,11 +203,10 @@ export default function Paywall() {
     setBusy('buy');
     track({ name: 'purchase_start', plan: plan.period });
     const result = await buy(plan);
+    // Record the purchase even if the paywall was closed while the store sheet was open.
+    if (result === 'pro') track({ name: 'purchase_success', plan: plan.period });
     if (!alive.current) return;
-    if (result === 'pro') {
-      track({ name: 'purchase_success', plan: plan.period });
-      return unlocked('Welcome to ReturnSafe Pro');
-    }
+    if (result === 'pro') return unlocked('Welcome to ReturnSafe Pro');
     setBusy(null);
     // Cancelling the store sheet is a choice, not an error: nothing is shown.
     if (result === 'pending')

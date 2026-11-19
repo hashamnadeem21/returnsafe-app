@@ -18,7 +18,7 @@ These answers are based on what the app actually sends (see `src/lib/telemetry.t
 | Diagnostics › Crash Data | Yes (Crashlytics) | No | No | App Functionality |
 | Usage Data › Product Interaction | Yes (7 fixed events, no parameters about the user) | No | No | Analytics |
 
-Not collected: Location, Health & Fitness, Financial Info (no card or bank data; amounts on receipts are User Content), Contacts, Browsing/Search History, Sensitive Info, Device ID (no IDFA or IDFV collection: `google_analytics_idfv_collection_enabled: false`), Performance Data, Other Diagnostic Data, Advertising Data.
+Not collected: Location, Health & Fitness, Financial Info (no card or bank data; amounts on receipts are User Content), Contacts, Browsing/Search History, Sensitive Info, Device ID (no IDFA or IDFV collection: `analytics_idfv_collection_enabled: false` in `firebase.json`), Performance Data, Other Diagnostic Data, Advertising Data.
 
 **Why these choices:**
 

@@ -7,6 +7,7 @@ import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testi
 import { Linking, StyleSheet } from 'react-native';
 
 import { useSnackbar } from '@/components/Snackbar';
+import { continueAsGuest } from '@/features/auth/authService';
 import { spokenStatus } from '@/features/receipts/components/ReceiptRow';
 import { useReceipts } from '@/features/receipts/receiptsStore';
 import type { Receipt } from '@/features/receipts/types';
@@ -48,6 +49,8 @@ const crashlytics = require('@react-native-firebase/crashlytics') as {
 };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const rc = require('@/test/fakePurchases') as { resetPurchases: () => void };
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const purchases = require('react-native-purchases').default as { purchasePackage: jest.Mock };
 
 let mockScheme: ColorScheme = 'light';
 jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
@@ -470,8 +473,9 @@ describe('analytics and crash reports', () => {
   });
 
   it('the app sends the funnel events with no personal data', async () => {
-    await startTelemetry(true);
     await start('/receipt/new', {}, {});
+    // After start(): its Firebase setup turns telemetry off in __DEV__ builds.
+    await startTelemetry(true);
     await fireEvent.press(await screen.findByTestId('receipt-store'));
     await fireEvent.changeText(await screen.findByTestId('store-search'), 'Target');
     await fireEvent.press(screen.getByTestId('store-option-target'));
@@ -496,5 +500,37 @@ describe('analytics and crash reports', () => {
       expect(JSON.stringify(e)).not.toMatch(/Target|48|@|users\//);
     }
     expect(firestoreDocs.size).toBeGreaterThan(0);
+  });
+
+  it('a guest retry is not counted as a second sign-up', async () => {
+    await startTelemetry(true);
+    await continueAsGuest();
+    await continueAsGuest();
+    await settle();
+    expect(analytics.__events.filter((e) => e.name === 'sign_up')).toEqual([
+      { name: 'sign_up', method: 'guest' },
+    ]);
+  });
+
+  it('records a purchase that finishes after the paywall was closed', async () => {
+    // Hold the store sheet open until the paywall is gone, then complete the real fake purchase.
+    let finish: () => void = () => undefined;
+    const gate = new Promise<void>((r) => {
+      finish = r;
+    });
+    const real = purchases.purchasePackage.getMockImplementation()!;
+    purchases.purchasePackage.mockImplementationOnce(async (...args: unknown[]) => {
+      await gate;
+      return real(...args);
+    });
+    await start('/receipt/new', {}, {});
+    await startTelemetry(true);
+    await settle(() => router().push({ pathname: '/paywall', params: { from: 'settings' } }));
+    await fireEvent.press(await screen.findByTestId('paywall-buy'));
+    await settle(() => router().back());
+    await act(async () => finish());
+    await waitFor(() =>
+      expect(analytics.__events).toContainEqual({ name: 'purchase_success', plan: 'year' }),
+    );
   });
 });

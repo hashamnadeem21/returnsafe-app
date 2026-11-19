@@ -18,6 +18,8 @@ Email **[privacy@getreturnsafe.com]** from the email address on your account, wi
 
 If you used ReturnSafe only as a guest (no email), use the in-app option. We have no way to identify a guest account by email.
 
+> **[Decision needed before publishing this as the Play "Delete account URL"]** Google Play requires a way to request deletion outside the app for every account the app creates, guest accounts included. Pick one and replace this note: (a) show a "Support ID" for guests in Settings and accept it by email here; (b) delete guest accounts automatically after [N] months without use and say so here and in the Privacy Policy; or (c) both. Until then, a guest who has removed the app has no external route.
+
 ## What is deleted
 
 - Your account: email, name and sign-in methods.

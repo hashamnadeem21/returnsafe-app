@@ -8,7 +8,7 @@ rm -rf coverage lib
 npm run build >/dev/null
 
 NODE_V8_COVERAGE="$PWD/coverage/raw" \
-NODE_OPTIONS="--require $PWD/scripts/coverage-flush.cjs" \
+NODE_OPTIONS="--require \"$PWD/scripts/coverage-flush.cjs\"" \
 FUNCTIONS_TEST_COMPILED=1 \
   ../node_modules/.bin/firebase emulators:exec --project returnsafe-app --only auth,firestore,storage,functions \
   "npx vitest run"

@@ -43,4 +43,5 @@ jobs:
       - run: npm ci
       - run: npm ci --prefix functions
       - run: npm --prefix functions run typecheck
-      - run: npm run test:functions
+      # Runs every functions and rules test and fails below 80% coverage of functions/src.
+      - run: npm run coverage:functions

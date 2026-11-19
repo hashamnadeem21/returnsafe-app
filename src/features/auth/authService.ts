@@ -203,8 +203,9 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
 export async function continueAsGuest(): Promise<void> {
   await wrap(async () => {
-    await signInAnonymously(auth());
-    track({ name: 'sign_up', method: 'guest' });
+    const result = await signInAnonymously(auth());
+    // A retry after ensureUserDoc failed returns the same guest: count only the first sign-in.
+    if (result.additionalUserInfo?.isNewUser) track({ name: 'sign_up', method: 'guest' });
     await ensureUserDoc();
   });
 }
