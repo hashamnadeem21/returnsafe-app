@@ -130,18 +130,21 @@ These couldn't run here: the EAS CLI isn't logged in, the **returnsafe-prod** Fi
 
 ### TC-706: an update for another runtime version is ignored
 
-Use the **preview** channel only. An update published to `production` reaches every user on a matching build and can't be unpublished by reverting files.
+Use the dedicated **runtime-test** channel (the `runtime-test` profile in `eas.json`). Only the build made for this test listens to it, so the test bundles never reach production or preview users.
 
-1. Install a **preview** build of version **1.0.0** on a device (`eas build --profile preview`).
-2. Publish an update made with a different `version`:
-   - In `app.config.ts`, set `version: '1.0.1'`, change a visible string (for example the Home title), and run:
-     ```bash
-     eas update --channel preview --message "TC-706 runtime 1.0.1"
-     ```
-   - Revert both changes; don't commit them.
-3. Fully close and reopen the installed app twice.
-4. **Pass if** the old title still shows: the 1.0.0 build ignored the 1.0.1 update. Expo dashboard › Updates shows the update's runtime version as 1.0.1.
-5. Optional: publish the same change to `preview` with `version` still 1.0.0. After two launches, the build shows it, which proves updates do reach a matching runtime. Then run `eas update:rollback --channel preview` so the preview channel is clean.
+1. Build version **1.0.0** with `eas build --profile runtime-test --platform ios` (or `android`) and install it on a device. Open it once while online.
+2. **Control (required):** change a visible string (for example the Home title to "TC-706 control") with `version` still 1.0.0, then:
+   ```bash
+   eas update --channel runtime-test --message "TC-706 control 1.0.0"
+   ```
+   Fully close and reopen the app twice. The control title must show. If it doesn't, the device isn't receiving updates; fix that first, because the next step can't prove anything.
+3. **Test:** set `version: '1.0.1'` in `app.config.ts`, change the title to "TC-706 runtime 1.0.1", then:
+   ```bash
+   eas update --channel runtime-test --message "TC-706 runtime 1.0.1"
+   ```
+4. Fully close and reopen the app twice.
+5. **Pass if** step 2 showed the control title and it still shows now, not the 1.0.1 title: the 1.0.0 build ignored the update for another runtime. Expo dashboard › Updates shows the runtime versions 1.0.0 and 1.0.1.
+6. Clean up: revert the local changes (don't commit them), delete both test update groups (`eas update:list --branch runtime-test`, then `eas update:delete <group-id>`), and uninstall the test build.
 
 ## Launch checklist
 

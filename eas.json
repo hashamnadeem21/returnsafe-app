@@ -25,6 +25,10 @@
       },
       "channel": "preview"
     },
+    "runtime-test": {
+      "extends": "preview",
+      "channel": "runtime-test"
+    },
     "production": {
       "autoIncrement": true,
       "env": {
